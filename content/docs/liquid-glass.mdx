@@ -1,0 +1,132 @@
+---
+title: Liquid Glass 通透度
+description: 提供可复用的 LiquidGlassProvider、useLiquidGlass Hook 与 Apple 系统同款「透明 ↔ 色调」通透度滑块，统一调节全站液态玻璃的不透明度、雾化强度与对比度。
+keywords:
+  - LiquidGlassProvider
+  - useLiquidGlass
+  - LiquidGlassTintSlider
+  - 通透度
+  - 透明
+  - 色调
+  - Clear
+  - Tinted
+  - Liquid Glass
+  - 液态玻璃配置
+  - Provider
+---
+
+对照 Apple iOS / macOS 系统设置中的 **外观 → Liquid Glass** 能力，我们提供了独立的 **`LiquidGlassProvider`**、`useLiquidGlass()` Hook 以及开箱即用的 **`LiquidGlassTintSlider`** 调节滑块，方便其他项目通过 Shadcn Registry 直接引入。
+
+- **透明（Clear · `tint = 0`）**：更低底色不透明度与轻雾化，背景色彩与细节清晰穿透。
+- **标准（Regular · `tint = 0.5`）**：默认平衡值，兼顾玻璃通透质感与文字清晰度。
+- **色调（Tinted · `tint = 1`）**：增加玻璃不透明度与柔和雾化，显著提升内容和控制项在复杂背景上的对比度。
+
+## 交互演示：透明 ↔ 色调
+
+拖动下方滑块（或左侧边栏底部的全局「玻璃通透度」滑块），全站所有 `Button`、`Tabs`、`Select` 与玻璃容器都会实时联动：
+
+<ComponentPreview name="liquid-glass-settings" />
+
+## 安装（Shadcn Registry）
+
+```bash
+# 通过 @apple-liquid 命名空间一键安装 Provider、Hook 与内置滑块
+npx shadcn@latest add @apple-liquid/liquid-glass-provider
+
+# 或直接通过 URL 安装
+npx shadcn@latest add https://your-domain.com/r/liquid-glass-provider.json
+```
+
+> 所有组件在**不包裹** `<LiquidGlassProvider>` 时也会通过默认 CSS Token（`--liquid-glass-tint: 0.5`）正常渲染；包裹后即可解锁运行时全局切换、`localStorage` 持久化与用户自定义设置。
+
+## 在你的项目中使用
+
+### 1. 在根布局包裹 `LiquidGlassProvider`
+
+```tsx
+// app/layout.tsx
+import { LiquidGlassProvider } from '@/components/ui/liquid-glass-provider';
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="zh-CN">
+      <body>
+        <LiquidGlassProvider defaultTint="regular">
+          {children}
+        </LiquidGlassProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+### 2. 在设置页直接放入内置滑块或使用 `useLiquidGlass()`
+
+```tsx
+'use client';
+
+import {
+  LiquidGlassTintSlider,
+  useLiquidGlass,
+} from '@/components/ui/liquid-glass-provider';
+
+export function AppearanceSettings() {
+  const { tint, preset, setPreset, resetTint } = useLiquidGlass();
+
+  return (
+    <div className="space-y-4">
+      {/* 开箱即用的 Apple 系统同款滑块 */}
+      <LiquidGlassTintSlider showDescription />
+
+      {/* 也可以用 Hook 绑定自定义按钮或预设 */}
+      <div className="flex items-center gap-2 text-xs">
+        <button onClick={() => setPreset('clear')}>透明</button>
+        <button onClick={() => setPreset('regular')}>标准</button>
+        <button onClick={() => setPreset('tinted')}>色调</button>
+        <button onClick={resetTint}>重置（当前：{Math.round(tint * 100)}% / {preset}）</button>
+      </div>
+    </div>
+  );
+}
+```
+
+## 局部作用域隔离（`syncToRoot={false}`）
+
+如果只想对某个卡片或面板单独指定通透度而不影响全局（例如同屏对比 **透明** 与 **色调**），只需传入 `syncToRoot={false}`：
+
+<ComponentPreview name="liquid-glass-scoped-compare" />
+
+## API 参考
+
+### `LiquidGlassProvider`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `defaultTint` | `number \| 'clear' \| 'regular' \| 'tinted'` | `0.5` | 初始通透度（`0` 为透明，`1` 为色调） |
+| `tint` | `number` | — | 受控模式下的通透度值（`0`～`1`） |
+| `onTintChange` | `(tint: number) => void` | — | 通透度变更回调 |
+| `storageKey` | `string \| false` | `'apple-liquid-ui:glass-tint'` | `localStorage` 持久化键名，传 `false` 关闭持久化 |
+| `syncToRoot` | `boolean` | `true` | `true` 时写入 `:root` 以联动 Portal 浮层（下拉菜单、抽屉、弹窗）；`false` 时仅作用于当前子树 |
+
+### `useLiquidGlass()`
+
+| 返回字段 | 类型 | 说明 |
+| :--- | :--- | :--- |
+| `tint` | `number` | 当前通透度数值（`0`～`1`） |
+| `setTint` | `(next: number \| LiquidGlassPreset) => void` | 连续调节或按预设名切换 |
+| `preset` | `'clear' \| 'regular' \| 'tinted' \| 'custom'` | 当前命中的预设名 |
+| `setPreset` | `(preset: LiquidGlassPreset) => void` | 快速跳转到指定预设 |
+| `resetTint` | `() => void` | 恢复为 `defaultTint` |
+
+### `LiquidGlassTintSlider`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `compact` | `boolean` | `false` | 紧凑模式，适合侧边栏或工具栏 |
+| `showDescription` | `boolean` | `false` | 是否在底部展示 Apple 同款通透度说明文案 |
+| `showLabel` | `boolean` | `true` | 是否显示顶部标题与当前百分比/预设标签 |
+| `label` | `React.ReactNode` | `'Liquid Glass 通透度'` | 自定义标题文案 |

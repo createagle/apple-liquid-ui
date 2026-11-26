@@ -1,0 +1,103 @@
+---
+title: Select 选择器
+description: 响应式 Apple Liquid Glass 选择器：桌面端呈现 macOS 27 悬浮液态下拉菜单，移动端自动切换为可下滑关闭的 iOS 27 底部液态玻璃 Drawer 列表。
+keywords:
+  - Select
+  - 选择器
+  - 下拉菜单
+  - Dropdown
+  - 底部抽屉
+  - Drawer
+  - Sheet
+  - macOS 27
+  - iOS 27
+  - 响应式组件
+  - Liquid Glass
+---
+
+一套完全标准的 shadcn/ui JSX API（`<Select>` / `<SelectTrigger>` / `<SelectValue>` / `<SelectContent>` / `<SelectGroup>` / `<SelectItem>`），无需手写双端判断，通过 `useIsMobile()`（`768px`）自动按设备形态切换交互结构：
+
+- **桌面端（`>= 768px` · macOS 27）**：基于 `@base-ui/react/select` 展开悬浮液态玻璃下拉菜单，具备 `#0069F9` 经典蓝色悬停高亮、右侧勾选图标与键盘方向键导航。
+- **移动端（`< 768px` · iOS 27）**：自动切换为基于 `@base-ui/react/drawer` 的**悬浮液态玻璃底部 Drawer**，支持手指下滑手势关闭、顶部拖拽手柄、`50px+` 触控分组列表行与右侧 Apple Blue 勾选态。
+
+## 响应式实时预览
+
+默认呈现桌面端 macOS 27 下拉菜单；点击预览栏右上角的 **移动端图标**（或在真机/窄屏打开）即可即时体验 iOS 27 底部滑动 Drawer，也可切换到 **Code** 查看完整代码：
+
+<ComponentPreview name="select-liquid-hero" />
+
+## 安装（Shadcn Registry）
+
+```bash
+# 通过配置好的 @apple-liquid 命名空间安装（自动关联 drawer、use-mobile 与 liquid-glass）
+npx shadcn@latest add @apple-liquid/select
+
+# 或直接通过 URL 安装
+npx shadcn@latest add https://your-domain.com/r/select.json
+```
+
+## 触发器样式与尺寸
+
+提供 `variant="glass"`（悬浮液态玻璃胶囊触发器）与 `variant="default"`（macOS 27 Pop-up / iOS 27 填充圆角触发器），支持 `default` 与 `sm` 两种尺寸及禁用态：
+
+<ComponentPreview name="select-variants" />
+
+## 分组与分隔线
+
+在桌面端表现为紧凑分组标题与细分隔线；在移动端自动转化为 iOS 27 标志性的圆角分组卡片列表（Inset Grouped List）：
+
+<ComponentPreview name="select-grouped" />
+
+## 受控状态
+
+完全支持 `value` / `onValueChange` 受控模式及 `name` / `required` 原生表单提交（移动端 Drawer 模式下自动同步隐藏 `<input>`）：
+
+<ComponentPreview name="select-controlled" />
+
+## 使用方式
+
+```tsx
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+export function Example() {
+  return (
+    <Select defaultValue="macbook">
+      <SelectTrigger variant="glass" className="w-56">
+        <SelectValue placeholder="选择设备..." />
+      </SelectTrigger>
+      <SelectContent title="选择 Apple 设备">
+        <SelectGroup>
+          <SelectLabel>桌面与移动设备</SelectLabel>
+          <SelectItem value="macbook">MacBook Pro</SelectItem>
+          <SelectItem value="iphone">iPhone 18 Pro</SelectItem>
+        </SelectGroup>
+      </SelectContent>
+    </Select>
+  );
+}
+```
+
+## Props API
+
+### `SelectTrigger`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `variant` | `'default' \| 'glass'` | `'default'` | `default` 为 macOS Pop-up / iOS 填充风，`glass` 为通透液态玻璃胶囊 |
+| `size` | `'default' \| 'sm'` | `'default'` | 桌面端 `32px / 28px`，移动端自动切为 `46px / 38px` 触控高度 |
+| `disableMotion` | `boolean` | `false` | 禁用触发器按压弹簧动画 |
+
+### `SelectContent`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `title` | `React.ReactNode` | `'请选择'` | 移动端底部 Drawer 顶部显示的标题 |
+| `side` / `align` / `sideOffset` | Base UI Positioner | `'bottom' / 'start' / 6` | 仅桌面端下拉定位使用 |

@@ -1,6 +1,11 @@
 @import 'tailwindcss';
-@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/shadcn.css';
 @import 'fumadocs-ui/css/preset.css';
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@liqui-design/glass/tokens.css";
+
+@custom-variant dark (&:is(.dark *));
 
 html {
   scrollbar-gutter: stable;
@@ -9,4 +14,210 @@ html {
 html > body[data-scroll-locked] {
   margin-right: 0px !important;
   --removed-body-scroll-bar-size: 0px !important;
+}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+
+  /* Apple macOS 27 & iOS 27 Official System Colors + Luminous Liquid Glass Overrides */
+  --apple-blue: #0088ff;
+  --apple-blue-pressed: #0078f0;
+  --apple-red: #ff383c;
+  --apple-red-pressed: #e5292d;
+  --apple-fill-bordered-mac: rgba(0, 0, 0, 0.08);
+  --apple-fill-bordered-mac-hover: rgba(0, 0, 0, 0.12);
+  --apple-fill-bordered-mac-pressed: rgba(0, 0, 0, 0.16);
+  --apple-fill-bordered-ios: rgba(118, 118, 128, 0.12);
+  --apple-fill-bordered-ios-pressed: rgba(118, 118, 128, 0.22);
+  --apple-fill-over-glass: rgba(0, 0, 0, 0.12);
+  --apple-fill-over-glass-pressed: rgba(0, 0, 0, 0.2);
+
+  /* Apple Liquid Glass Transparency <-> Tint (0 = Clear 透明, 0.5 = Regular 标准, 1 = Tinted 色调) */
+  --liquid-glass-tint: 0.5;
+  --liquid-surface-alpha: calc(0.24 + var(--liquid-glass-tint, 0.5) * 0.64);
+  --liquid-surface-menu-alpha: calc(0.42 + var(--liquid-glass-tint, 0.5) * 0.52);
+  --liquid-surface-sheet-alpha: calc(0.52 + var(--liquid-glass-tint, 0.5) * 0.44);
+  --liquid-surface: rgb(240 242 246 / var(--liquid-surface-alpha));
+  --liquid-surface-hover: rgb(246 247 250 / min(0.98, calc(var(--liquid-surface-alpha) + 0.1)));
+  --liquid-surface-menu: rgb(255 255 255 / var(--liquid-surface-menu-alpha));
+  --liquid-surface-sheet: rgb(255 255 255 / var(--liquid-surface-sheet-alpha));
+  --liquid-blur: calc(10px + var(--liquid-glass-tint, 0.5) * 26px);
+  --liquid-saturate: calc(1.45 + var(--liquid-glass-tint, 0.5) * 0.55);
+
+  --lq-tint: rgb(255 255 255 / calc(0.12 + var(--liquid-glass-tint, 0.5) * 0.62));
+  --lq-tint-deep: rgb(255 255 255 / calc(0.05 + var(--liquid-glass-tint, 0.5) * 0.28));
+}
+
+[data-liquid-glass-scope] {
+  --liquid-surface-alpha: calc(0.24 + var(--liquid-glass-tint, 0.5) * 0.64);
+  --liquid-surface-menu-alpha: calc(0.42 + var(--liquid-glass-tint, 0.5) * 0.52);
+  --liquid-surface-sheet-alpha: calc(0.52 + var(--liquid-glass-tint, 0.5) * 0.44);
+  --liquid-surface: rgb(240 242 246 / var(--liquid-surface-alpha));
+  --liquid-surface-hover: rgb(246 247 250 / min(0.98, calc(var(--liquid-surface-alpha) + 0.1)));
+  --liquid-surface-menu: rgb(255 255 255 / var(--liquid-surface-menu-alpha));
+  --liquid-surface-sheet: rgb(255 255 255 / var(--liquid-surface-sheet-alpha));
+  --liquid-blur: calc(10px + var(--liquid-glass-tint, 0.5) * 26px);
+  --liquid-saturate: calc(1.45 + var(--liquid-glass-tint, 0.5) * 0.55);
+  --lq-tint: rgb(255 255 255 / calc(0.12 + var(--liquid-glass-tint, 0.5) * 0.62));
+  --lq-tint-deep: rgb(255 255 255 / calc(0.05 + var(--liquid-glass-tint, 0.5) * 0.28));
+}
+
+.dark {
+  --apple-blue: #0091ff;
+  --apple-blue-pressed: #0a99ff;
+  --apple-red: #ff4245;
+  --apple-red-pressed: #ff5a5d;
+  --apple-fill-bordered-mac: rgba(255, 255, 255, 0.08);
+  --apple-fill-bordered-mac-hover: rgba(255, 255, 255, 0.13);
+  --apple-fill-bordered-mac-pressed: rgba(255, 255, 255, 0.18);
+  --apple-fill-bordered-ios: rgba(120, 120, 128, 0.28);
+  --apple-fill-bordered-ios-pressed: rgba(120, 120, 128, 0.38);
+  --apple-fill-over-glass: rgba(255, 255, 255, 0.15);
+  --apple-fill-over-glass-pressed: rgba(255, 255, 255, 0.24);
+
+  /* Matches Apple iOS 27 Dark Glass (luminous translucent glass responsive to --liquid-glass-tint) */
+  --liquid-surface-alpha: calc(0.22 + var(--liquid-glass-tint, 0.5) * 0.62);
+  --liquid-surface-menu-alpha: calc(0.4 + var(--liquid-glass-tint, 0.5) * 0.52);
+  --liquid-surface-sheet-alpha: calc(0.5 + var(--liquid-glass-tint, 0.5) * 0.44);
+  --liquid-surface: rgb(26 26 30 / var(--liquid-surface-alpha));
+  --liquid-surface-hover: rgb(38 38 44 / min(0.96, calc(var(--liquid-surface-alpha) + 0.1)));
+  --liquid-surface-menu: rgb(26 26 30 / var(--liquid-surface-menu-alpha));
+  --liquid-surface-sheet: rgb(22 22 26 / var(--liquid-surface-sheet-alpha));
+  --liquid-blur: calc(10px + var(--liquid-glass-tint, 0.5) * 26px);
+  --liquid-saturate: calc(1.45 + var(--liquid-glass-tint, 0.5) * 0.55);
+
+  --lq-tint: rgb(255 255 255 / calc(0.06 + var(--liquid-glass-tint, 0.5) * 0.36));
+  --lq-tint-deep: rgb(160 160 175 / calc(0.04 + var(--liquid-glass-tint, 0.5) * 0.22));
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+.dark [data-liquid-glass-scope],
+[data-liquid-glass-scope].dark {
+  --liquid-surface-alpha: calc(0.22 + var(--liquid-glass-tint, 0.5) * 0.62);
+  --liquid-surface-menu-alpha: calc(0.4 + var(--liquid-glass-tint, 0.5) * 0.52);
+  --liquid-surface-sheet-alpha: calc(0.5 + var(--liquid-glass-tint, 0.5) * 0.44);
+  --liquid-surface: rgb(26 26 30 / var(--liquid-surface-alpha));
+  --liquid-surface-hover: rgb(38 38 44 / min(0.96, calc(var(--liquid-surface-alpha) + 0.1)));
+  --liquid-surface-menu: rgb(26 26 30 / var(--liquid-surface-menu-alpha));
+  --liquid-surface-sheet: rgb(22 22 26 / var(--liquid-surface-sheet-alpha));
+  --liquid-blur: calc(10px + var(--liquid-glass-tint, 0.5) * 26px);
+  --liquid-saturate: calc(1.45 + var(--liquid-glass-tint, 0.5) * 0.55);
+  --lq-tint: rgb(255 255 255 / calc(0.06 + var(--liquid-glass-tint, 0.5) * 0.36));
+  --lq-tint-deep: rgb(160 160 175 / calc(0.04 + var(--liquid-glass-tint, 0.5) * 0.22));
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
 }

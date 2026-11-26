@@ -1,13 +1,51 @@
 ---
-title: Hello World
-description: Your first document
+title: 快速开始
+description: 基于 shadcn/ui 构建的 Apple Liquid Glass 组件库，支持纯静态文档站与 shadcn Registry 分发。
+keywords:
+  - Apple Liquid Glass
+  - 液态玻璃
+  - 毛玻璃
+  - shadcn registry
+  - 安装指南
 ---
 
-Welcome to the docs! You can start writing documents in `/content/docs`.
+欢迎使用 **Apple Liquid UI**。本项目基于 **Next.js + Fumadocs + Tailwind CSS v4 + shadcn/ui (`base-nova`)** 构建，所有组件源码统一维护在 `components/ui/` 中，并自动编译为静态的 shadcn Registry（`/r/*.json`）。
 
-## What is Next?
+## 通过 shadcn Registry 安装
 
-<Cards>
-  <Card title="Learn more about Next.js" href="https://nextjs.org/docs" />
-  <Card title="Learn more about Fumadocs" href="https://fumadocs.dev" />
-</Cards>
+### 方式一：配置 Namespace（推荐）
+
+在目标项目的 `components.json` 中注册 `@apple-liquid` 命名空间：
+
+```json
+{
+  "registries": {
+    "@apple-liquid": "https://your-domain.com/r/{name}.json"
+  }
+}
+```
+
+随后即可按名称直接安装任意组件：
+
+```bash
+npx shadcn@latest add @apple-liquid/button
+```
+
+### 方式二：直接通过 URL 安装
+
+```bash
+npx shadcn@latest add https://your-domain.com/r/button.json
+```
+
+## 本地构建与开发
+
+```bash
+# 启动文档开发服务器
+pnpm dev
+
+# 仅重新同步 registry.json 并编译 public/r/*.json
+pnpm registry:build
+
+# 完整构建（自动编译 Registry + 导出纯静态站点到 out/）
+pnpm build
+```
