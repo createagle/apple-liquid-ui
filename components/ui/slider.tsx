@@ -4,14 +4,51 @@ import * as React from "react"
 import { Slider as SliderPrimitive } from "@base-ui/react/slider"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
-import { motion, useReducedMotion } from "motion/react"
+import { useReducedMotion } from "motion/react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
-import { LIQUID_SPRINGS } from "@/lib/liquid-motion"
-import { LiquidLens } from "@/components/ui/liquid-lens"
+import {
+  buildLensMaps,
+  clamp,
+  CONVEX,
+  createSpringLoop,
+  LensFilter,
+  lerp,
+  spring,
+  supportsRefraction,
+  type LensMaps,
+  type LensScale,
+} from "@/components/ui/liquid-lens"
 
 type SliderSize = "sm" | "default" | "lg"
 type SliderVariant = "default" | "glass"
+
+const REST_SCALE = 0.6
+const PRESS_SCALE = 1.0
+const REST_RATIO = 0.4
+const PRESS_RATIO = 0.9
+const REST_FILL = 1
+const PRESS_FILL = 0.08
+const PRESS_FILL_NO_LENS = 0.72
+const SPECULAR_OPACITY = 0.42
+const SPECULAR_SATURATION = 1.8
+const COLOURED_RIM_OPACITY = 0.16
+
+const REST_THUMB_DIMS: Record<
+  "mobile" | "desktop",
+  Record<SliderSize, { w: number; h: number }>
+> = {
+  mobile: {
+    sm: { w: 26, h: 17 },
+    default: { w: 34, h: 22 },
+    lg: { w: 40, h: 26 },
+  },
+  desktop: {
+    sm: { w: 22, h: 14 },
+    default: { w: 26, h: 16 },
+    lg: { w: 32, h: 20 },
+  },
+}
 
 const sliderTrackVariants = cva(
   [
@@ -28,9 +65,9 @@ const sliderTrackVariants = cva(
       },
       variant: {
         default:
-          "bg-[rgba(120,120,128,0.22)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)] dark:bg-[rgba(120,120,128,0.34)] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.35)]",
+          "bg-[rgba(137,137,143,0.38)] dark:bg-[rgba(137,137,143,0.44)]",
         glass:
-          "bg-(--liquid-surface) shadow-[inset_0_1px_2px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.08),inset_0_-0.5px_0_rgba(255,255,255,0.5)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45),0_0_0_0.5px_rgba(255,255,255,0.16)]",
+          "bg-(--liquid-surface) shadow-[inset_0_1px_2px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_-0.5px_0_rgba(255,255,255,0.45)] [backdrop-filter:blur(4px)_saturate(1.4)] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.4),0_0_0_0.5px_rgba(255,255,255,0.16)]",
       },
     },
     defaultVariants: {
@@ -40,27 +77,198 @@ const sliderTrackVariants = cva(
   }
 )
 
-const sliderThumbSizeVariants = cva("", {
-  variants: {
-    size: {
-      sm: [
-        "data-horizontal:h-[18px] data-horizontal:w-[28px] md:data-horizontal:h-[14px] md:data-horizontal:w-[22px]",
-        "data-vertical:h-[28px] data-vertical:w-[18px] md:data-vertical:h-[22px] md:data-vertical:w-[14px]",
-      ].join(" "),
-      default: [
-        "data-horizontal:h-[22px] data-horizontal:w-[34px] md:data-horizontal:h-[16px] md:data-horizontal:w-[26px]",
-        "data-vertical:h-[34px] data-vertical:w-[22px] md:data-vertical:h-[26px] md:data-vertical:w-[16px]",
-      ].join(" "),
-      lg: [
-        "data-horizontal:h-[26px] data-horizontal:w-[40px] md:data-horizontal:h-[20px] md:data-horizontal:w-[32px]",
-        "data-vertical:h-[40px] data-vertical:w-[26px] md:data-vertical:h-[32px] md:data-vertical:w-[20px]",
-      ].join(" "),
-    },
-  },
-  defaultVariants: {
-    size: "default",
-  },
-})
+interface SliderLensThumbProps {
+  index: number
+  restW: number
+  restH: number
+  disabled?: boolean
+  isMotionEnabled: boolean
+  refraction: number
+  dispersion: number
+  curvature: number
+}
+
+function SliderLensThumb({
+  index,
+  restW,
+  restH,
+  disabled,
+  isMotionEnabled,
+  refraction,
+  dispersion,
+  curvature,
+}: SliderLensThumbProps) {
+  const filterId = `apple-slider-${React.useId().replace(/[^a-zA-Z0-9]/g, "")}`
+  const thumbRef = React.useRef<HTMLDivElement | null>(null)
+  const lensRef = React.useRef<HTMLSpanElement | null>(null)
+  const scaleRef = React.useRef<LensScale | null>(null)
+  const pointerDownRef = React.useRef(false)
+  const hasLens = React.useRef(false)
+  const [maps, setMaps] = React.useState<LensMaps | null>(null)
+
+  const lensW = Math.round(restW / REST_SCALE)
+  const lensH = Math.round(restH / REST_SCALE)
+  const minDim = Math.min(lensW, lensH)
+  const lensR = minDim / 2
+  const bezel = 0.36 * lensR
+  const intensity =
+    refraction > 4 ? refraction / 24 : Math.max(0.1, refraction)
+  const peak = 0.54 * minDim * intensity
+
+  React.useEffect(() => {
+    if (!isMotionEnabled || !supportsRefraction()) {
+      hasLens.current = false
+      setMaps(null)
+      return
+    }
+    hasLens.current = true
+    setMaps(
+      buildLensMaps({
+        width: lensW,
+        height: lensH,
+        radius: lensR,
+        bezel,
+        surface: CONVEX,
+        curvature,
+        lightAngle: 0,
+        dpr: Math.min(window.devicePixelRatio || 1, 3),
+      })
+    )
+  }, [bezel, curvature, isMotionEnabled, lensH, lensR, lensW])
+
+  const press = React.useRef(spring(2000, 80)).current
+  const peakRef = React.useRef(peak)
+  peakRef.current = peak
+  const motionRef = React.useRef(isMotionEnabled)
+  motionRef.current = isMotionEnabled
+
+  const paint = React.useCallback(() => {
+    const t = motionRef.current ? press.value : 0
+    const el = lensRef.current
+    if (el) {
+      el.style.scale = `${lerp(REST_SCALE, PRESS_SCALE, t)}`
+      const floor = hasLens.current ? PRESS_FILL : PRESS_FILL_NO_LENS
+      const alpha = clamp(lerp(REST_FILL, floor, t), 0, 1)
+      el.style.backgroundColor = `rgba(255,255,255,${alpha})`
+    }
+    if (motionRef.current) {
+      scaleRef.current?.set(peakRef.current * lerp(REST_RATIO, PRESS_RATIO, t))
+    }
+  }, [press])
+
+  const paintRef = React.useRef(paint)
+  paintRef.current = paint
+  const loopRef = React.useRef<ReturnType<typeof createSpringLoop> | null>(null)
+  loopRef.current ??= createSpringLoop([press], () => paintRef.current())
+  const loop = loopRef.current
+
+  const syncPressState = React.useCallback(() => {
+    const node = thumbRef.current
+    if (!node || disabled || !motionRef.current) {
+      loop.settle(press, 0)
+      return
+    }
+    const active =
+      node.hasAttribute("data-dragging") || pointerDownRef.current
+    loop.settle(press, active ? 1 : 0)
+  }, [disabled, loop, press])
+
+  React.useEffect(() => {
+    loop.reduced = !isMotionEnabled
+    paintRef.current()
+  }, [isMotionEnabled, peak, loop])
+
+  React.useEffect(() => {
+    const node = thumbRef.current
+    if (!node) return
+
+    paintRef.current()
+    const observer = new MutationObserver(() => {
+      syncPressState()
+    })
+    observer.observe(node, {
+      attributes: true,
+      attributeFilter: ["data-dragging"],
+    })
+
+    const onGlobalRelease = () => {
+      if (!pointerDownRef.current) return
+      pointerDownRef.current = false
+      syncPressState()
+    }
+    window.addEventListener("pointerup", onGlobalRelease)
+    window.addEventListener("pointercancel", onGlobalRelease)
+
+    return () => {
+      observer.disconnect()
+      window.removeEventListener("pointerup", onGlobalRelease)
+      window.removeEventListener("pointercancel", onGlobalRelease)
+      loop.stop()
+    }
+  }, [loop, syncPressState])
+
+  return (
+    <SliderPrimitive.Thumb
+      ref={thumbRef}
+      index={index}
+      data-slot="slider-thumb"
+      onPointerDown={() => {
+        if (disabled || !isMotionEnabled) return
+        pointerDownRef.current = true
+        syncPressState()
+      }}
+      style={{ width: restW, height: restH }}
+      className={cn(
+        "relative z-10 block shrink-0 cursor-grab rounded-full outline-none select-none active:cursor-grabbing",
+        "after:absolute after:-inset-2.5",
+        "focus-visible:ring-3 focus-visible:ring-(--apple-blue)/45 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "disabled:pointer-events-none disabled:opacity-50"
+      )}
+    >
+      {maps ? (
+        <LensFilter
+          id={filterId}
+          maps={maps}
+          width={lensW}
+          height={lensH}
+          scale={peak * REST_RATIO}
+          blur={0}
+          specularOpacity={SPECULAR_OPACITY}
+          specularSaturation={SPECULAR_SATURATION}
+          colouredRimOpacity={COLOURED_RIM_OPACITY}
+          dispersion={dispersion}
+          scaleRef={scaleRef}
+        />
+      ) : null}
+
+      {/* Single pre-scaled CONVEX lens that swells and magnifies the rail underneath */}
+      <span
+        ref={lensRef}
+        data-slot="slider-lens"
+        aria-hidden="true"
+        className="pointer-events-none will-change-transform"
+        style={{
+          position: "absolute",
+          width: lensW,
+          height: lensH,
+          borderRadius: lensR,
+          left: (restW - lensW) / 2,
+          top: (restH - lensH) / 2,
+          scale: REST_SCALE,
+          backgroundColor: `rgba(255,255,255,${REST_FILL})`,
+          boxShadow:
+            "0 3px 14px rgba(0,0,0,0.16), 0 0.5px 2px rgba(0,0,0,0.1), 0 0 0 0.5px rgba(0,0,0,0.18)",
+          ...(maps
+            ? {
+                backdropFilter: `url(#${filterId})`,
+                WebkitBackdropFilter: `url(#${filterId})`,
+              }
+            : null),
+        }}
+      />
+    </SliderPrimitive.Thumb>
+  )
+}
 
 export interface SliderProps
   extends SliderPrimitive.Root.Props,
@@ -75,13 +283,17 @@ export interface SliderProps
    */
   disableMotion?: boolean
   /**
-   * Optical Snell refraction intensity for the floating Lip glass droplet (default `1`).
+   * Optical Snell refraction intensity multiplier for the magnifying Convex droplet (default `1`).
    */
   refraction?: number
   /**
-   * Chromatic prism dispersion intensity on the droplet bezel (default `0.055`).
+   * Chromatic prism dispersion intensity on the droplet bezel (default `0.015`).
    */
   dispersion?: number
+  /**
+   * Spherical dome curvature across the magnifying lens (`0..1`, default `0.65`).
+   */
+  curvature?: number
 }
 
 function Slider({
@@ -91,7 +303,8 @@ function Slider({
   ticks = false,
   disableMotion = false,
   refraction = 1,
-  dispersion = 0.055,
+  dispersion = 0.015,
+  curvature = 0.65,
   defaultValue,
   value,
   min = 0,
@@ -108,6 +321,10 @@ function Slider({
   const resolvedSize: SliderSize = size ?? "default"
   const resolvedVariant: SliderVariant = variant ?? "default"
   const isVertical = orientation === "vertical"
+
+  const baseDims = REST_THUMB_DIMS[isMobile ? "mobile" : "desktop"][resolvedSize]
+  const restW = isVertical ? baseDims.h : baseDims.w
+  const restH = isVertical ? baseDims.w : baseDims.h
 
   const thumbCount = React.useMemo(() => {
     if (Array.isArray(value)) return Math.max(1, value.length)
@@ -128,25 +345,6 @@ function Slider({
     }
     return 5
   }, [ticks, step, max, min])
-
-  const [activeThumbIndex, setActiveThumbIndex] = React.useState<number | null>(
-    null
-  )
-
-  React.useEffect(() => {
-    if (activeThumbIndex === null) return
-    const clear = () => setActiveThumbIndex(null)
-    window.addEventListener("pointerup", clear)
-    window.addEventListener("pointercancel", clear)
-    return () => {
-      window.removeEventListener("pointerup", clear)
-      window.removeEventListener("pointercancel", clear)
-    }
-  }, [activeThumbIndex])
-
-  const springTransition = isMobile
-    ? LIQUID_SPRINGS.iosPress
-    : LIQUID_SPRINGS.macosPress
 
   return (
     <SliderPrimitive.Root
@@ -219,77 +417,19 @@ function Slider({
           </span>
         ) : null}
 
-        {Array.from({ length: thumbCount }, (_, index) => {
-          const isActive = activeThumbIndex === index && !disabled
-          const showLiquidLens = isMotionEnabled && isActive
-
-          return (
-            <SliderPrimitive.Thumb
-              key={index}
-              index={index}
-              data-slot="slider-thumb"
-              data-active={isActive ? "true" : undefined}
-              onPointerDown={() => {
-                if (!disabled) setActiveThumbIndex(index)
-              }}
-              className={cn(
-                "relative z-10 block shrink-0 cursor-grab rounded-full outline-none select-none active:cursor-grabbing",
-                "after:absolute after:-inset-2.5",
-                "focus-visible:ring-3 focus-visible:ring-(--apple-blue)/45 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                "disabled:pointer-events-none disabled:opacity-50",
-                sliderThumbSizeVariants({ size: resolvedSize })
-              )}
-            >
-              {/* Resting Apple Solid White Capsule Thumb */}
-              <motion.span
-                aria-hidden="true"
-                data-slot="slider-resting-thumb"
-                className={cn(
-                  "pointer-events-none absolute inset-0 rounded-full bg-white",
-                  "shadow-[0_2px_8px_rgba(0,0,0,0.18),0_0.5px_2px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,1)]",
-                  "dark:bg-white/95 dark:shadow-[0_3px_10px_rgba(0,0,0,0.5),0_0_0_0.5px_rgba(255,255,255,0.2)]"
-                )}
-                animate={{
-                  opacity: showLiquidLens ? 0 : 1,
-                  scale: isActive && !isMotionEnabled ? 1.05 : 1,
-                }}
-                transition={{ duration: 0.14 }}
-              />
-
-              {/* Apple iOS 27 / macOS 27 Floating Crystal Liquid Glass Droplet (pre-mounted so filter is warm) */}
-              {isMotionEnabled ? (
-                <motion.div
-                  aria-hidden="true"
-                  data-slot="slider-liquid-droplet"
-                  className="pointer-events-none absolute inset-0 z-20 will-change-transform"
-                  initial={false}
-                  animate={{
-                    opacity: showLiquidLens ? 1 : 0,
-                    scale: showLiquidLens ? 1.04 : 0.94,
-                  }}
-                  transition={springTransition}
-                >
-                  <LiquidLens
-                    profile="lip"
-                    rim="crystal"
-                    radius={999}
-                    refraction={refraction}
-                    dispersion={dispersion}
-                    blur={0}
-                    brightness={1.05}
-                    saturation={1.1}
-                    className={cn(
-                      "absolute",
-                      isVertical
-                        ? "-inset-x-[5px] -inset-y-[7px]"
-                        : "-inset-x-[7px] -inset-y-[5px]"
-                    )}
-                  />
-                </motion.div>
-              ) : null}
-            </SliderPrimitive.Thumb>
-          )
-        })}
+        {Array.from({ length: thumbCount }, (_, index) => (
+          <SliderLensThumb
+            key={index}
+            index={index}
+            restW={restW}
+            restH={restH}
+            disabled={disabled}
+            isMotionEnabled={isMotionEnabled}
+            refraction={refraction}
+            dispersion={dispersion}
+            curvature={curvature}
+          />
+        ))}
       </SliderPrimitive.Control>
     </SliderPrimitive.Root>
   )

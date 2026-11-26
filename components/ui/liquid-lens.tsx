@@ -3,516 +3,701 @@
 import * as React from "react"
 import { cn } from "cn"
 
-const mapCache = new Map<string, { href: string; scale: number }>()
-const rimCache = new Map<string, string>()
-const filterIds = new Map<string, string>()
-const pinnedImages = new Map<string, HTMLImageElement>()
-const MAX_CACHE = 64
-const SVG_NS = "http://www.w3.org/2000/svg"
-let nextFilterId = 1
-let filterHost: SVGSVGElement | null = null
+export type LiquidLensProfile = "lip" | "convex" | "meniscus"
 
-export type LiquidLensProfile = "lip" | "convex"
+/* -------------------------------------------------------------------------- */
+/* Surfaces                                                                   */
+/* -------------------------------------------------------------------------- */
 
-function ensureFilterHost(): SVGSVGElement {
-  if (filterHost && filterHost.isConnected) return filterHost
-  const svg = document.createElementNS(SVG_NS, "svg")
-  svg.setAttribute("aria-hidden", "true")
-  svg.setAttribute("data-liquid-lens-filters", "")
-  svg.style.position = "fixed"
-  svg.style.width = "0"
-  svg.style.height = "0"
-  svg.style.pointerEvents = "none"
-  svg.style.overflow = "hidden"
-  document.body.appendChild(svg)
-  filterHost = svg
-  return svg
+export interface LensSurface {
+  /** Stable id — keys the profile and map caches. */
+  id: string
+  /** Height of the glass over normalized depth `t` in `[0, 1]` from outer edge. */
+  height: (t: number) => number
+  /** Relief thickness relative to the flat glass slab beneath it. */
+  relief: number
+  /** Flat slab thickness beneath the relief so flat regions still refract. */
+  slab: number
+  /** Normalization reference: `"edge"` (default) or `"max"` across the band. */
+  normalize?: "edge" | "max"
 }
 
-function svgEl(tag: string, attrs: Record<string, string | number>) {
-  const node = document.createElementNS(SVG_NS, tag)
-  for (const [k, v] of Object.entries(attrs)) {
-    node.setAttribute(k, String(v))
+const superellipse = (p: number) => (t: number) => {
+  const clamped = Math.max(0, Math.min(1, t))
+  return Math.pow(Math.max(0, 1 - Math.pow(Math.max(0, 1 - clamped), p)), 1 / p)
+}
+
+const squircle = (x: number) =>
+  Math.pow(Math.max(0, 1 - Math.pow(1 - x, 4)), 0.25)
+
+const circle = (t: number) => {
+  const clamped = Math.max(0, Math.min(1, t))
+  return Math.sqrt(Math.max(0, 1 - (1 - clamped) * (1 - clamped)))
+}
+
+const smootherstep = (t: number) => {
+  const clamped = Math.max(0, Math.min(1, t))
+  return clamped * clamped * clamped * (clamped * (clamped * 6 - 15) + 10)
+}
+
+/**
+ * Raised convex outer crest crossfaded into a shallow concave bowl lifted by
+ * a glass slab — edges pull backdrop inward while the center reads zoomed out.
+ */
+export const LIP: LensSurface = {
+  id: "lip",
+  height: (t) => {
+    const k = smootherstep(t)
+    return squircle(t * 2) * (1 - k) + (1 - circle(t) + 0.1) * k
+  },
+  relief: 2.776,
+  slab: 6.776,
+}
+
+/**
+ * Fitted superellipse dome (`p = 3.25`) for magnifying underlying content such
+ * as Slider tracks and progress fills.
+ */
+export const CONVEX: LensSurface = {
+  id: "convex",
+  height: superellipse(3.25),
+  relief: 1.608,
+  slab: 5.945,
+}
+
+/**
+ * Pure outward-refracting concave meniscus (`slope = 0` at `t = 0` and `t = 1`),
+ * keeping the outer protruding rim clean while crisply zooming out the interior.
+ */
+export const MENISCUS: LensSurface = {
+  id: "meniscus",
+  height: (t) => {
+    const c = Math.max(0, Math.min(1, t))
+    return (1 - c) * (1 - c) * (1 + 2 * c)
+  },
+  relief: 2.8,
+  slab: 5.5,
+  normalize: "max",
+}
+
+/* -------------------------------------------------------------------------- */
+/* Vector Snell Profile                                                       */
+/* -------------------------------------------------------------------------- */
+
+const PROFILE_SIZE = 128
+const IOR = 1.5
+const profileCache = new Map<string, Float32Array>()
+
+function lensProfile(surface: LensSurface): Float32Array {
+  const cached = profileCache.get(surface.id)
+  if (cached) return cached
+
+  const shift = new Float32Array(PROFILE_SIZE)
+  const a = 1 / IOR
+  const h = 1e-4
+
+  for (let i = 0; i < PROFILE_SIZE; i++) {
+    const t = i / PROFILE_SIZE
+    const height = surface.height(t)
+    const slope = (surface.height(t + h) - height) / h
+    const len = Math.hypot(slope, 1)
+    const nx = -slope / len
+    const ny = -1 / len
+    const inside = 1 - a * a * (1 - ny * ny)
+    if (inside < 0) continue
+    const k = a * ny + Math.sqrt(inside)
+    const dirX = -k * nx
+    const dirY = a - k * ny
+    const depth = height * surface.relief + surface.slab
+    shift[i] = dirY !== 0 ? dirX * (depth / dirY) : 0
   }
-  return node
+
+  let norm = Math.abs(shift[0]) || 1
+  if (surface.normalize === "max") {
+    let maxAbs = 0
+    for (let i = 0; i < PROFILE_SIZE; i++) {
+      const abs = Math.abs(shift[i])
+      if (abs > maxAbs) maxAbs = abs
+    }
+    norm = maxAbs || 1
+  }
+
+  for (let i = 0; i < PROFILE_SIZE; i++) {
+    shift[i] = Math.max(-1, Math.min(1, shift[i] / norm))
+  }
+
+  profileCache.set(surface.id, shift)
+  return shift
 }
+
+/* -------------------------------------------------------------------------- */
+/* Maps                                                                       */
+/* -------------------------------------------------------------------------- */
+
+export interface LensMaps {
+  displacement: string
+  specular: string
+}
+
+export const LENS_LIGHT_ANGLE = 30
+
+export interface LensMapOptions {
+  /** Lens element box width in CSS px. */
+  width: number
+  /** Lens element box height in CSS px. */
+  height: number
+  /** Corner radius in CSS px (`height / 2` for a capsule). */
+  radius: number
+  /** Width of the sculpted optical band in CSS px measured inward from edge. */
+  bezel: number
+  /** Surface height profile (`LIP` or `CONVEX`). */
+  surface: LensSurface
+  /** Device pixel ratio (caller should clamp, e.g. `<= 3`). */
+  dpr: number
+  /** Spherical-cap dome strength across the entire lens (`0..1`). */
+  curvature?: number
+  /** Key light direction in degrees clockwise from straight up. */
+  lightAngle?: number
+}
+
+export interface LensOptics {
+  curvature?: number
+  dispersion?: number
+}
+
+export function resolveLens(
+  lens: boolean | LensOptics | undefined,
+  defaults: Required<LensOptics>
+): Required<LensOptics> | null {
+  if (lens === false) return null
+  if (typeof lens !== "object") return defaults
+  return {
+    curvature: lens.curvature ?? defaults.curvature,
+    dispersion: lens.dispersion ?? defaults.dispersion,
+  }
+}
+
+const DOME_CAP = 0.38
+const DOME_RADIUS = (1 + DOME_CAP * DOME_CAP) / (2 * DOME_CAP)
+const DOME_EDGE = 1 / Math.sqrt(DOME_RADIUS * DOME_RADIUS - 1)
+
+function domeShift(u: number): number {
+  const a = Math.min(Math.abs(u), 1)
+  return (
+    (Math.sign(u) * (a / Math.sqrt(DOME_RADIUS * DOME_RADIUS - a * a))) /
+    DOME_EDGE
+  )
+}
+
+const MAX_CACHE = 96
+const mapCache = new Map<string, LensMaps>()
+const pinnedImages = new Map<string, HTMLImageElement>()
 
 function prewarmDataUrl(href: string) {
-  if (pinnedImages.has(href)) return
+  if (typeof window === "undefined" || !href || pinnedImages.has(href)) return
   const img = new Image()
   img.src = href
-  if (pinnedImages.size >= MAX_CACHE) {
+  if (pinnedImages.size >= MAX_CACHE * 2) {
     const oldest = pinnedImages.keys().next().value
     if (oldest) pinnedImages.delete(oldest)
   }
   pinnedImages.set(href, img)
 }
 
-/**
- * Registers an SVG refraction + chromatic dispersion filter that preserves
- * exact source alpha (`1×A` via the green channel, `0×A` on R/B channels)
- * instead of tripling alpha (`3×A`), completely eliminating dark charcoal
- * darkening when sampling semi-transparent backdrops.
- */
-function ensureCleanLensFilter(params: {
-  w: number
-  h: number
-  mapHref: string
-  refraction: number
-  dispersion: number
-}): string {
-  const { w, h, mapHref, refraction, dispersion } = params
-  const key = `${w}x${h}|r${refraction.toFixed(2)}|d${dispersion.toFixed(3)}|${mapHref.length}:${mapHref.slice(-24)}`
-  const existing = filterIds.get(key)
-  if (existing) return existing
-
-  const id = `apple-liquid-lens-${nextFilterId++}`
-  const filter = svgEl("filter", {
-    id,
-    x: 0,
-    y: 0,
-    width: w,
-    height: h,
-    filterUnits: "userSpaceOnUse",
-    "color-interpolation-filters": "sRGB",
-  })
-
-  const feImg = svgEl("feImage", {
-    x: 0,
-    y: 0,
-    width: w,
-    height: h,
-    result: "map",
-  })
-  feImg.setAttribute("href", mapHref)
-  filter.appendChild(feImg)
-
-  const makeDisp = (scale: number, result?: string) =>
-    svgEl("feDisplacementMap", {
-      in: "SourceGraphic",
-      in2: "map",
-      scale,
-      xChannelSelector: "R",
-      yChannelSelector: "B",
-      ...(result ? { result } : {}),
-    })
-
-  if (dispersion > 0) {
-    filter.appendChild(makeDisp(refraction * (1 - dispersion), "dispR"))
-    filter.appendChild(
-      svgEl("feColorMatrix", {
-        in: "dispR",
-        type: "matrix",
-        values: "1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 1",
-        result: "chR",
-      })
-    )
-
-    filter.appendChild(makeDisp(refraction, "dispG"))
-    filter.appendChild(
-      svgEl("feColorMatrix", {
-        in: "dispG",
-        type: "matrix",
-        values: "0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 0 1",
-        result: "chG",
-      })
-    )
-
-    filter.appendChild(makeDisp(refraction * (1 + dispersion), "dispB"))
-    filter.appendChild(
-      svgEl("feColorMatrix", {
-        in: "dispB",
-        type: "matrix",
-        values: "0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 0 1",
-        result: "chB",
-      })
-    )
-
-    filter.appendChild(
-      svgEl("feComposite", {
-        in: "chR",
-        in2: "chG",
-        operator: "arithmetic",
-        k1: 0,
-        k2: 1,
-        k3: 1,
-        k4: 0,
-        result: "chRG",
-      })
-    )
-    filter.appendChild(
-      svgEl("feComposite", {
-        in: "chRG",
-        in2: "chB",
-        operator: "arithmetic",
-        k1: 0,
-        k2: 1,
-        k3: 1,
-        k4: 0,
-        result: "chRGB",
-      })
-    )
-    filter.appendChild(
-      svgEl("feComposite", {
-        in: "chRGB",
-        in2: "dispG",
-        operator: "in",
-      })
-    )
-  } else {
-    filter.appendChild(makeDisp(refraction))
-  }
-
-  const host = ensureFilterHost()
-  host.appendChild(filter)
-  filterIds.set(key, id)
-
-  if (filterIds.size > MAX_CACHE) {
-    const oldest = filterIds.entries().next().value
-    if (oldest) {
-      const [oldKey, oldId] = oldest
-      filterIds.delete(oldKey)
-      host.querySelector(`#${oldId}`)?.remove()
-    }
-  }
-
-  return id
-}
-
-function convexSquircle(u: number): number {
-  const clamped = Math.max(0, Math.min(1, u))
-  const v = 1 - Math.pow(1 - clamped, 4)
-  return Math.pow(Math.max(0, v), 0.25)
-}
-
-function smootherstep(u: number): number {
-  const t = Math.max(0, Math.min(1, u))
-  return t * t * t * (t * (t * 6 - 15) + 10)
-}
-
-/**
- * Apple Liquid Glass surface height profile h(u) for u in [0, 1]
- * (0 = outer glass edge, 1 = inner bezel boundary).
- * - `convex`: Convex Squircle (1 - (1 - u)^4)^(1/4)
- * - `lip`: Raised convex outer rim blended into a shallow concave bowl via
- *   smootherstep, producing crisp inward rim refraction + smooth zoomed-out interior.
- */
-function surfaceHeight(u: number, profile: LiquidLensProfile): number {
-  const convex = convexSquircle(u)
-  if (profile === "convex") return convex
-  const concave = 1 - convex
-  const blend = smootherstep(u)
-  return convex * (1 - blend) + concave * blend
-}
-
-/**
- * Precomputes a 1D Snell-Descartes Law refraction displacement table along
- * normalized bezel depth u in [0, 1] (n_air = 1.0, n_glass = 1.5).
- * Positive values displace INWARD (-normal); negative values displace OUTWARD (+normal).
- */
-function buildSnellProfileTable(
-  profile: LiquidLensProfile,
-  bezelPx: number,
-  thicknessPx: number,
-  ior = 1.5
-): Float32Array {
-  const SAMPLES = 128
-  const table = new Float32Array(SAMPLES)
-  const delta = 1 / 512
-
-  for (let i = 0; i < SAMPLES; i++) {
-    const u = i / (SAMPLES - 1)
-    if (u <= 0.002 || u >= 0.998) {
-      table[i] = 0
-      continue
-    }
-
-    const h = surfaceHeight(u, profile)
-    const hPrev = surfaceHeight(Math.max(0, u - delta), profile)
-    const hNext = surfaceHeight(Math.min(1, u + delta), profile)
-    // Derivative dh/dx in physical pixel units (height in px / bezel distance in px)
-    const dhdu = (hNext - hPrev) / (2 * delta)
-    const slope = (dhdu * thicknessPx) / Math.max(1, bezelPx)
-
-    // Orthogonal incident ray hitting surface of slope `slope`:
-    // sin(theta1) = slope / sqrt(1 + slope^2)
-    const sinTheta1 = slope / Math.hypot(1, slope)
-    const sinTheta2 = Math.max(-0.999, Math.min(0.999, sinTheta1 / ior))
-    const theta1 = Math.asin(Math.max(-0.999, Math.min(0.999, sinTheta1)))
-    const theta2 = Math.asin(sinTheta2)
-    const deflection = theta1 - theta2
-
-    // Gentle 2% outer edge fade prevents sub-pixel jaggedness at the capsule silhouette
-    const edgeFade = Math.min(1, u / 0.04)
-    const smoothEdge = edgeFade * edgeFade * (3 - 2 * edgeFade)
-
-    // Physical ray landing offset at background plane through glass height (h * thicknessPx)
-    table[i] = Math.tan(deflection) * (h * thicknessPx) * smoothEdge
-  }
-
-  return table
-}
-
-/**
- * Generates a Snell's Law optical displacement map for a rounded capsule.
- * All sample coordinates are clamped inside [0.5, w - 0.5] x [0.5, h - 0.5]
- * so Chromium never produces out-of-bounds clamping artifacts.
- */
-function buildSnellLensMap(
-  width: number,
-  height: number,
-  radius: number,
-  bezel: number,
-  profile: LiquidLensProfile,
-  thickness: number
-): { href: string; scale: number } {
-  const w = Math.max(2, Math.round(width))
-  const h = Math.max(2, Math.round(height))
-  const r = Math.min(radius, w / 2, h / 2)
-  const bz = Math.max(2, Math.min(bezel, Math.min(w, h) / 2))
-  const th = Math.max(2, thickness)
-
-  const key = `${w}x${h}r${Math.round(r)}b${bz.toFixed(1)}t${th.toFixed(1)}p${profile}`
-  const cached = mapCache.get(key)
-  if (cached) return cached
-
+function toPng(image: ImageData): string {
   const canvas = document.createElement("canvas")
-  canvas.width = w
-  canvas.height = h
+  canvas.width = image.width
+  canvas.height = image.height
   const ctx = canvas.getContext("2d")
-  if (!ctx) return { href: "", scale: 0 }
+  if (!ctx) return ""
+  ctx.putImageData(image, 0, 0)
+  return canvas.toDataURL()
+}
 
-  const profileTable = buildSnellProfileTable(profile, bz, th, 1.5)
-  const lastIdx = profileTable.length - 1
+/**
+ * Generates high-DPR displacement (`R=x, G=y`) and directional hairline specular
+ * rim PNG maps for rounded-rect / capsule lenses.
+ */
+export function buildLensMaps(options: LensMapOptions): LensMaps {
+  const {
+    width,
+    height,
+    radius,
+    bezel,
+    surface,
+    dpr,
+    curvature = 0,
+    lightAngle = LENS_LIGHT_ANGLE,
+  } = options
 
-  const total = w * h
-  const dxBuf = new Float32Array(total)
-  const dyBuf = new Float32Array(total)
-  let maxDisp = 1
+  const safeDpr = Math.max(1, Math.min(3, dpr || 1))
+  const safeW = Math.max(2, width)
+  const safeH = Math.max(2, height)
+  const clampedR = Math.min(radius, safeW / 2, safeH / 2)
+  const clampedB = Math.max(1, Math.min(bezel, Math.min(safeW, safeH) / 2))
 
-  const halfW = w / 2
-  const halfH = h / 2
-  const bx = halfW - r
-  const by = halfH - r
+  const key =
+    `${surface.id}|${safeW.toFixed(1)}x${safeH.toFixed(1)}r${clampedR.toFixed(1)}` +
+    `b${clampedB.toFixed(2)}c${curvature.toFixed(3)}l${Math.round(lightAngle)}@${safeDpr.toFixed(2)}`
 
-  for (let y = 0; y < h; y++) {
-    const py = y + 0.5 - halfH
-    const sy = py < 0 ? -1 : 1
-    const qy = Math.abs(py) - by
+  const hit = mapCache.get(key)
+  if (hit) {
+    mapCache.delete(key)
+    mapCache.set(key, hit)
+    return hit
+  }
 
-    for (let x = 0; x < w; x++) {
-      const px = x + 0.5 - halfW
-      const sx = px < 0 ? -1 : 1
-      const qx = Math.abs(px) - bx
+  const lightRad = (lightAngle * Math.PI) / 180
+  const light = Math.atan2(-Math.cos(lightRad), Math.sin(lightRad))
 
-      let sd: number
-      let nx: number
-      let ny: number
+  const W = Math.max(2, Math.round(safeW * safeDpr))
+  const H = Math.max(2, Math.round(safeH * safeDpr))
+  const R = clampedR * safeDpr
+  const B = clampedB * safeDpr
+  const innerW = Math.max(0, W - R * 2)
+  const innerH = Math.max(0, H - R * 2)
+  const shift = lensProfile(surface)
 
-      if (qx > 0 && qy > 0) {
-        const len = Math.hypot(qx, qy)
-        sd = len - r
-        nx = (sx * qx) / len
-        ny = (sy * qy) / len
-      } else if (qx > qy) {
-        sd = qx - r
-        nx = sx
-        ny = 0
-      } else {
-        sd = qy - r
-        nx = 0
-        ny = sy
+  const disp = new ImageData(W, H)
+  const spec = new ImageData(W, H)
+  // Neutral RGBA (128, 128, 0, 255) across the buffer
+  new Uint32Array(disp.data.buffer).fill(0xff008080)
+
+  const rSq = R * R
+  const outerSq = (R + 1) * (R + 1)
+  const innerSq = Math.max(0, R - B) * Math.max(0, R - B)
+  const dome = Math.max(0, Math.min(1, curvature))
+  const halfW = W / 2
+  const halfH = H / 2
+
+  for (let y = 0; y < H; y++) {
+    const py = y + 0.5
+    const ly = py < R ? py - R : py > H - R ? py - R - innerH : 0
+
+    for (let x = 0; x < W; x++) {
+      const px = x + 0.5
+      const lx = px < R ? px - R : px > W - R ? px - R - innerW : 0
+      const sq = lx * lx + ly * ly
+      if (sq > outerSq) continue
+
+      const inBand = sq >= innerSq
+      if (!inBand && dome === 0) continue
+
+      const dist = Math.sqrt(sq) || 1e-6
+      const depth = R - dist
+      const nx = lx / dist
+      const ny = ly / dist
+      const aa = sq < rSq ? 1 : Math.max(0, 1 - (dist - R))
+
+      let sx = 0
+      let sy = 0
+      if (inBand) {
+        const idx = Math.max(
+          0,
+          Math.min(PROFILE_SIZE - 1, Math.floor((depth / B) * PROFILE_SIZE))
+        )
+        const mag = shift[idx] ?? 0
+        sx = nx * mag
+        sy = ny * mag
       }
-
-      let dx = 0
-      let dy = 0
-      if (sd < 0) {
-        const u = -sd / bz
-        if (u > 0 && u < 1) {
-          const fIdx = u * lastIdx
-          const i0 = Math.floor(fIdx)
-          const i1 = Math.min(lastIdx, i0 + 1)
-          const frac = fIdx - i0
-          const disp =
-            profileTable[i0] * (1 - frac) + profileTable[i1] * frac
-
-          // Positive disp bends INWARD (-nx, -ny); negative disp (concave dip) bends OUTWARD (+nx, +ny)
-          dx = -nx * disp
-          dy = -ny * disp
-
-          // Clamp strictly inside the filter's SourceGraphic box
-          dx = Math.max(0.5 - (x + 0.5), Math.min(w - 0.5 - (x + 0.5), dx))
-          dy = Math.max(0.5 - (y + 0.5), Math.min(h - 0.5 - (y + 0.5), dy))
-        }
+      if (dome > 0) {
+        sx += dome * domeShift((px - halfW) / halfW)
+        sy += dome * domeShift((py - halfH) / halfH)
       }
+      sx = Math.max(-1, Math.min(1, sx))
+      sy = Math.max(-1, Math.min(1, sy))
 
-      const pIdx = y * w + x
-      dxBuf[pIdx] = dx
-      dyBuf[pIdx] = dy
-      const absX = Math.abs(dx)
-      const absY = Math.abs(dy)
-      if (absX > maxDisp) maxDisp = absX
-      if (absY > maxDisp) maxDisp = absY
+      const i = (y * W + x) * 4
+      disp.data[i] = Math.round(128 - sx * 127 * aa)
+      disp.data[i + 1] = Math.round(128 - sy * 127 * aa)
+      disp.data[i + 2] = 0
+      disp.data[i + 3] = 255
+
+      if (!inBand || depth < 0) continue
+
+      const theta = Math.atan2(ny, nx)
+      const lit = Math.cos(theta - light) ** 2
+      const across = Math.abs(depth / safeDpr - 0.5)
+      const rim = across >= 1 ? 0 : Math.cos((Math.PI / 2) * across)
+      const value = Math.max(0, Math.min(1, lit * rim * aa))
+
+      const rgb = Math.round(Math.sqrt(value) * 255)
+      spec.data[i] = rgb
+      spec.data[i + 1] = rgb
+      spec.data[i + 2] = rgb
+      spec.data[i + 3] = Math.round(value * 255)
     }
   }
 
-  const img = ctx.createImageData(w, h)
-  const data = img.data
-  for (let i = 0; i < total; i++) {
-    const idx = i * 4
-    data[idx] = Math.round(128 + (dxBuf[i] / maxDisp) * 127)
-    data[idx + 1] = 128
-    data[idx + 2] = Math.round(128 + (dyBuf[i] / maxDisp) * 127)
-    data[idx + 3] = 255
+  const maps: LensMaps = {
+    displacement: toPng(disp),
+    specular: toPng(spec),
   }
 
-  ctx.putImageData(img, 0, 0)
-  const result = { href: canvas.toDataURL(), scale: maxDisp * 2 }
+  prewarmDataUrl(maps.displacement)
+  prewarmDataUrl(maps.specular)
 
   if (mapCache.size >= MAX_CACHE) {
     const oldest = mapCache.keys().next().value
     if (oldest) mapCache.delete(oldest)
   }
-  mapCache.set(key, result)
-  return result
+  mapCache.set(key, maps)
+
+  return maps
 }
+
+/* -------------------------------------------------------------------------- */
+/* SVG Filter                                                                 */
+/* -------------------------------------------------------------------------- */
+
+export interface LensScale {
+  set: (scale: number) => void
+}
+
+export interface LensFilterProps {
+  id: string
+  maps: LensMaps
+  width: number
+  height: number
+  scale: number
+  blur: number
+  specularOpacity: number
+  specularSaturation: number
+  colouredRimOpacity?: number
+  dispersion?: number
+  scaleRef?: React.Ref<LensScale>
+}
+
+const ISOLATE = {
+  r: "1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 1",
+  g: "0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 0 1",
+  b: "0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 0 1",
+} as const
 
 /**
- * Generates Apple's directional diagonal specular rim highlight (-55° primary
- * top-left + +125° secondary bottom-right) directly from the capsule SDF normal,
- * giving crisp crystal-glass rim light instead of flat uniform borders.
+ * SVG refraction + wet coloured specular rim filter.
+ * Deliberately omits fixed `x/y/width/height/filterUnits` so Chromium retains
+ * the default 10% overflow margin for outward-sampling concave / high-scale rims.
  */
-function buildSpecularRimMap(
-  width: number,
-  height: number,
-  radius: number
-): string {
-  const w = Math.max(2, Math.round(width))
-  const h = Math.max(2, Math.round(height))
-  const r = Math.min(radius, w / 2, h / 2)
+export function LensFilter({
+  id,
+  maps,
+  width,
+  height,
+  scale,
+  blur,
+  specularOpacity,
+  specularSaturation,
+  colouredRimOpacity = 1,
+  dispersion = 0,
+  scaleRef,
+}: LensFilterProps) {
+  const passes = React.useRef<(SVGFEDisplacementMapElement | null)[]>([])
+  const spread =
+    dispersion > 0 ? [1 - dispersion, 1, 1 + dispersion] : [1]
 
-  const key = `rim:${w}x${h}r${Math.round(r)}`
-  const cached = rimCache.get(key)
-  if (cached) return cached
+  React.useImperativeHandle(
+    scaleRef,
+    () => ({
+      set(next: number) {
+        const multipliers =
+          dispersion > 0 ? [1 - dispersion, 1, 1 + dispersion] : [1]
+        multipliers.forEach((k, i) => {
+          passes.current[i]?.setAttribute("scale", `${next * k}`)
+        })
+      },
+    }),
+    [dispersion]
+  )
 
-  const canvas = document.createElement("canvas")
-  canvas.width = w
-  canvas.height = h
-  const ctx = canvas.getContext("2d")
-  if (!ctx) return ""
+  const inputSource = blur > 0 ? "softened" : "SourceGraphic"
 
-  const img = ctx.createImageData(w, h)
-  const data = img.data
+  const renderPass = (k: number, i: number, result: string) => (
+    <feDisplacementMap
+      key={result}
+      ref={(node) => {
+        passes.current[i] = node
+      }}
+      in={inputSource}
+      in2="map"
+      scale={scale * k}
+      xChannelSelector="R"
+      yChannelSelector="G"
+      result={result}
+    />
+  )
 
-  const halfW = w / 2
-  const halfH = h / 2
-  const bx = halfW - r
-  const by = halfH - r
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className="pointer-events-none absolute size-0"
+    >
+      <defs>
+        <filter id={id} colorInterpolationFilters="sRGB">
+          {blur > 0 ? (
+            <feGaussianBlur
+              in="SourceGraphic"
+              stdDeviation={blur}
+              result="softened"
+            />
+          ) : null}
 
-  // Primary light direction (-55° top-left) & opposing bounce (+125° bottom-right)
-  const lx = -0.5736
-  const ly = -0.8192
-  const rimWidth = 2.4
+          <feImage
+            href={maps.displacement}
+            x={0}
+            y={0}
+            width={width}
+            height={height}
+            result="map"
+          />
 
-  for (let y = 0; y < h; y++) {
-    const py = y + 0.5 - halfH
-    const sy = py < 0 ? -1 : 1
-    const qy = Math.abs(py) - by
+          {dispersion > 0 ? (
+            <>
+              {renderPass(spread[0], 0, "bentR")}
+              <feColorMatrix
+                in="bentR"
+                type="matrix"
+                values={ISOLATE.r}
+                result="onlyR"
+              />
+              {renderPass(spread[1], 1, "bentG")}
+              <feColorMatrix
+                in="bentG"
+                type="matrix"
+                values={ISOLATE.g}
+                result="onlyG"
+              />
+              {renderPass(spread[2], 2, "bentB")}
+              <feColorMatrix
+                in="bentB"
+                type="matrix"
+                values={ISOLATE.b}
+                result="onlyB"
+              />
+              <feComposite
+                in="onlyR"
+                in2="onlyG"
+                operator="arithmetic"
+                k1={0}
+                k2={1}
+                k3={1}
+                k4={0}
+                result="rg"
+              />
+              <feComposite
+                in="rg"
+                in2="onlyB"
+                operator="arithmetic"
+                k1={0}
+                k2={1}
+                k3={1}
+                k4={0}
+                result="rgb"
+              />
+              <feComposite
+                in="rgb"
+                in2="bentG"
+                operator="in"
+                result="bent"
+              />
+            </>
+          ) : (
+            renderPass(1, 0, "bent")
+          )}
 
-    for (let x = 0; x < w; x++) {
-      const px = x + 0.5 - halfW
-      const sx = px < 0 ? -1 : 1
-      const qx = Math.abs(px) - bx
-
-      let sd: number
-      let nx: number
-      let ny: number
-
-      if (qx > 0 && qy > 0) {
-        const len = Math.hypot(qx, qy)
-        sd = len - r
-        nx = (sx * qx) / len
-        ny = (sy * qy) / len
-      } else if (qx > qy) {
-        sd = qx - r
-        nx = sx
-        ny = 0
-      } else {
-        sd = qy - r
-        nx = 0
-        ny = sy
-      }
-
-      const idx = (y * w + x) * 4
-      if (sd < 0 && -sd <= rimWidth) {
-        const d = -sd
-        // Sharp crystal rim band peaking near 0.75px inward
-        const radial = Math.exp(-Math.pow((d - 0.7) / 0.85, 2))
-        const dot = nx * lx + ny * ly
-        const primary = Math.pow(Math.max(0, dot), 1.6) * 0.92
-        const bounce = Math.pow(Math.max(0, -dot), 2.0) * 0.55
-        const ambient = 0.2
-        const alpha = Math.min(1, radial * (ambient + primary + bounce))
-
-        data[idx] = 255
-        data[idx + 1] = 255
-        data[idx + 2] = 255
-        data[idx + 3] = Math.round(alpha * 255)
-      } else {
-        data[idx] = 255
-        data[idx + 1] = 255
-        data[idx + 2] = 255
-        data[idx + 3] = 0
-      }
-    }
-  }
-
-  ctx.putImageData(img, 0, 0)
-  const href = canvas.toDataURL()
-
-  if (rimCache.size >= MAX_CACHE) {
-    const oldest = rimCache.keys().next().value
-    if (oldest) rimCache.delete(oldest)
-  }
-  rimCache.set(key, href)
-  return href
+          <feColorMatrix
+            in="bent"
+            type="saturate"
+            values={String(specularSaturation)}
+            result="vivid"
+          />
+          <feImage
+            href={maps.specular}
+            x={0}
+            y={0}
+            width={width}
+            height={height}
+            result="rim"
+          />
+          <feComposite
+            in="vivid"
+            in2="rim"
+            operator="in"
+            result="colouredRim"
+          />
+          <feComponentTransfer in="rim" result="whiteRim">
+            <feFuncA type="linear" slope={specularOpacity} />
+          </feComponentTransfer>
+          {colouredRimOpacity < 1 ? (
+            <>
+              <feComponentTransfer in="colouredRim" result="softColouredRim">
+                <feFuncA type="linear" slope={colouredRimOpacity} />
+              </feComponentTransfer>
+              <feBlend in="softColouredRim" in2="bent" result="withColour" />
+            </>
+          ) : (
+            <feBlend in="colouredRim" in2="bent" result="withColour" />
+          )}
+          <feBlend in="whiteRim" in2="withColour" />
+        </filter>
+      </defs>
+    </svg>
+  )
 }
+
+/* -------------------------------------------------------------------------- */
+/* 240Hz Sub-Stepped Spring Integrator                                        */
+/* -------------------------------------------------------------------------- */
+
+export interface Spring {
+  value: number
+  velocity: number
+  target: number
+  stiffness: number
+  damping: number
+  held?: boolean
+}
+
+export function spring(stiffness: number, damping: number, value = 0): Spring {
+  return {
+    value,
+    velocity: 0,
+    target: value,
+    stiffness,
+    damping,
+  }
+}
+
+export function advance(s: Spring, dt: number): boolean {
+  const steps = Math.min(Math.ceil(dt / (1 / 240)), 16)
+  const h = dt / steps
+  for (let i = 0; i < steps; i++) {
+    s.velocity +=
+      (s.stiffness * (s.target - s.value) - s.damping * s.velocity) * h
+    s.value += s.velocity * h
+  }
+  return Math.abs(s.target - s.value) < 0.0005 && Math.abs(s.velocity) < 0.005
+}
+
+export const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+
+export const clamp = (value: number, min: number, max: number) =>
+  value < min ? min : value > max ? max : value
+
+export interface SpringLoop {
+  settle: (s: Spring, target: number) => void
+  wake: () => void
+  snap: () => void
+  stop: () => void
+  reduced: boolean
+}
+
+export function createSpringLoop(
+  springs: Spring[],
+  paint: () => void
+): SpringLoop {
+  let raf = 0
+  let last = 0
+
+  const loop: SpringLoop = {
+    reduced: false,
+    settle(s, target) {
+      s.target = target
+      if (loop.reduced) {
+        s.value = target
+        s.velocity = 0
+        paint()
+        return
+      }
+      loop.wake()
+    },
+    wake() {
+      if (raf) return
+      last = performance.now()
+      const tick = (now: number) => {
+        const dt = Math.min((now - last) / 1000, 1 / 15)
+        last = now
+        let settled = true
+        for (const s of springs) {
+          settled = (s.held ? false : advance(s, dt)) && settled
+        }
+        paint()
+        raf = settled ? 0 : requestAnimationFrame(tick)
+      }
+      raf = requestAnimationFrame(tick)
+    },
+    snap() {
+      for (const s of springs) {
+        s.value = s.target
+        s.velocity = 0
+      }
+      paint()
+    },
+    stop() {
+      cancelAnimationFrame(raf)
+      raf = 0
+    },
+  }
+
+  return loop
+}
+
+export function supportsRefraction(): boolean {
+  if (typeof window === "undefined") return false
+  if (!CSS.supports("backdrop-filter", "blur(1px)")) return false
+  const ua = navigator.userAgent
+  if (/^((?!chrome|chromium|edg|android).)*safari/i.test(ua)) return false
+  if (/firefox/i.test(ua)) return false
+  return true
+}
+
+/* -------------------------------------------------------------------------- */
+/* Backward-Compatible <LiquidLens> Wrapper                                   */
+/* -------------------------------------------------------------------------- */
 
 export interface LiquidLensProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Corner radius in px (use 999 for full capsule/circle). */
   radius?: number
-  /** Optical bezel width in px (`0` = auto full half-height for Lip indicators). */
+  /** Optical bezel width in px (`0` = auto Apple bezel ratio). */
   bezel?: number
-  /** Optical glass thickness / refraction intensity multiplier (default `1`). */
+  /** Optical refraction intensity multiplier (default `1`). */
   refraction?: number
-  /** Surface profile: `lip` (Apple Switch/Slider/Tabs raised rim + concave center) or `convex` (Convex Squircle). */
+  /** Surface profile: `lip` (raised rim + zoomed-out bowl) or `convex` (magnifying dome). */
   profile?: LiquidLensProfile
-  /** Subtle RGB chromatic aberration on the curved bezel (0 = off, ~0.055 = Apple native). */
+  /** Spherical dome strength (`0..1`). */
+  curvature?: number
+  /** Subtle RGB chromatic aberration on the curved bezel. */
   dispersion?: number
-  /** Optional light backdrop blur in px (0 = crystal clear droplet center). */
+  /** Optional light backdrop blur in px (`0` = crystal clear). */
   blur?: number
   /** Backdrop saturation boost. */
   saturation?: number
-  /** Optional backdrop brightness boost for crystal glass light collection. */
+  /** Optional backdrop brightness boost. */
   brightness?: number
-  /** Visual rim style: `crystal` (Apple directional specular rim) or `default`. */
+  /** Specular white rim opacity (`0..1`). */
+  specularOpacity?: number
+  /** Coloured specular saturation boost. */
+  specularSaturation?: number
+  /** Light angle in degrees clockwise from top. */
+  lightAngle?: number
+  /** Visual rim style: `crystal` (wet coloured + specular rim) or `default`. */
   rim?: "default" | "crystal"
 }
 
-/**
- * Physically-based Apple Liquid Glass optical lens driven by Snell–Descartes Law
- * (n_air = 1.0 -> n_glass = 1.5) with Apple's Lip & Convex Squircle surface profiles
- * and normal-mapped directional specular rim highlights.
- */
 export function LiquidLens({
   radius = 999,
   bezel = 0,
   refraction = 1,
   profile = "lip",
-  dispersion = 0.055,
+  curvature,
+  dispersion = 0.08,
   blur = 0,
   saturation = 1.08,
   brightness = 1.04,
+  specularOpacity = 0.45,
+  specularSaturation = 6,
+  lightAngle = LENS_LIGHT_ANGLE,
   rim = "crystal",
   className,
   style,
@@ -520,15 +705,12 @@ export function LiquidLens({
   ...props
 }: LiquidLensProps) {
   const ref = React.useRef<HTMLDivElement | null>(null)
+  const filterId = `apple-lens-${React.useId().replace(/[^a-zA-Z0-9]/g, "")}`
   const [size, setSize] = React.useState<{ w: number; h: number } | null>(null)
   const [canRefract, setCanRefract] = React.useState(false)
 
   React.useLayoutEffect(() => {
-    const ua = navigator.userAgent
-    const isChromium =
-      /Chrome|Chromium|Edg|OPR|Brave/i.test(ua) && !/Firefox/i.test(ua)
-    setCanRefract(isChromium)
-
+    setCanRefract(supportsRefraction())
     const el = ref.current
     if (!el) return
 
@@ -549,51 +731,58 @@ export function LiquidLens({
     return () => ro.disconnect()
   }, [])
 
-  const { filterId, rimHref } = React.useMemo(() => {
-    if (!size) return { filterId: null, rimHref: null }
-
-    const specularHref =
-      rim === "crystal" ? buildSpecularRimMap(size.w, size.h, radius) : null
-
-    if (!canRefract) {
-      return { filterId: null, rimHref: specularHref }
-    }
+  const { maps, scalePx } = React.useMemo(() => {
+    if (!size || !canRefract) return { maps: null, scalePx: 0 }
 
     const minDim = Math.min(size.w, size.h)
-    // Auto full-radius bezel for Lip droplets so outer convex lip transitions smoothly into concave center
-    const resolvedBezel = bezel > 0 ? bezel : minDim / 2
-    // Support both normalized intensity (e.g. 0.5..2.0) and legacy px scale values (e.g. 18..28)
-    const intensity = refraction > 4 ? refraction / 24 : Math.max(0.1, refraction)
-    const glassThickness = Math.max(4, minDim * 0.48)
+    const r = Math.min(radius, size.w / 2, size.h / 2)
+    const resolvedBezel = bezel > 0 ? bezel : 0.413 * r
+    const intensity =
+      refraction > 4 ? refraction / 24 : Math.max(0.05, refraction)
+    const surface =
+      profile === "convex"
+        ? CONVEX
+        : profile === "meniscus"
+          ? MENISCUS
+          : LIP
+    const resolvedCurvature =
+      curvature ??
+      (profile === "convex" ? 0.4 : profile === "meniscus" ? 0 : 0.25)
+    const peakFactor =
+      profile === "convex" ? 0.54 : profile === "meniscus" ? 0.28 : 0.34
 
-    const { href: mapHref, scale: baseScale } = buildSnellLensMap(
-      size.w,
-      size.h,
-      radius,
-      resolvedBezel,
-      profile,
-      glassThickness
-    )
-    if (!mapHref) return { filterId: null, rimHref: specularHref }
-
-    prewarmDataUrl(mapHref)
-    const id = ensureCleanLensFilter({
-      w: size.w,
-      h: size.h,
-      mapHref,
-      refraction: baseScale * intensity,
-      dispersion,
+    const nextMaps = buildLensMaps({
+      width: size.w,
+      height: size.h,
+      radius: r,
+      bezel: resolvedBezel,
+      surface,
+      curvature: resolvedCurvature,
+      lightAngle,
+      dpr: Math.min(window.devicePixelRatio || 1, 3),
     })
 
-    return { filterId: id, rimHref: specularHref }
-  }, [bezel, canRefract, dispersion, profile, radius, refraction, rim, size])
+    return {
+      maps: nextMaps,
+      scalePx: peakFactor * minDim * intensity,
+    }
+  }, [
+    bezel,
+    canRefract,
+    curvature,
+    lightAngle,
+    profile,
+    radius,
+    refraction,
+    size,
+  ])
 
-  const filterParts: string[] = []
-  if (blur > 0) filterParts.push(`blur(${blur}px)`)
-  if (brightness !== 1) filterParts.push(`brightness(${brightness})`)
-  if (saturation !== 1) filterParts.push(`saturate(${saturation})`)
-  const fallbackFilter =
-    filterParts.length > 0 ? filterParts.join(" ") : undefined
+  const backdropAdjust: string[] = []
+  if (!maps && blur > 0) backdropAdjust.push(`blur(${blur}px)`)
+  if (brightness !== 1) backdropAdjust.push(`brightness(${brightness})`)
+  if (saturation !== 1) backdropAdjust.push(`saturate(${saturation})`)
+  const adjustFilter =
+    backdropAdjust.length > 0 ? backdropAdjust.join(" ") : undefined
 
   return (
     <div
@@ -621,39 +810,38 @@ export function LiquidLens({
       }}
       {...props}
     >
-      {/* Layer 1: Optional subtle blur/brightness/saturation backdrop */}
-      {fallbackFilter ? (
+      {maps && size ? (
+        <LensFilter
+          id={filterId}
+          maps={maps}
+          width={size.w}
+          height={size.h}
+          scale={scalePx}
+          blur={blur}
+          specularOpacity={rim === "crystal" ? specularOpacity : 0.65}
+          specularSaturation={specularSaturation}
+          dispersion={dispersion}
+        />
+      ) : null}
+
+      {adjustFilter ? (
         <span
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 rounded-[inherit]"
           style={{
-            backdropFilter: fallbackFilter,
-            WebkitBackdropFilter: fallbackFilter,
+            backdropFilter: adjustFilter,
+            WebkitBackdropFilter: adjustFilter,
           }}
         />
       ) : null}
 
-      {/* Layer 2: Dedicated isolated SVG Snell's Law refraction & RGB prism layer */}
-      {filterId ? (
+      {maps ? (
         <span
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 rounded-[inherit]"
           style={{
             backdropFilter: `url(#${filterId})`,
             WebkitBackdropFilter: `url(#${filterId})`,
-          }}
-        />
-      ) : null}
-
-      {/* Layer 3: Apple normal-mapped directional diagonal specular rim light */}
-      {rimHref ? (
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 rounded-[inherit]"
-          style={{
-            backgroundImage: `url(${rimHref})`,
-            backgroundSize: "100% 100%",
-            backgroundRepeat: "no-repeat",
           }}
         />
       ) : null}

@@ -22,6 +22,7 @@
         "light": {
           "apple-blue": "#0088ff",
           "apple-blue-pressed": "#0078f0",
+          "apple-green": "#34c759",
           "apple-red": "#ff383c",
           "apple-red-pressed": "#e5292d",
           "apple-fill-bordered-mac": "rgba(0, 0, 0, 0.08)",
@@ -59,6 +60,7 @@
         "dark": {
           "apple-blue": "#0091ff",
           "apple-blue-pressed": "#0a99ff",
+          "apple-green": "#30d158",
           "apple-red": "#ff4245",
           "apple-red-pressed": "#ff5a5d",
           "apple-fill-bordered-mac": "rgba(255, 255, 255, 0.08)",
@@ -1076,11 +1078,21 @@
         {
           "path": "components/ui/slider.tsx",
           "type": "registry:ui"
+        },
+        {
+          "path": "hooks/use-mobile.ts",
+          "type": "registry:hook"
         }
       ],
       "dependencies": [
         "@base-ui/react",
-        "cn"
+        "class-variance-authority",
+        "cn",
+        "motion"
+      ],
+      "registryDependencies": [
+        "@apple-liquid/liquid-glass",
+        "@apple-liquid/liquid-lens"
       ]
     },
     {
@@ -1108,11 +1120,21 @@
         {
           "path": "components/ui/switch.tsx",
           "type": "registry:ui"
+        },
+        {
+          "path": "hooks/use-mobile.ts",
+          "type": "registry:hook"
         }
       ],
       "dependencies": [
         "@base-ui/react",
-        "cn"
+        "class-variance-authority",
+        "cn",
+        "motion"
+      ],
+      "registryDependencies": [
+        "@apple-liquid/liquid-glass",
+        "@apple-liquid/liquid-lens"
       ]
     },
     {

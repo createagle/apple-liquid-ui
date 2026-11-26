@@ -4,18 +4,21 @@ import * as React from "react"
 import { Tabs as TabsPrimitive } from "@base-ui/react/tabs"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
-import {
-  motion,
-  useMotionValue,
-  useReducedMotion,
-  useSpring,
-  useTransform,
-  useVelocity,
-} from "motion/react"
+import { useReducedMotion } from "motion/react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
-import { LIQUID_SPRINGS } from "@/lib/liquid-motion"
-import { LiquidLens } from "@/components/ui/liquid-lens"
+import {
+  buildLensMaps,
+  clamp,
+  CONVEX,
+  createSpringLoop,
+  LensFilter,
+  lerp,
+  spring,
+  supportsRefraction,
+  type LensMaps,
+  type LensScale,
+} from "@/components/ui/liquid-lens"
 
 type TabValue = TabsPrimitive.Tab.Value
 
@@ -152,18 +155,22 @@ export interface TabsListProps
   extends TabsPrimitive.List.Props,
     VariantProps<typeof tabsListVariants> {
   /**
-   * Disables interactive drag-scrubbing and liquid lens magnification.
+   * Disables interactive drag-scrubbing and liquid lens refraction.
    */
   disableMotion?: boolean
   /**
    * Chromatic prism dispersion intensity on the floating liquid glass droplet
-   * while pressing, dragging, or gliding across tabs (`0` disables, default `0.36`).
+   * while pressing, dragging, or gliding across tabs (default `0.18`).
    */
   dispersion?: number
   /**
-   * Refraction strength in px for the floating liquid glass droplet (default `46`).
+   * Optical Snell refraction intensity multiplier for the floating liquid glass droplet (default `1`).
    */
   refraction?: number
+  /**
+   * Spherical dome curvature across the droplet window (`0..1`, default `0.18`).
+   */
+  curvature?: number
 }
 
 interface TabRect {
@@ -173,12 +180,34 @@ interface TabRect {
   height: number
 }
 
+const REST_RATIO = 0.14
+const PRESS_RATIO = 1.0
+const STRETCH_MAX = 0.18
+const STRETCH_SPEED = 2400
+const SPECULAR_OPACITY = 0.52
+const SPECULAR_SATURATION = 4.2
+const COLOURED_RIM_OPACITY = 0.65
+
+function getSwellPad(
+  variant: NonNullable<TabsListProps["variant"]>,
+  isMobile: boolean
+): { padX: number; padY: number } {
+  if (variant === "tab-bar") {
+    return isMobile ? { padX: 12, padY: 12 } : { padX: 12, padY: 10 }
+  }
+  if (variant === "glass") {
+    return { padX: 11, padY: 9 }
+  }
+  return isMobile ? { padX: 9, padY: 7 } : { padX: 8, padY: 6 }
+}
+
 function TabsList({
   className,
   variant = "default",
   disableMotion = false,
-  dispersion = 0.055,
-  refraction = 28,
+  dispersion = 0.18,
+  refraction = 1,
+  curvature = 0.18,
   children,
   onPointerDown,
   onPointerMove,
@@ -193,17 +222,24 @@ function TabsList({
 
   const resolvedVariant = variant ?? "default"
   const isHorizontal = (ctx?.orientation ?? "horizontal") === "horizontal"
-  const canScrub =
-    isMotionEnabled && isHorizontal && resolvedVariant !== "line"
+  const isLine = resolvedVariant === "line"
+  const canScrub = isMotionEnabled && isHorizontal && !isLine
+  const filterId = `apple-tabs-${React.useId().replace(/[^a-zA-Z0-9]/g, "")}`
 
   const listRef = React.useRef<HTMLDivElement | null>(null)
+  const indicatorRef = React.useRef<HTMLSpanElement | null>(null)
+  const lineIndicatorRef = React.useRef<HTMLSpanElement | null>(null)
+  const dropletRef = React.useRef<HTMLSpanElement | null>(null)
+  const scaleRef = React.useRef<LensScale | null>(null)
   const initializedRef = React.useRef(false)
   const glideTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [hasRect, setHasRect] = React.useState(false)
-  const [isPressing, setIsPressing] = React.useState(false)
+  const [mapSize, setMapSize] = React.useState<{ w: number; h: number } | null>(
+    null
+  )
+  const [maps, setMaps] = React.useState<LensMaps | null>(null)
   const [isDragging, setIsDragging] = React.useState(false)
-  const [isGliding, setIsGliding] = React.useState(false)
 
   const dragRef = React.useRef<{
     pointerId: number
@@ -216,24 +252,190 @@ function TabsList({
     triggers: { el: HTMLElement; value: string; left: number; width: number }[]
   } | null>(null)
 
-  const x = useMotionValue(0)
-  const y = useMotionValue(0)
-  const width = useMotionValue(0)
-  const height = useMotionValue(0)
+  const engine = React.useRef({
+    x: spring(520, 40),
+    y: spring(520, 40),
+    w: spring(520, 40),
+    h: spring(520, 40),
+    press: spring(900, 46),
+    stretch: spring(520, 44),
+  }).current
 
-  const springConfig = isMobile
-    ? LIQUID_SPRINGS.iosPress
-    : LIQUID_SPRINGS.morph
+  const swellPad = getSwellPad(resolvedVariant, isMobile)
+  const expandedMapW = mapSize ? mapSize.w + swellPad.padX * 2 : 0
+  const expandedMapH = mapSize ? mapSize.h + swellPad.padY * 2 : 0
+  const intensity =
+    refraction > 4 ? refraction / 24 : Math.max(0.1, refraction)
+  const minDim =
+    expandedMapW > 0 && expandedMapH > 0
+      ? Math.min(expandedMapW, expandedMapH)
+      : 48
+  const peak = 0.68 * minDim * intensity
 
-  const springX = useSpring(x, springConfig)
-  const springY = useSpring(y, springConfig)
-  const springW = useSpring(width, springConfig)
-  const springH = useSpring(height, springConfig)
+  const metricsRef = React.useRef({
+    isMotionEnabled,
+    isHorizontal,
+    isLine,
+    peak,
+    padX: swellPad.padX,
+    padY: swellPad.padY,
+  })
+  metricsRef.current = {
+    isMotionEnabled,
+    isHorizontal,
+    isLine,
+    peak,
+    padX: swellPad.padX,
+    padY: swellPad.padY,
+  }
 
-  // Velocity-driven liquid droplet stretch & squash while gliding / dragging
-  const vx = useVelocity(springX)
-  const stretchX = useTransform(vx, [-1500, 0, 1500], [1.14, 1, 1.14])
-  const squashY = useTransform(vx, [-1500, 0, 1500], [0.92, 1, 0.92])
+  const paint = React.useCallback(() => {
+    const m = metricsRef.current
+    const { x, y, w, h, press, stretch } = engine
+
+    if (m.isLine) {
+      const lineEl = lineIndicatorRef.current
+      if (lineEl) {
+        if (m.isHorizontal) {
+          lineEl.style.translate = `${x.value}px 0px`
+          lineEl.style.width = `${w.value}px`
+        } else {
+          lineEl.style.translate = `0px ${y.value}px`
+          lineEl.style.height = `${h.value}px`
+        }
+      }
+      return
+    }
+
+    const p01 = clamp(press.value, 0, 1.35)
+    const speed = m.isHorizontal ? Math.abs(x.velocity) : Math.abs(y.velocity)
+    stretch.target = m.isMotionEnabled
+      ? Math.min(speed / STRETCH_SPEED, STRETCH_MAX)
+      : 0
+    const s = m.isMotionEnabled ? clamp(stretch.value, 0, 0.22) : 0
+    const stretchSX = m.isHorizontal ? 1 + s : 1 - s * 0.42
+    const stretchSY = m.isHorizontal ? 1 - s * 0.42 : 1 + s
+
+    const expW = w.value + m.padX * 2
+    const expH = h.value + m.padY * 2
+    const restScaleX = w.value / Math.max(1, expW)
+    const restScaleY = h.value / Math.max(1, expH)
+
+    const indicator = indicatorRef.current
+    if (indicator) {
+      const indScaleX = m.isMotionEnabled
+        ? lerp(1, expW / Math.max(1, w.value), press.value) * stretchSX
+        : 1
+      const indScaleY = m.isMotionEnabled
+        ? lerp(1, expH / Math.max(1, h.value), press.value) * stretchSY
+        : 1
+      indicator.style.translate = `${x.value}px ${y.value}px`
+      indicator.style.width = `${w.value}px`
+      indicator.style.height = `${h.value}px`
+      indicator.style.scale = `${indScaleX} ${indScaleY}`
+      indicator.style.opacity = m.isMotionEnabled
+        ? `${clamp(1 - p01 * 1.6, 0, 1)}`
+        : "1"
+    }
+
+    const droplet = dropletRef.current
+    if (droplet) {
+      const swellScaleX = m.isMotionEnabled
+        ? lerp(restScaleX, 1, press.value)
+        : restScaleX
+      const swellScaleY = m.isMotionEnabled
+        ? lerp(restScaleY, 1, press.value)
+        : restScaleY
+      droplet.style.translate = `${x.value - m.padX}px ${y.value - m.padY}px`
+      droplet.style.width = `${expW}px`
+      droplet.style.height = `${expH}px`
+      droplet.style.scale = `${swellScaleX * stretchSX} ${swellScaleY * stretchSY}`
+      const dropOpacity = m.isMotionEnabled ? clamp(p01 * 1.6, 0, 1) : 0
+      droplet.style.opacity = `${dropOpacity}`
+      droplet.style.visibility =
+        p01 < 0.005 && press.target === 0 ? "hidden" : "visible"
+      droplet.style.backgroundColor = `rgba(255,255,255,${(0.04 * clamp(p01, 0, 1)).toFixed(4)})`
+    }
+
+    if (m.isMotionEnabled) {
+      scaleRef.current?.set(m.peak * lerp(REST_RATIO, PRESS_RATIO, p01))
+    }
+  }, [engine])
+
+  const paintRef = React.useRef(paint)
+  paintRef.current = paint
+  const loopRef = React.useRef<ReturnType<typeof createSpringLoop> | null>(null)
+  loopRef.current ??= createSpringLoop(
+    [engine.x, engine.y, engine.w, engine.h, engine.press, engine.stretch],
+    () => paintRef.current()
+  )
+  const loop = loopRef.current
+
+  React.useEffect(() => {
+    loop.reduced = !isMotionEnabled
+    paintRef.current()
+  }, [
+    isMotionEnabled,
+    isHorizontal,
+    isLine,
+    peak,
+    swellPad.padX,
+    swellPad.padY,
+    loop,
+  ])
+
+  const mapRadius =
+    resolvedVariant === "default" && !isMobile
+      ? 12
+      : expandedMapH > 0
+        ? expandedMapH / 2
+        : 24
+
+  React.useEffect(() => {
+    if (
+      !isMotionEnabled ||
+      isLine ||
+      expandedMapW <= 0 ||
+      expandedMapH <= 0 ||
+      !supportsRefraction()
+    ) {
+      setMaps(null)
+      return
+    }
+    const dim = Math.min(expandedMapW, expandedMapH)
+    const r = Math.min(mapRadius, expandedMapW / 2, expandedMapH / 2)
+    setMaps(
+      buildLensMaps({
+        width: expandedMapW,
+        height: expandedMapH,
+        radius: r,
+        bezel: 0.48 * (dim / 2),
+        surface: CONVEX,
+        curvature,
+        lightAngle: 0,
+        dpr: Math.min(window.devicePixelRatio || 1, 3),
+      })
+    )
+  }, [
+    curvature,
+    expandedMapH,
+    expandedMapW,
+    isLine,
+    isMotionEnabled,
+    mapRadius,
+  ])
+
+  const triggerGlide = React.useCallback(() => {
+    if (!metricsRef.current.isMotionEnabled || metricsRef.current.isLine) return
+    loop.settle(engine.press, 1)
+    if (glideTimerRef.current) clearTimeout(glideTimerRef.current)
+    glideTimerRef.current = setTimeout(() => {
+      glideTimerRef.current = null
+      if (!dragRef.current) {
+        loop.settle(engine.press, 0)
+      }
+    }, 260)
+  }, [engine, loop])
 
   const measureActive = React.useCallback(
     (instant = false) => {
@@ -252,50 +454,42 @@ function TabsList({
       }
       if (next.width === 0 || next.height === 0) return
 
-      const prevX = x.get()
-      const prevY = y.get()
+      const prevX = engine.x.target
+      const prevY = engine.y.target
       const movedSignificantly =
         Math.abs(next.x - prevX) > 2 || Math.abs(next.y - prevY) > 2
 
-      if (instant || !initializedRef.current || !isMotionEnabled) {
-        x.jump(next.x)
-        y.jump(next.y)
-        width.jump(next.width)
-        height.jump(next.height)
-        springX.jump(next.x)
-        springY.jump(next.y)
-        springW.jump(next.width)
-        springH.jump(next.height)
-        initializedRef.current = true
-      } else {
-        x.set(next.x)
-        y.set(next.y)
-        width.set(next.width)
-        height.set(next.height)
+      setMapSize((prev) =>
+        prev && prev.w === next.width && prev.h === next.height
+          ? prev
+          : { w: next.width, h: next.height }
+      )
 
-        if (movedSignificantly && resolvedVariant !== "line") {
-          setIsGliding(true)
-          if (glideTimerRef.current) clearTimeout(glideTimerRef.current)
-          glideTimerRef.current = setTimeout(() => {
-            setIsGliding(false)
-          }, 380)
+      if (instant || !initializedRef.current || !metricsRef.current.isMotionEnabled) {
+        engine.x.value = engine.x.target = next.x
+        engine.y.value = engine.y.target = next.y
+        engine.w.value = engine.w.target = next.width
+        engine.h.value = engine.h.target = next.height
+        engine.x.velocity = 0
+        engine.y.velocity = 0
+        engine.w.velocity = 0
+        engine.h.velocity = 0
+        initializedRef.current = true
+        paintRef.current()
+      } else {
+        loop.settle(engine.x, next.x)
+        loop.settle(engine.y, next.y)
+        loop.settle(engine.w, next.width)
+        loop.settle(engine.h, next.height)
+
+        if (movedSignificantly && !metricsRef.current.isLine) {
+          triggerGlide()
         }
       }
 
       setHasRect(true)
     },
-    [
-      height,
-      isMotionEnabled,
-      resolvedVariant,
-      springH,
-      springW,
-      springX,
-      springY,
-      width,
-      x,
-      y,
-    ]
+    [engine, loop, triggerGlide]
   )
 
   React.useLayoutEffect(() => {
@@ -303,6 +497,12 @@ function TabsList({
       measureActive(!initializedRef.current)
     }
   }, [ctx?.activeValue, isDragging, measureActive])
+
+  React.useLayoutEffect(() => {
+    if (hasRect) {
+      paintRef.current()
+    }
+  }, [hasRect, resolvedVariant, isMobile])
 
   React.useEffect(() => {
     const container = listRef.current
@@ -329,9 +529,10 @@ function TabsList({
     return () => {
       ro.disconnect()
       mo.disconnect()
+      loop.stop()
       if (glideTimerRef.current) clearTimeout(glideTimerRef.current)
     }
-  }, [measureActive])
+  }, [loop, measureActive])
 
   const handlePointerDown: NonNullable<
     TabsPrimitive.List.Props["onPointerDown"]
@@ -341,6 +542,17 @@ function TabsList({
 
     const container = listRef.current
     if (!container) return
+
+    const targetEl = (e.target as HTMLElement | null)?.closest<HTMLElement>(
+      '[data-slot="tabs-trigger"]'
+    )
+    if (
+      targetEl &&
+      (targetEl.hasAttribute("disabled") ||
+        targetEl.hasAttribute("data-disabled"))
+    ) {
+      return
+    }
 
     const triggerEls = Array.from(
       container.querySelectorAll<HTMLElement>(
@@ -359,22 +571,23 @@ function TabsList({
     const activeEl = container.querySelector<HTMLElement>(
       '[data-slot="tabs-trigger"][data-active]'
     )
-    const targetEl =
-      (e.target as HTMLElement | null)?.closest<HTMLElement>(
-        '[data-slot="tabs-trigger"]'
-      ) ?? activeEl
-
-    if (!targetEl) return
+    const anchorEl = activeEl ?? targetEl
+    if (!anchorEl) return
 
     const first = triggers[0]
     const last = triggers[triggers.length - 1]
-    const thumbW = activeEl ? activeEl.offsetWidth : targetEl.offsetWidth
+    const thumbW = anchorEl.offsetWidth
 
-    setIsPressing(true)
+    if (glideTimerRef.current) {
+      clearTimeout(glideTimerRef.current)
+      glideTimerRef.current = null
+    }
+    loop.settle(engine.press, 1)
+
     dragRef.current = {
       pointerId: e.pointerId,
       startClientX: e.clientX,
-      startThumbX: activeEl ? activeEl.offsetLeft : targetEl.offsetLeft,
+      startThumbX: anchorEl.offsetLeft,
       thumbW,
       minX: first.left,
       maxX: last.left + last.width - thumbW,
@@ -416,8 +629,15 @@ function TabsList({
       }
     }
 
-    x.set(clampedX)
-    width.set(hovered.width)
+    loop.settle(engine.x, clampedX)
+    loop.settle(engine.w, hovered.width)
+    setMapSize((prev) =>
+      prev && prev.w === hovered.width
+        ? prev
+        : prev
+          ? { w: hovered.width, h: prev.h }
+          : null
+    )
 
     if (hovered.value && hovered.value !== String(ctx?.activeValue ?? "")) {
       ctx?.selectValue(hovered.value)
@@ -430,7 +650,6 @@ function TabsList({
 
     const wasDragged = drag.moved
     dragRef.current = null
-    setIsPressing(false)
     setIsDragging(false)
 
     if (wasDragged) {
@@ -440,6 +659,9 @@ function TabsList({
         // Ignore if capture was already released
       }
       requestAnimationFrame(() => measureActive(false))
+      loop.settle(engine.press, 0)
+    } else if (!glideTimerRef.current) {
+      loop.settle(engine.press, 0)
     }
   }
 
@@ -456,19 +678,12 @@ function TabsList({
     finishDrag(e.pointerId)
   }
 
-  const showLiquidLens =
-    isMotionEnabled &&
-    hasRect &&
-    resolvedVariant !== "line" &&
-    (isDragging || isGliding || isPressing)
-
   const pillRadiusClass =
     resolvedVariant === "default"
       ? "rounded-full md:rounded-[6.5px]"
       : "rounded-full"
 
-  // Spotless Apple native resting active pill — constant tone unaffected by global
-  // Liquid Glass transparency/tint so vivid wallpapers never bleed into the active indicator.
+  // Constant-tone resting active pill unaffected by global Liquid Glass tint
   const restingThumbClass =
     resolvedVariant === "tab-bar"
       ? "bg-[#ebebf0]/92 shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_0.5px_0_rgba(255,255,255,0.85)] dark:bg-[#424248]/92 dark:shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_0.5px_0_rgba(255,255,255,0.18)]"
@@ -494,19 +709,19 @@ function TabsList({
       )}
       {...props}
     >
-      {/* Dedicated sibling glass backdrop layer so TabsList itself is not a Backdrop Root
-          and LiquidLens can cleanly sample the full scene even at tint = 0 (Clear) */}
+      {/* Low-blur sibling glass backdrop so background edges survive for the droplet to refract */}
       {isGlassSurface ? (
         <span
           aria-hidden="true"
           data-slot="tabs-glass-backdrop"
-          className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] bg-(--liquid-surface) [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))]"
+          className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] bg-(--liquid-surface) [backdrop-filter:blur(calc(1.5px_+_var(--liquid-glass-tint,0.5)_*_6px))_saturate(var(--liquid-saturate))]"
         />
       ) : null}
 
-      {/* Spotless resting active pill (sits cleanly above backdrop at z-0, behind labels at z-10) */}
-      {hasRect && resolvedVariant !== "line" ? (
-        <motion.span
+      {/* Resting active pill at z-0 behind tab labels */}
+      {hasRect && !isLine ? (
+        <span
+          ref={indicatorRef}
           aria-hidden="true"
           data-slot="tabs-indicator"
           className={cn(
@@ -514,78 +729,64 @@ function TabsList({
             pillRadiusClass,
             restingThumbClass
           )}
-          style={{
-            x: springX,
-            y: springY,
-            width: springW,
-            height: springH,
-            scaleX: isDragging || isGliding ? stretchX : 1,
-            scaleY: isDragging || isGliding ? squashY : 1,
-          }}
-          animate={{
-            opacity: showLiquidLens ? 0 : 1,
-          }}
-          transition={{ duration: 0.14 }}
         />
       ) : null}
 
       {/* Minimal underline indicator for variant="line" */}
-      {hasRect && resolvedVariant === "line" ? (
-        <motion.span
+      {hasRect && isLine ? (
+        <span
+          ref={lineIndicatorRef}
           aria-hidden="true"
           data-slot="tabs-line-indicator"
           className={cn(
-            "pointer-events-none absolute z-10 rounded-full bg-(--apple-blue)",
+            "pointer-events-none absolute z-10 rounded-full bg-(--apple-blue) will-change-transform",
             isHorizontal
               ? "bottom-0 left-0 h-[2px]"
               : "top-0 right-0 w-[2px]"
           )}
-          style={
-            isHorizontal
-              ? { x: springX, width: springW }
-              : { y: springY, height: springH }
-          }
         />
       ) : null}
 
       {children}
 
-      {/* Apple iOS 26/27 Floating Crystal Liquid Glass Droplet:
-          Stays pre-mounted so the SVG displacement filter is warm on frame 0.
-          Expands physically (-inset-x-2 -inset-y-1.5) so filterUnits="userSpaceOnUse"
-          matches the protruding droplet 1:1 with crystal-clear center and vivid rainbow prism rim. */}
-      {isMotionEnabled && hasRect && resolvedVariant !== "line" ? (
-        <motion.div
+      {maps && expandedMapW > 0 && expandedMapH > 0 ? (
+        <LensFilter
+          id={filterId}
+          maps={maps}
+          width={expandedMapW}
+          height={expandedMapH}
+          scale={peak * REST_RATIO}
+          blur={0}
+          specularOpacity={SPECULAR_OPACITY}
+          specularSaturation={SPECULAR_SATURATION}
+          colouredRimOpacity={COLOURED_RIM_OPACITY}
+          dispersion={dispersion}
+          scaleRef={scaleRef}
+        />
+      ) : null}
+
+      {/* Scheme A: Pre-expanded CONVEX Crystal Droplet above icons/labels (z-20) */}
+      {isMotionEnabled && hasRect && !isLine ? (
+        <span
+          ref={dropletRef}
           aria-hidden="true"
           data-slot="tabs-liquid-droplet"
           className="pointer-events-none absolute top-0 left-0 z-20 will-change-transform"
           style={{
-            x: springX,
-            y: springY,
-            width: springW,
-            height: springH,
-            scaleX: isDragging || isGliding ? stretchX : 1,
-            scaleY: isDragging || isGliding ? squashY : 1,
+            borderRadius:
+              resolvedVariant === "default" && !isMobile ? "12px" : "9999px",
+            opacity: 0,
+            visibility: "hidden",
+            boxShadow:
+              "0 10px 28px -4px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.1), 0 0 0 0.5px rgba(0,0,0,0.12), inset 0 1px 1.5px rgba(255,255,255,0.55), inset 0 -1px 1.5px rgba(255,255,255,0.28)",
+            ...(maps
+              ? {
+                  backdropFilter: `url(#${filterId})`,
+                  WebkitBackdropFilter: `url(#${filterId})`,
+                }
+              : null),
           }}
-          initial={false}
-          animate={{
-            opacity: showLiquidLens ? 1 : 0,
-          }}
-          transition={{ duration: showLiquidLens ? 0.12 : 0.18 }}
-        >
-          <LiquidLens
-            profile="lip"
-            rim="crystal"
-            radius={resolvedVariant === "default" && !isMobile ? 12 : 999}
-            bezel={isMobile ? 15 : 12}
-            refraction={refraction}
-            dispersion={dispersion}
-            blur={0}
-            brightness={1.04}
-            saturation={1.08}
-            className="absolute -inset-x-2 -inset-y-1.5"
-          />
-        </motion.div>
+        />
       ) : null}
     </TabsPrimitive.List>
   )

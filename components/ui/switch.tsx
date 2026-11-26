@@ -4,18 +4,21 @@ import * as React from "react"
 import { Switch as SwitchPrimitive } from "@base-ui/react/switch"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
-import {
-  motion,
-  useMotionValue,
-  useReducedMotion,
-  useSpring,
-  useTransform,
-  useVelocity,
-} from "motion/react"
+import { useReducedMotion } from "motion/react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
-import { LIQUID_SPRINGS } from "@/lib/liquid-motion"
-import { LiquidLens } from "@/components/ui/liquid-lens"
+import {
+  buildLensMaps,
+  clamp,
+  createSpringLoop,
+  LensFilter,
+  lerp,
+  MENISCUS,
+  spring,
+  supportsRefraction,
+  type LensMaps,
+  type LensScale,
+} from "@/components/ui/liquid-lens"
 
 type SwitchSize = "sm" | "default" | "lg"
 type SwitchVariant = "default" | "green" | "blue" | "glass"
@@ -24,9 +27,54 @@ interface SwitchGeometry {
   trackW: number
   trackH: number
   pad: number
-  thumbW: number
-  thumbH: number
+  lensW: number
+  lensH: number
+  lensR: number
   travel: number
+  thumbLeft: number
+  bezel: number
+  blur: number
+}
+
+const REST_SCALE = 0.65
+const PRESS_SCALE = 0.9
+const REST_RATIO = 0.4
+const PRESS_RATIO = 0.9
+const REST_FILL = 1
+const PRESS_FILL = 0.07
+const PRESS_FILL_NO_LENS = 0.72
+const DRAG_SLOP = 4
+const OVERDRAG = 22
+const SPECULAR_OPACITY = 0.44
+const SPECULAR_SATURATION = 1.8
+const COLOURED_RIM_OPACITY = 0.18
+
+function createGeometry(
+  trackW: number,
+  trackH: number,
+  restThumbW: number,
+  restThumbH: number
+): SwitchGeometry {
+  const pad = (trackH - restThumbH) / 2
+  const lensW = Math.round(restThumbW / REST_SCALE)
+  const lensH = Math.round(restThumbH / REST_SCALE)
+  const lensR = lensH / 2
+  const travel = trackW - restThumbW - pad * 2
+  const thumbLeft = pad - (lensW * (1 - REST_SCALE)) / 2
+  const k = trackH / 67
+
+  return {
+    trackW,
+    trackH,
+    pad,
+    lensW,
+    lensH,
+    lensR,
+    travel,
+    thumbLeft,
+    bezel: 0.54 * lensR,
+    blur: Math.max(0.05, 0.2 * k),
+  }
 }
 
 const SWITCH_GEOMETRY: Record<
@@ -34,28 +82,14 @@ const SWITCH_GEOMETRY: Record<
   Record<SwitchSize, SwitchGeometry>
 > = {
   mobile: {
-    sm: { trackW: 46, trackH: 22, pad: 2, thumbW: 26, thumbH: 18, travel: 16 },
-    default: {
-      trackW: 60,
-      trackH: 28,
-      pad: 2,
-      thumbW: 36,
-      thumbH: 24,
-      travel: 20,
-    },
-    lg: { trackW: 68, trackH: 32, pad: 2, thumbW: 40, thumbH: 28, travel: 24 },
+    sm: createGeometry(46, 22, 26, 18),
+    default: createGeometry(60, 28, 36, 24),
+    lg: createGeometry(68, 32, 40, 28),
   },
   desktop: {
-    sm: { trackW: 36, trackH: 18, pad: 2, thumbW: 20, thumbH: 14, travel: 12 },
-    default: {
-      trackW: 42,
-      trackH: 22,
-      pad: 2,
-      thumbW: 24,
-      thumbH: 18,
-      travel: 14,
-    },
-    lg: { trackW: 52, trackH: 26, pad: 2, thumbW: 30, thumbH: 22, travel: 18 },
+    sm: createGeometry(36, 18, 20, 14),
+    default: createGeometry(42, 22, 24, 18),
+    lg: createGeometry(52, 26, 30, 22),
   },
 }
 
@@ -99,13 +133,17 @@ export interface SwitchProps
    */
   disableMotion?: boolean
   /**
-   * Optical Snell refraction intensity for the floating Lip glass droplet (default `1`).
+   * Optical Snell refraction intensity multiplier for the floating Lip droplet (default `1`).
    */
   refraction?: number
   /**
-   * Chromatic prism dispersion intensity on the droplet bezel (default `0.055`).
+   * Chromatic prism dispersion intensity on the droplet bezel (default `0.015`).
    */
   dispersion?: number
+  /**
+   * Spherical dome curvature across the droplet window (`0..1`, default `0`).
+   */
+  curvature?: number
 }
 
 function Switch({
@@ -115,17 +153,11 @@ function Switch({
   showLabels = false,
   disableMotion = false,
   refraction = 1,
-  dispersion = 0.055,
-  checked: checkedProp,
-  defaultChecked = false,
-  onCheckedChange,
+  dispersion = 0.015,
+  curvature = 0,
   disabled,
   readOnly,
   onPointerDown,
-  onPointerMove,
-  onPointerUp,
-  onPointerCancel,
-  onClick,
   ...props
 }: SwitchProps) {
   const isMobile = useIsMobile()
@@ -136,212 +168,213 @@ function Switch({
   const resolvedSize: SwitchSize = size ?? "default"
   const resolvedVariant: SwitchVariant = variant ?? "default"
   const geo = SWITCH_GEOMETRY[isMobile ? "mobile" : "desktop"][resolvedSize]
+  const filterId = `apple-switch-${React.useId().replace(/[^a-zA-Z0-9]/g, "")}`
 
-  const isControlled = checkedProp !== undefined
-  const [uncontrolledChecked, setUncontrolledChecked] =
-    React.useState(defaultChecked)
-  const isChecked = isControlled ? Boolean(checkedProp) : uncontrolledChecked
+  const intensity =
+    refraction > 4 ? refraction / 24 : Math.max(0.1, refraction)
+  const peak = 0.28 * geo.lensH * intensity
+  const kShadow = geo.trackH / 67
+  const restShadow = `0 ${(9 * kShadow).toFixed(2)}px ${(49 * kShadow).toFixed(2)}px rgba(0,0,0,0.14), 0 1px 2px rgba(0,0,0,0.1)`
+  const pressedShadow = `0 ${(10 * kShadow).toFixed(2)}px ${(36 * kShadow).toFixed(2)}px rgba(0,0,0,0.22), 0 0 0 0.5px rgba(0,0,0,0.28)`
+  const draggingShadow =
+    `${pressedShadow}, inset ${(2 * kShadow).toFixed(2)}px ${(7 * kShadow).toFixed(2)}px ${(24 * kShadow).toFixed(2)}px rgba(0,0,0,0.09),` +
+    ` inset ${(-2 * kShadow).toFixed(2)}px ${(-7 * kShadow).toFixed(2)}px ${(24 * kShadow).toFixed(2)}px rgba(255,255,255,0.12)`
 
   const rootRef = React.useRef<HTMLSpanElement | null>(null)
-  const glideTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
-  const suppressNextClickRef = React.useRef(false)
-  const initializedRef = React.useRef(false)
+  const thumbRef = React.useRef<HTMLSpanElement | null>(null)
+  const accentRef = React.useRef<HTMLSpanElement | null>(null)
+  const labelOnRef = React.useRef<HTMLSpanElement | null>(null)
+  const scaleRef = React.useRef<LensScale | null>(null)
+  const hasLens = React.useRef(false)
+  const [maps, setMaps] = React.useState<LensMaps | null>(null)
 
-  const [isPressing, setIsPressing] = React.useState(false)
-  const [isDragging, setIsDragging] = React.useState(false)
-  const [isGliding, setIsGliding] = React.useState(false)
-
-  const dragRef = React.useRef<{
-    pointerId: number
-    startClientX: number
-    startThumbX: number
-    moved: boolean
-    currentX: number
-  } | null>(null)
-
-  const x = useMotionValue(isChecked ? geo.travel : 0)
-  const springConfig = isMobile
-    ? LIQUID_SPRINGS.iosPress
-    : LIQUID_SPRINGS.morph
-  const springX = useSpring(x, springConfig)
-
-  // Normalized 0..1 progress used for smooth real-time track color cross-fade while dragging
-  const activeOpacity = useTransform(springX, [0, geo.travel], [0, 1])
-
-  // Velocity-driven liquid droplet squash & stretch while gliding / dragging
-  const vx = useVelocity(springX)
-  const stretchX = useTransform(vx, [-900, 0, 900], [1.14, 1, 1.14])
-  const squashY = useTransform(vx, [-900, 0, 900], [0.9, 1, 0.9])
-
-  const triggerGlide = React.useCallback(() => {
-    if (!isMotionEnabled) return
-    setIsGliding(true)
-    if (glideTimerRef.current) clearTimeout(glideTimerRef.current)
-    glideTimerRef.current = setTimeout(() => {
-      setIsGliding(false)
-    }, 280)
-  }, [isMotionEnabled])
-
-  React.useLayoutEffect(() => {
-    if (dragRef.current?.moved) return
-    const target = isChecked ? geo.travel : 0
-    if (!initializedRef.current || !isMotionEnabled) {
-      x.jump(target)
-      springX.jump(target)
-      initializedRef.current = true
-    } else {
-      x.set(target)
+  React.useEffect(() => {
+    if (!isMotionEnabled || !supportsRefraction()) {
+      hasLens.current = false
+      setMaps(null)
+      return
     }
-  }, [geo.travel, isChecked, isMotionEnabled, springX, x])
+    hasLens.current = true
+    setMaps(
+      buildLensMaps({
+        width: geo.lensW,
+        height: geo.lensH,
+        radius: geo.lensR,
+        bezel: geo.bezel,
+        surface: MENISCUS,
+        curvature,
+        lightAngle: 0,
+        dpr: Math.min(window.devicePixelRatio || 1, 3),
+      })
+    )
+  }, [curvature, geo.bezel, geo.lensH, geo.lensR, geo.lensW, isMotionEnabled])
+
+  const engine = React.useRef({
+    pos: spring(1000, 80),
+    press: spring(2000, 80),
+    tint: spring(1000, 80),
+    dragging: false,
+    moved: 0,
+    startX: 0,
+    startPos: 0,
+  }).current
+
+  const metricsRef = React.useRef({
+    travel: geo.travel,
+    peak,
+    restShadow,
+    pressedShadow,
+    draggingShadow,
+    isMotionEnabled,
+  })
+  metricsRef.current = {
+    travel: geo.travel,
+    peak,
+    restShadow,
+    pressedShadow,
+    draggingShadow,
+    isMotionEnabled,
+  }
+
+  const paint = React.useCallback(() => {
+    const { pos, press, tint, dragging } = engine
+    const m = metricsRef.current
+    const thumb = thumbRef.current
+    const p = m.isMotionEnabled ? press.value : 0
+
+    if (thumb) {
+      thumb.style.translate = `${pos.value * m.travel}px -50%`
+      thumb.style.scale = `${lerp(REST_SCALE, PRESS_SCALE, p)}`
+      const floor = hasLens.current ? PRESS_FILL : PRESS_FILL_NO_LENS
+      const alpha = clamp(lerp(REST_FILL, floor, p), 0, 1)
+      thumb.style.backgroundColor = `rgba(255,255,255,${alpha})`
+      thumb.style.boxShadow = dragging
+        ? m.draggingShadow
+        : p > 0.05
+          ? m.pressedShadow
+          : m.restShadow
+    }
+
+    const tintAlpha = clamp(tint.value, 0, 1)
+    if (accentRef.current) {
+      accentRef.current.style.opacity = `${tintAlpha}`
+    }
+    if (labelOnRef.current) {
+      labelOnRef.current.style.opacity = `${tintAlpha}`
+    }
+    if (m.isMotionEnabled) {
+      scaleRef.current?.set(m.peak * lerp(REST_RATIO, PRESS_RATIO, p))
+    }
+  }, [engine])
+
+  const paintRef = React.useRef(paint)
+  paintRef.current = paint
+  const loopRef = React.useRef<ReturnType<typeof createSpringLoop> | null>(null)
+  loopRef.current ??= createSpringLoop(
+    [engine.pos, engine.press, engine.tint],
+    () => paintRef.current()
+  )
+  const loop = loopRef.current
+
+  React.useEffect(() => {
+    loop.reduced = !isMotionEnabled
+    paintRef.current()
+  }, [isMotionEnabled, geo.travel, peak, loop])
+
+  React.useEffect(() => {
+    const root = rootRef.current
+    if (!root) return
+
+    const read = () => (root.hasAttribute("data-checked") ? 1 : 0)
+    engine.pos.value = engine.pos.target = read()
+    engine.tint.value = engine.tint.target = engine.pos.value
+    paintRef.current()
+
+    const observer = new MutationObserver(() => {
+      if (engine.dragging) return
+      const next = read()
+      loop.settle(engine.pos, next)
+      loop.settle(engine.tint, next)
+    })
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: ["data-checked"],
+    })
+
+    return () => {
+      observer.disconnect()
+      loop.stop()
+    }
+  }, [engine, loop])
+
+  const onPointerMove = React.useCallback(
+    (event: PointerEvent) => {
+      const m = metricsRef.current
+      const dx = event.clientX - engine.startX
+      engine.moved = Math.max(engine.moved, Math.abs(dx))
+      if (engine.moved < DRAG_SLOP || !m.isMotionEnabled) return
+
+      engine.dragging = true
+      engine.pos.held = true
+      const raw = engine.startPos + dx / Math.max(1, m.travel)
+      const over = raw < 0 ? -raw : raw > 1 ? raw - 1 : 0
+      engine.pos.value =
+        Math.min(1, Math.max(0, raw)) + Math.sign(raw) * (over / OVERDRAG)
+      engine.pos.velocity = 0
+      loop.settle(engine.tint, engine.pos.value > 0.5 ? 1 : 0)
+      loop.wake()
+    },
+    [engine, loop]
+  )
+
+  const finishDrag = React.useCallback(
+    (cancelled: boolean) => {
+      const root = rootRef.current
+      window.removeEventListener("pointermove", onPointerMove)
+      window.removeEventListener("pointerup", handleGlobalUp)
+      window.removeEventListener("pointercancel", handleGlobalCancel)
+      loop.settle(engine.press, 0)
+
+      if (!engine.dragging || !root) return
+      engine.dragging = false
+      engine.pos.held = false
+
+      const wants = engine.pos.value > 0.5 ? 1 : 0
+      const current = root.hasAttribute("data-checked") ? 1 : 0
+
+      loop.settle(engine.pos, current)
+      loop.settle(engine.tint, current)
+
+      if (cancelled || wants === current) {
+        const swallow = (e: Event) => {
+          e.preventDefault()
+          e.stopPropagation()
+        }
+        root.addEventListener("click", swallow, { capture: true, once: true })
+        setTimeout(() => {
+          root.removeEventListener("click", swallow, { capture: true })
+        }, 60)
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [engine, loop, onPointerMove]
+  )
+
+  const handleGlobalUp = React.useCallback(() => {
+    finishDrag(false)
+  }, [finishDrag])
+
+  const handleGlobalCancel = React.useCallback(() => {
+    finishDrag(true)
+  }, [finishDrag])
 
   React.useEffect(() => {
     return () => {
-      if (glideTimerRef.current) clearTimeout(glideTimerRef.current)
+      window.removeEventListener("pointermove", onPointerMove)
+      window.removeEventListener("pointerup", handleGlobalUp)
+      window.removeEventListener("pointercancel", handleGlobalCancel)
     }
-  }, [])
-
-  const emitCheckedChange = React.useCallback(
-    (
-      nextChecked: boolean,
-      eventDetails?: Parameters<
-        NonNullable<SwitchPrimitive.Root.Props["onCheckedChange"]>
-      >[1]
-    ) => {
-      if (!isControlled) {
-        setUncontrolledChecked(nextChecked)
-      }
-      onCheckedChange?.(
-        nextChecked,
-        eventDetails ??
-          ({
-            reason: "none",
-            event: new Event("change"),
-            cancel: () => {},
-            allowPropagation: () => {},
-            isCanceled: false,
-            isPropagationAllowed: false,
-            trigger: undefined,
-          } as Parameters<
-            NonNullable<SwitchPrimitive.Root.Props["onCheckedChange"]>
-          >[1])
-      )
-    },
-    [isControlled, onCheckedChange]
-  )
-
-  const handleCheckedChange: NonNullable<
-    SwitchPrimitive.Root.Props["onCheckedChange"]
-  > = React.useCallback(
-    (nextChecked, eventDetails) => {
-      emitCheckedChange(nextChecked, eventDetails)
-      triggerGlide()
-    },
-    [emitCheckedChange, triggerGlide]
-  )
-
-  const handlePointerDown: NonNullable<
-    SwitchPrimitive.Root.Props["onPointerDown"]
-  > = (e) => {
-    onPointerDown?.(e)
-    if (!isInteractive || e.button !== 0) return
-
-    setIsPressing(true)
-    const startThumbX = isChecked ? geo.travel : 0
-    dragRef.current = {
-      pointerId: e.pointerId,
-      startClientX: e.clientX,
-      startThumbX,
-      moved: false,
-      currentX: startThumbX,
-    }
-  }
-
-  const handlePointerMove: NonNullable<
-    SwitchPrimitive.Root.Props["onPointerMove"]
-  > = (e) => {
-    onPointerMove?.(e)
-    const drag = dragRef.current
-    if (!drag || drag.pointerId !== e.pointerId || !isMotionEnabled) return
-
-    const dx = e.clientX - drag.startClientX
-    if (!drag.moved && Math.abs(dx) > 3) {
-      drag.moved = true
-      setIsDragging(true)
-      rootRef.current?.setPointerCapture?.(e.pointerId)
-    }
-
-    if (!drag.moved) return
-
-    const rawX = drag.startThumbX + dx
-    // Slight rubber-band overscroll at both ends
-    const clampedX = Math.max(-3, Math.min(geo.travel + 3, rawX))
-    drag.currentX = clampedX
-    x.set(clampedX)
-  }
-
-  const finishDrag = (pointerId: number, cancelled = false) => {
-    const drag = dragRef.current
-    if (!drag || drag.pointerId !== pointerId) return
-
-    const wasDragged = drag.moved
-    const finalX = drag.currentX
-    dragRef.current = null
-    setIsPressing(false)
-    setIsDragging(false)
-
-    if (wasDragged) {
-      suppressNextClickRef.current = true
-      requestAnimationFrame(() => {
-        suppressNextClickRef.current = false
-      })
-      try {
-        rootRef.current?.releasePointerCapture?.(pointerId)
-      } catch {
-        // Ignore if capture was already released
-      }
-
-      if (!cancelled) {
-        const nextChecked = finalX >= geo.travel / 2
-        if (nextChecked !== isChecked) {
-          emitCheckedChange(nextChecked)
-        }
-        x.set(nextChecked ? geo.travel : 0)
-      } else {
-        x.set(isChecked ? geo.travel : 0)
-      }
-    }
-  }
-
-  const handlePointerUp: NonNullable<
-    SwitchPrimitive.Root.Props["onPointerUp"]
-  > = (e) => {
-    onPointerUp?.(e)
-    finishDrag(e.pointerId, false)
-  }
-
-  const handlePointerCancel: NonNullable<
-    SwitchPrimitive.Root.Props["onPointerCancel"]
-  > = (e) => {
-    onPointerCancel?.(e)
-    finishDrag(e.pointerId, true)
-  }
-
-  const handleClick: NonNullable<SwitchPrimitive.Root.Props["onClick"]> = (
-    e
-  ) => {
-    if (suppressNextClickRef.current) {
-      suppressNextClickRef.current = false
-      e.preventDefault()
-      e.stopPropagation()
-      return
-    }
-    onClick?.(e)
-  }
-
-  const showLiquidLens =
-    isMotionEnabled &&
-    isInteractive &&
-    (isPressing || isDragging || isGliding)
+  }, [handleGlobalCancel, handleGlobalUp, onPointerMove])
 
   const activeTrackColorClass =
     resolvedVariant === "blue"
@@ -349,7 +382,7 @@ function Switch({
       : resolvedVariant === "green"
         ? "bg-(--apple-green)"
         : resolvedVariant === "glass"
-          ? "bg-(--apple-green)/82 md:bg-(--apple-blue)/85 shadow-[inset_0_1px_1px_rgba(255,255,255,0.45)]"
+          ? "bg-(--apple-green)/84 md:bg-(--apple-blue)/86 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]"
           : "bg-(--apple-green) md:bg-(--apple-blue)"
 
   return (
@@ -358,16 +391,24 @@ function Switch({
       data-slot="switch"
       data-size={resolvedSize}
       data-variant={resolvedVariant}
-      data-dragging={isDragging ? "true" : undefined}
-      checked={isChecked}
       disabled={disabled}
       readOnly={readOnly}
-      onCheckedChange={handleCheckedChange}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerCancel}
-      onClick={handleClick}
+      onPointerDown={(event) => {
+        onPointerDown?.(event)
+        if (event.defaultPrevented || !isInteractive || event.button !== 0) {
+          return
+        }
+        event.currentTarget.setPointerCapture?.(event.pointerId)
+        engine.moved = 0
+        engine.startX = event.clientX
+        engine.startPos = engine.pos.value
+        if (isMotionEnabled) {
+          loop.settle(engine.press, 1)
+        }
+        window.addEventListener("pointermove", onPointerMove)
+        window.addEventListener("pointerup", handleGlobalUp)
+        window.addEventListener("pointercancel", handleGlobalCancel)
+      }}
       className={cn(
         switchVariants({ size: resolvedSize, variant: resolvedVariant }),
         isInteractive && isMotionEnabled && "touch-pan-y",
@@ -375,107 +416,78 @@ function Switch({
       )}
       {...props}
     >
-      {/* Track Layer (sibling to LiquidLens so Root does not create a Backdrop Root) */}
+      {/* Flat/low-blur track sibling so Root never traps Thumb backdrop-filter */}
       <span
         aria-hidden="true"
         data-slot="switch-track"
         className={cn(
           "pointer-events-none absolute inset-0 overflow-hidden rounded-full",
           resolvedVariant === "glass"
-            ? "bg-(--liquid-surface) shadow-[inset_0_1px_2px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.08),inset_0_-0.5px_0_rgba(255,255,255,0.5)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45),0_0_0_0.5px_rgba(255,255,255,0.16)]"
-            : "bg-[rgba(120,120,128,0.26)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] dark:bg-[rgba(120,120,128,0.36)] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.35)]"
+            ? "bg-(--liquid-surface) shadow-[inset_0_1px_2px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.08),inset_0_-0.5px_0_rgba(255,255,255,0.5)] [backdrop-filter:blur(4px)_saturate(1.4)] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45),0_0_0_0.5px_rgba(255,255,255,0.16)]"
+            : "bg-[rgba(142,142,152,0.42)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)] dark:bg-[rgba(120,120,128,0.46)] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)]"
         )}
       >
-        {/* Smoothly interpolated active color fill (responds continuously to drag scrubbing) */}
-        <motion.span
+        <span
+          ref={accentRef}
           aria-hidden="true"
+          style={{ opacity: 0 }}
           className={cn(
             "pointer-events-none absolute inset-0 rounded-full",
             activeTrackColorClass
           )}
-          style={{
-            opacity: isMotionEnabled ? activeOpacity : isChecked ? 1 : 0,
-          }}
         />
 
-        {/* Optional Apple Accessibility On/Off Labels (I / O) */}
         {showLabels ? (
           <span className="pointer-events-none absolute inset-0 flex items-center justify-between px-[7px]">
-            <motion.span
+            <span
+              ref={labelOnRef}
+              style={{ opacity: 0 }}
               className="h-[8px] w-[1.5px] rounded-full bg-white/90"
-              style={{
-                opacity: isMotionEnabled ? activeOpacity : isChecked ? 1 : 0,
-              }}
             />
             <span className="size-[7px] rounded-full border-[1.5px] border-neutral-500/65 dark:border-white/45" />
           </span>
         ) : null}
       </span>
 
-      {/* Accessible Base UI Thumb anchor (visually rendered by the spring-driven layers below) */}
-      <SwitchPrimitive.Thumb
-        data-slot="switch-thumb"
-        className="pointer-events-none sr-only"
-      />
-
-      {/* Resting Apple Solid White Capsule Thumb */}
-      <motion.span
-        aria-hidden="true"
-        data-slot="switch-resting-thumb"
-        className={cn(
-          "pointer-events-none absolute z-10 rounded-full bg-white will-change-transform",
-          "shadow-[0_3px_8px_rgba(0,0,0,0.16),0_1px_2px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,1)]",
-          "dark:bg-white/95 dark:shadow-[0_3px_10px_rgba(0,0,0,0.45),0_1px_2px_rgba(0,0,0,0.28)]"
-        )}
-        style={{
-          top: geo.pad,
-          left: geo.pad,
-          width: geo.thumbW,
-          height: geo.thumbH,
-          x: isMotionEnabled ? springX : isChecked ? geo.travel : 0,
-          scaleX: isDragging || isGliding ? stretchX : 1,
-          scaleY: isDragging || isGliding ? squashY : 1,
-        }}
-        animate={{
-          opacity: showLiquidLens ? 0 : 1,
-        }}
-        transition={{ duration: 0.14 }}
-      />
-
-      {/* Apple iOS 27 / macOS 27 Protruding Crystal Liquid Glass Droplet (pre-mounted so filter is warm) */}
-      {isMotionEnabled ? (
-        <motion.div
-          aria-hidden="true"
-          data-slot="switch-liquid-droplet"
-          className="pointer-events-none absolute z-20 will-change-transform"
-          style={{
-            top: geo.pad,
-            left: geo.pad,
-            width: geo.thumbW,
-            height: geo.thumbH,
-            x: springX,
-            scaleX: isDragging || isGliding ? stretchX : 1,
-            scaleY: isDragging || isGliding ? squashY : 1,
-          }}
-          initial={false}
-          animate={{
-            opacity: showLiquidLens ? 1 : 0,
-          }}
-          transition={{ duration: showLiquidLens ? 0.1 : 0.16 }}
-        >
-          <LiquidLens
-            profile="lip"
-            rim="crystal"
-            radius={999}
-            refraction={refraction}
-            dispersion={dispersion}
-            blur={0}
-            brightness={1.05}
-            saturation={1.1}
-            className="absolute -inset-x-[7px] -inset-y-[5px]"
-          />
-        </motion.div>
+      {maps ? (
+        <LensFilter
+          id={filterId}
+          maps={maps}
+          width={geo.lensW}
+          height={geo.lensH}
+          scale={peak * REST_RATIO}
+          blur={geo.blur}
+          specularOpacity={SPECULAR_OPACITY}
+          specularSaturation={SPECULAR_SATURATION}
+          colouredRimOpacity={COLOURED_RIM_OPACITY}
+          dispersion={dispersion}
+          scaleRef={scaleRef}
+        />
       ) : null}
+
+      {/* Single pre-scaled capsule thumb that swells and melts into a clean MENISCUS glass lens */}
+      <SwitchPrimitive.Thumb
+        ref={thumbRef}
+        data-slot="switch-thumb"
+        className="pointer-events-none absolute z-10 will-change-transform"
+        style={{
+          width: geo.lensW,
+          height: geo.lensH,
+          borderRadius: geo.lensR,
+          left: geo.thumbLeft,
+          top: geo.trackH / 2,
+          translate: "0px -50%",
+          scale: REST_SCALE,
+          backgroundColor: `rgba(255,255,255,${REST_FILL})`,
+          boxShadow: restShadow,
+          ...(maps
+            ? {
+                backdropFilter: `url(#${filterId})`,
+                WebkitBackdropFilter: `url(#${filterId})`,
+              }
+            : null),
+        }}
+      />
     </SwitchPrimitive.Root>
   )
 }
