@@ -354,7 +354,8 @@ function TabsList({
       droplet.style.opacity = `${dropOpacity}`
       droplet.style.visibility =
         p01 < 0.005 && press.target === 0 ? "hidden" : "visible"
-      droplet.style.backgroundColor = `rgba(255,255,255,${(0.04 * clamp(p01, 0, 1)).toFixed(4)})`
+      const fillPct = (clamp(p01, 0, 1) * 100).toFixed(2)
+      droplet.style.backgroundColor = `color-mix(in srgb, var(--tabs-droplet-fill) ${fillPct}%, transparent)`
     }
 
     if (m.isMotionEnabled) {
@@ -771,7 +772,7 @@ function TabsList({
           ref={dropletRef}
           aria-hidden="true"
           data-slot="tabs-liquid-droplet"
-          className="pointer-events-none absolute top-0 left-0 z-20 will-change-transform"
+          className="pointer-events-none absolute top-0 left-0 z-20 will-change-transform [--tabs-droplet-fill:rgba(255,255,255,0.16)] dark:[--tabs-droplet-fill:rgba(255,255,255,0.10)]"
           style={{
             borderRadius:
               resolvedVariant === "default" && !isMobile ? "12px" : "9999px",

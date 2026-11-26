@@ -154,13 +154,14 @@ export interface LensMapOptions {
   surface: LensSurface
   /** Device pixel ratio (caller should clamp, e.g. `<= 3`). */
   dpr: number
-  /** Spherical-cap dome strength across the entire lens (`0..1`). */
+  /** Spherical-cap dome strength across the entire lens (`-1..1`; `> 0` magnifies, `< 0` zooms out). */
   curvature?: number
   /** Key light direction in degrees clockwise from straight up. */
   lightAngle?: number
 }
 
 export interface LensOptics {
+  /** Spherical-cap dome strength (`-1..1`; `> 0` magnifies, `< 0` zooms out). */
   curvature?: number
   dispersion?: number
 }
@@ -177,7 +178,7 @@ export function resolveLens(
   }
 }
 
-const DOME_CAP = 0.38
+const DOME_CAP = 0.6
 const DOME_RADIUS = (1 + DOME_CAP * DOME_CAP) / (2 * DOME_CAP)
 const DOME_EDGE = 1 / Math.sqrt(DOME_RADIUS * DOME_RADIUS - 1)
 
@@ -217,6 +218,8 @@ function toPng(image: ImageData): string {
 /**
  * Generates high-DPR displacement (`R=x, G=y`) and directional hairline specular
  * rim PNG maps for rounded-rect / capsule lenses.
+ * Small-control indicator lenses are intentionally constant and independent of
+ * the global `--liquid-glass-tint` transparency setting.
  */
 export function buildLensMaps(options: LensMapOptions): LensMaps {
   const {
@@ -266,7 +269,7 @@ export function buildLensMaps(options: LensMapOptions): LensMaps {
   const rSq = R * R
   const outerSq = (R + 1) * (R + 1)
   const innerSq = Math.max(0, R - B) * Math.max(0, R - B)
-  const dome = Math.max(0, Math.min(1, curvature))
+  const dome = Math.max(-1, Math.min(1, curvature))
   const halfW = W / 2
   const halfH = H / 2
 
@@ -300,7 +303,7 @@ export function buildLensMaps(options: LensMapOptions): LensMaps {
         sx = nx * mag
         sy = ny * mag
       }
-      if (dome > 0) {
+      if (dome !== 0) {
         sx += dome * domeShift((px - halfW) / halfW)
         sy += dome * domeShift((py - halfH) / halfH)
       }
@@ -313,7 +316,7 @@ export function buildLensMaps(options: LensMapOptions): LensMaps {
       disp.data[i + 2] = 0
       disp.data[i + 3] = 255
 
-      if (!inBand || depth < 0) continue
+      if (!inBand) continue
 
       const theta = Math.atan2(ny, nx)
       const lit = Math.cos(theta - light) ** 2
@@ -665,7 +668,7 @@ export interface LiquidLensProps extends React.HTMLAttributes<HTMLDivElement> {
   refraction?: number
   /** Surface profile: `lip` (raised rim + zoomed-out bowl) or `convex` (magnifying dome). */
   profile?: LiquidLensProfile
-  /** Spherical dome strength (`0..1`). */
+  /** Spherical dome strength (`-1..1`; `> 0` magnifies, `< 0` zooms out). */
   curvature?: number
   /** Subtle RGB chromatic aberration on the curved bezel. */
   dispersion?: number

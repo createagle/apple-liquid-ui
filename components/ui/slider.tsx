@@ -28,11 +28,10 @@ const PRESS_SCALE = 1.0
 const REST_RATIO = 0.4
 const PRESS_RATIO = 0.9
 const REST_FILL = 1
-const PRESS_FILL = 0.08
+const PRESS_FILL = 0.14
 const PRESS_FILL_NO_LENS = 0.72
-const SPECULAR_OPACITY = 0.42
-const SPECULAR_SATURATION = 1.8
-const COLOURED_RIM_OPACITY = 0.16
+const SPECULAR_OPACITY = 0.45
+const SPECULAR_SATURATION = 7
 
 const REST_THUMB_DIMS: Record<
   "mobile" | "desktop",
@@ -110,10 +109,10 @@ function SliderLensThumb({
   const lensH = Math.round(restH / REST_SCALE)
   const minDim = Math.min(lensW, lensH)
   const lensR = minDim / 2
-  const bezel = 0.36 * lensR
+  const bezel = 0.417 * lensR
   const intensity =
     refraction > 4 ? refraction / 24 : Math.max(0.1, refraction)
-  const peak = 0.54 * minDim * intensity
+  const peak = 1.178 * minDim * intensity
 
   React.useEffect(() => {
     if (!isMotionEnabled || !supportsRefraction()) {
@@ -130,7 +129,6 @@ function SliderLensThumb({
         bezel,
         surface: CONVEX,
         curvature,
-        lightAngle: 0,
         dpr: Math.min(window.devicePixelRatio || 1, 3),
       })
     )
@@ -235,7 +233,6 @@ function SliderLensThumb({
           blur={0}
           specularOpacity={SPECULAR_OPACITY}
           specularSaturation={SPECULAR_SATURATION}
-          colouredRimOpacity={COLOURED_RIM_OPACITY}
           dispersion={dispersion}
           scaleRef={scaleRef}
         />
@@ -257,7 +254,7 @@ function SliderLensThumb({
           scale: REST_SCALE,
           backgroundColor: `rgba(255,255,255,${REST_FILL})`,
           boxShadow:
-            "0 3px 14px rgba(0,0,0,0.16), 0 0.5px 2px rgba(0,0,0,0.1), 0 0 0 0.5px rgba(0,0,0,0.18)",
+            "0 3px 14px rgba(0,0,0,0.12), inset 0 0.5px 1px rgba(255,255,255,0.45)",
           ...(maps
             ? {
                 backdropFilter: `url(#${filterId})`,
@@ -287,11 +284,11 @@ export interface SliderProps
    */
   refraction?: number
   /**
-   * Chromatic prism dispersion intensity on the droplet bezel (default `0.015`).
+   * Chromatic prism dispersion intensity on the droplet bezel (default `0.04`).
    */
   dispersion?: number
   /**
-   * Spherical dome curvature across the magnifying lens (`0..1`, default `0.65`).
+   * Spherical dome curvature across the magnifying lens (`0..1`, default `0.4`).
    */
   curvature?: number
 }
@@ -303,8 +300,8 @@ function Slider({
   ticks = false,
   disableMotion = false,
   refraction = 1,
-  dispersion = 0.015,
-  curvature = 0.65,
+  dispersion = 0.04,
+  curvature = 0.4,
   defaultValue,
   value,
   min = 0,

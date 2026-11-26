@@ -17,8 +17,12 @@ export function SwitchLiquidHeroDemo() {
 
   return (
     <div className="flex w-full max-w-md flex-col items-center gap-4">
-      <div className="flex w-full items-center justify-between gap-4 rounded-3xl bg-(--liquid-surface) px-5 py-4 shadow-[0_10px_28px_-8px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:shadow-[0_12px_30px_-8px_rgba(0,0,0,0.45),0_0_0_0.5px_rgba(255,255,255,0.14)]">
-        <div className="flex items-center gap-3 text-left">
+      <div className="relative flex w-full items-center justify-between gap-4 rounded-3xl px-5 py-4">
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] bg-(--liquid-surface) shadow-[0_10px_28px_-8px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:shadow-[0_12px_30px_-8px_rgba(0,0,0,0.45),0_0_0_0.5px_rgba(255,255,255,0.14)]"
+        />
+        <div className="relative z-10 flex items-center gap-3 text-left">
           <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-2xl bg-(--apple-green)/15 text-(--apple-green)">
             <SparklesIcon className="size-5" />
           </span>
@@ -40,6 +44,7 @@ export function SwitchLiquidHeroDemo() {
           size="lg"
           checked={enabled}
           onCheckedChange={setEnabled}
+          className="relative z-10"
         />
       </div>
 
@@ -52,63 +57,69 @@ export function SwitchLiquidHeroDemo() {
 
 export function SwitchVariantsDemo() {
   return (
-    <div className="flex w-full max-w-md flex-col gap-3 rounded-3xl bg-(--liquid-surface) p-5 shadow-[0_10px_28px_-8px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:shadow-[0_12px_30px_-8px_rgba(0,0,0,0.45),0_0_0_0.5px_rgba(255,255,255,0.14)]">
-      <div className="flex items-center justify-between gap-4">
-        <div className="text-left">
-          <Label htmlFor="switch-variant-default" className="text-sm font-medium">
-            Default（响应式：macOS 蓝 / iOS 绿）
-          </Label>
-          <p className="text-xs text-muted-foreground">桌面端自动采用 Apple Blue，移动端自动切换 Apple Green</p>
+    <div className="relative w-full max-w-md rounded-3xl">
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] bg-(--liquid-surface) shadow-[0_10px_28px_-8px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:shadow-[0_12px_30px_-8px_rgba(0,0,0,0.45),0_0_0_0.5px_rgba(255,255,255,0.14)]"
+      />
+      <div className="relative z-10 flex flex-col gap-3 p-5">
+        <div className="flex items-center justify-between gap-4">
+          <div className="text-left">
+            <Label htmlFor="switch-variant-default" className="text-sm font-medium">
+              Default（响应式：macOS 蓝 / iOS 绿）
+            </Label>
+            <p className="text-xs text-muted-foreground">桌面端自动采用 Apple Blue，移动端自动切换 Apple Green</p>
+          </div>
+          <Switch id="switch-variant-default" variant="default" defaultChecked />
         </div>
-        <Switch id="switch-variant-default" variant="default" defaultChecked />
-      </div>
 
-      <div className="h-px bg-black/[0.06] dark:bg-white/[0.08]" />
+        <div className="h-px bg-black/[0.06] dark:bg-white/[0.08]" />
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="text-left">
-          <Label htmlFor="switch-variant-green" className="text-sm font-medium">
-            Green（Apple Green）
-          </Label>
-          <p className="text-xs text-muted-foreground">固定使用 iOS 经典系统绿</p>
+        <div className="flex items-center justify-between gap-4">
+          <div className="text-left">
+            <Label htmlFor="switch-variant-green" className="text-sm font-medium">
+              Green（Apple Green）
+            </Label>
+            <p className="text-xs text-muted-foreground">固定使用 iOS 经典系统绿</p>
+          </div>
+          <Switch id="switch-variant-green" variant="green" defaultChecked />
         </div>
-        <Switch id="switch-variant-green" variant="green" defaultChecked />
-      </div>
 
-      <div className="h-px bg-black/[0.06] dark:bg-white/[0.08]" />
+        <div className="h-px bg-black/[0.06] dark:bg-white/[0.08]" />
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="text-left">
-          <Label htmlFor="switch-variant-blue" className="text-sm font-medium">
-            Blue（Apple Blue）
-          </Label>
-          <p className="text-xs text-muted-foreground">macOS 强调色风格开关</p>
+        <div className="flex items-center justify-between gap-4">
+          <div className="text-left">
+            <Label htmlFor="switch-variant-blue" className="text-sm font-medium">
+              Blue（Apple Blue）
+            </Label>
+            <p className="text-xs text-muted-foreground">macOS 强调色风格开关</p>
+          </div>
+          <Switch id="switch-variant-blue" variant="blue" defaultChecked />
         </div>
-        <Switch id="switch-variant-blue" variant="blue" defaultChecked />
-      </div>
 
-      <div className="h-px bg-black/[0.06] dark:bg-white/[0.08]" />
+        <div className="h-px bg-black/[0.06] dark:bg-white/[0.08]" />
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="text-left">
-          <Label htmlFor="switch-variant-glass" className="text-sm font-medium">
-            Glass（液态玻璃轨道）
-          </Label>
-          <p className="text-xs text-muted-foreground">半透明磨砂轨道，适配多彩壁纸与控制中心</p>
+        <div className="flex items-center justify-between gap-4">
+          <div className="text-left">
+            <Label htmlFor="switch-variant-glass" className="text-sm font-medium">
+              Glass（液态玻璃轨道）
+            </Label>
+            <p className="text-xs text-muted-foreground">半透明磨砂轨道，适配多彩壁纸与控制中心</p>
+          </div>
+          <Switch id="switch-variant-glass" variant="glass" />
         </div>
-        <Switch id="switch-variant-glass" variant="glass" />
-      </div>
 
-      <div className="h-px bg-black/[0.06] dark:bg-white/[0.08]" />
+        <div className="h-px bg-black/[0.06] dark:bg-white/[0.08]" />
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="text-left">
-          <Label htmlFor="switch-variant-labels" className="text-sm font-medium">
-            无障碍开/关标识（I / O）
-          </Label>
-          <p className="text-xs text-muted-foreground">开启 showLabels 在轨道内显示 I / O 指示符</p>
+        <div className="flex items-center justify-between gap-4">
+          <div className="text-left">
+            <Label htmlFor="switch-variant-labels" className="text-sm font-medium">
+              无障碍开/关标识（I / O）
+            </Label>
+            <p className="text-xs text-muted-foreground">开启 showLabels 在轨道内显示 I / O 指示符</p>
+          </div>
+          <Switch id="switch-variant-labels" showLabels defaultChecked />
         </div>
-        <Switch id="switch-variant-labels" showLabels defaultChecked />
       </div>
     </div>
   );
@@ -116,32 +127,38 @@ export function SwitchVariantsDemo() {
 
 export function SwitchSizesDemo() {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-6 rounded-3xl bg-(--liquid-surface) px-6 py-5 shadow-[0_10px_28px_-8px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:shadow-[0_12px_30px_-8px_rgba(0,0,0,0.45),0_0_0_0.5px_rgba(255,255,255,0.14)]">
-      <div className="flex flex-col items-center gap-2">
-        <Switch size="sm" defaultChecked aria-label="小号开关" />
-        <span className="text-xs text-muted-foreground">sm</span>
-      </div>
+    <div className="relative rounded-3xl">
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] bg-(--liquid-surface) shadow-[0_10px_28px_-8px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:shadow-[0_12px_30px_-8px_rgba(0,0,0,0.45),0_0_0_0.5px_rgba(255,255,255,0.14)]"
+      />
+      <div className="relative z-10 flex flex-wrap items-center justify-center gap-6 px-6 py-5">
+        <div className="flex flex-col items-center gap-2">
+          <Switch size="sm" defaultChecked aria-label="小号开关" />
+          <span className="text-xs text-muted-foreground">sm</span>
+        </div>
 
-      <div className="flex flex-col items-center gap-2">
-        <Switch size="default" defaultChecked aria-label="默认尺寸开关" />
-        <span className="text-xs text-muted-foreground">default</span>
-      </div>
+        <div className="flex flex-col items-center gap-2">
+          <Switch size="default" defaultChecked aria-label="默认尺寸开关" />
+          <span className="text-xs text-muted-foreground">default</span>
+        </div>
 
-      <div className="flex flex-col items-center gap-2">
-        <Switch size="lg" defaultChecked aria-label="大号开关" />
-        <span className="text-xs text-muted-foreground">lg</span>
-      </div>
+        <div className="flex flex-col items-center gap-2">
+          <Switch size="lg" defaultChecked aria-label="大号开关" />
+          <span className="text-xs text-muted-foreground">lg</span>
+        </div>
 
-      <div className="h-8 w-px bg-black/[0.08] dark:bg-white/10" />
+        <div className="h-8 w-px bg-black/[0.08] dark:bg-white/10" />
 
-      <div className="flex flex-col items-center gap-2">
-        <Switch disabled aria-label="禁用关闭状态" />
-        <span className="text-xs text-muted-foreground">disabled</span>
-      </div>
+        <div className="flex flex-col items-center gap-2">
+          <Switch disabled aria-label="禁用关闭状态" />
+          <span className="text-xs text-muted-foreground">disabled</span>
+        </div>
 
-      <div className="flex flex-col items-center gap-2">
-        <Switch disabled defaultChecked aria-label="禁用开启状态" />
-        <span className="text-xs text-muted-foreground">disabled on</span>
+        <div className="flex flex-col items-center gap-2">
+          <Switch disabled defaultChecked aria-label="禁用开启状态" />
+          <span className="text-xs text-muted-foreground">disabled on</span>
+        </div>
       </div>
     </div>
   );
@@ -213,46 +230,52 @@ export function SwitchSettingsPanelDemo() {
   ];
 
   return (
-    <div className="w-full max-w-md overflow-hidden rounded-3xl bg-(--liquid-surface) shadow-[0_12px_32px_-8px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.92)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:shadow-[0_14px_34px_-8px_rgba(0,0,0,0.5),0_0_0_0.5px_rgba(255,255,255,0.14)]">
-      <div className="flex items-center justify-between border-b border-black/[0.06] px-5 py-3.5 dark:border-white/[0.08]">
-        <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          系统连接设置
-        </span>
-        <span className="rounded-full bg-black/[0.06] px-2.5 py-0.5 text-[11px] font-medium text-foreground dark:bg-white/10">
-          已启用 {activeCount} / {rows.length}
-        </span>
-      </div>
+    <div className="relative w-full max-w-md rounded-3xl">
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] bg-(--liquid-surface) shadow-[0_12px_32px_-8px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.92)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:shadow-[0_14px_34px_-8px_rgba(0,0,0,0.5),0_0_0_0.5px_rgba(255,255,255,0.14)]"
+      />
+      <div className="relative z-10">
+        <div className="flex items-center justify-between border-b border-black/[0.06] px-5 py-3.5 dark:border-white/[0.08]">
+          <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            系统连接设置
+          </span>
+          <span className="rounded-full bg-black/[0.06] px-2.5 py-0.5 text-[11px] font-medium text-foreground dark:bg-white/10">
+            已启用 {activeCount} / {rows.length}
+          </span>
+        </div>
 
-      <div className="divide-y divide-black/[0.06] dark:divide-white/[0.08]">
-        {rows.map((row) => (
-          <div
-            key={row.key}
-            className="flex items-center justify-between gap-3 px-5 py-3"
-          >
-            <div className="flex items-center gap-3 text-left">
-              <span
-                className={`inline-flex size-8 shrink-0 items-center justify-center rounded-xl shadow-xs ${row.iconBg}`}
-              >
-                {row.icon}
-              </span>
-              <div>
-                <Label
-                  htmlFor={`setting-${row.key}`}
-                  className="cursor-pointer text-sm font-medium text-foreground"
+        <div className="divide-y divide-black/[0.06] dark:divide-white/[0.08]">
+          {rows.map((row) => (
+            <div
+              key={row.key}
+              className="flex items-center justify-between gap-3 px-5 py-3"
+            >
+              <div className="flex items-center gap-3 text-left">
+                <span
+                  className={`inline-flex size-8 shrink-0 items-center justify-center rounded-xl shadow-xs ${row.iconBg}`}
                 >
-                  {row.label}
-                </Label>
-                <p className="text-xs text-muted-foreground">{row.desc}</p>
+                  {row.icon}
+                </span>
+                <div>
+                  <Label
+                    htmlFor={`setting-${row.key}`}
+                    className="cursor-pointer text-sm font-medium text-foreground"
+                  >
+                    {row.label}
+                  </Label>
+                  <p className="text-xs text-muted-foreground">{row.desc}</p>
+                </div>
               </div>
-            </div>
 
-            <Switch
-              id={`setting-${row.key}`}
-              checked={settings[row.key]}
-              onCheckedChange={toggle(row.key)}
-            />
-          </div>
-        ))}
+              <Switch
+                id={`setting-${row.key}`}
+                checked={settings[row.key]}
+                onCheckedChange={toggle(row.key)}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

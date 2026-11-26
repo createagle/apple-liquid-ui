@@ -13,7 +13,7 @@ import {
   createSpringLoop,
   LensFilter,
   lerp,
-  MENISCUS,
+  LIP,
   spring,
   supportsRefraction,
   type LensMaps,
@@ -36,18 +36,17 @@ interface SwitchGeometry {
   blur: number
 }
 
-const REST_SCALE = 0.65
-const PRESS_SCALE = 0.9
+const REST_SCALE = 0.62
+const PRESS_SCALE = 0.96
 const REST_RATIO = 0.4
 const PRESS_RATIO = 0.9
 const REST_FILL = 1
-const PRESS_FILL = 0.07
+const PRESS_FILL = 0.14
 const PRESS_FILL_NO_LENS = 0.72
 const DRAG_SLOP = 4
 const OVERDRAG = 22
-const SPECULAR_OPACITY = 0.44
-const SPECULAR_SATURATION = 1.8
-const COLOURED_RIM_OPACITY = 0.18
+const SPECULAR_OPACITY = 0.55
+const SPECULAR_SATURATION = 6
 
 function createGeometry(
   trackW: number,
@@ -72,7 +71,7 @@ function createGeometry(
     lensR,
     travel,
     thumbLeft,
-    bezel: 0.54 * lensR,
+    bezel: 0.45 * lensR,
     blur: Math.max(0.05, 0.2 * k),
   }
 }
@@ -137,11 +136,11 @@ export interface SwitchProps
    */
   refraction?: number
   /**
-   * Chromatic prism dispersion intensity on the droplet bezel (default `0.015`).
+   * Chromatic prism dispersion intensity on the droplet bezel (default `0.15`).
    */
   dispersion?: number
   /**
-   * Spherical dome curvature across the droplet window (`0..1`, default `0`).
+   * Spherical dome curvature across the droplet window (`-1..1`, default `-0.38` for Apple concave zoom-out).
    */
   curvature?: number
 }
@@ -153,8 +152,8 @@ function Switch({
   showLabels = false,
   disableMotion = false,
   refraction = 1,
-  dispersion = 0.015,
-  curvature = 0,
+  dispersion = 0.15,
+  curvature = -0.38,
   disabled,
   readOnly,
   onPointerDown,
@@ -172,13 +171,12 @@ function Switch({
 
   const intensity =
     refraction > 4 ? refraction / 24 : Math.max(0.1, refraction)
-  const peak = 0.28 * geo.lensH * intensity
+  const peak = 0.46 * geo.lensH * intensity
   const kShadow = geo.trackH / 67
-  const restShadow = `0 ${(9 * kShadow).toFixed(2)}px ${(49 * kShadow).toFixed(2)}px rgba(0,0,0,0.14), 0 1px 2px rgba(0,0,0,0.1)`
-  const pressedShadow = `0 ${(10 * kShadow).toFixed(2)}px ${(36 * kShadow).toFixed(2)}px rgba(0,0,0,0.22), 0 0 0 0.5px rgba(0,0,0,0.28)`
+  const restShadow = `0 ${(9 * kShadow).toFixed(2)}px ${(49 * kShadow).toFixed(2)}px rgba(0,0,0,0.1)`
   const draggingShadow =
-    `${pressedShadow}, inset ${(2 * kShadow).toFixed(2)}px ${(7 * kShadow).toFixed(2)}px ${(24 * kShadow).toFixed(2)}px rgba(0,0,0,0.09),` +
-    ` inset ${(-2 * kShadow).toFixed(2)}px ${(-7 * kShadow).toFixed(2)}px ${(24 * kShadow).toFixed(2)}px rgba(255,255,255,0.12)`
+    `${restShadow}, inset ${(2 * kShadow).toFixed(2)}px ${(7 * kShadow).toFixed(2)}px ${(24 * kShadow).toFixed(2)}px rgba(0,0,0,0.09),` +
+    ` inset ${(-2 * kShadow).toFixed(2)}px ${(-7 * kShadow).toFixed(2)}px ${(24 * kShadow).toFixed(2)}px rgba(255,255,255,0.09)`
 
   const rootRef = React.useRef<HTMLSpanElement | null>(null)
   const thumbRef = React.useRef<HTMLSpanElement | null>(null)
@@ -201,9 +199,8 @@ function Switch({
         height: geo.lensH,
         radius: geo.lensR,
         bezel: geo.bezel,
-        surface: MENISCUS,
+        surface: LIP,
         curvature,
-        lightAngle: 0,
         dpr: Math.min(window.devicePixelRatio || 1, 3),
       })
     )
@@ -223,7 +220,6 @@ function Switch({
     travel: geo.travel,
     peak,
     restShadow,
-    pressedShadow,
     draggingShadow,
     isMotionEnabled,
   })
@@ -231,7 +227,6 @@ function Switch({
     travel: geo.travel,
     peak,
     restShadow,
-    pressedShadow,
     draggingShadow,
     isMotionEnabled,
   }
@@ -248,11 +243,7 @@ function Switch({
       const floor = hasLens.current ? PRESS_FILL : PRESS_FILL_NO_LENS
       const alpha = clamp(lerp(REST_FILL, floor, p), 0, 1)
       thumb.style.backgroundColor = `rgba(255,255,255,${alpha})`
-      thumb.style.boxShadow = dragging
-        ? m.draggingShadow
-        : p > 0.05
-          ? m.pressedShadow
-          : m.restShadow
+      thumb.style.boxShadow = dragging ? m.draggingShadow : m.restShadow
     }
 
     const tintAlpha = clamp(tint.value, 0, 1)
@@ -378,12 +369,12 @@ function Switch({
 
   const activeTrackColorClass =
     resolvedVariant === "blue"
-      ? "bg-(--apple-blue)"
+      ? "bg-(--apple-blue)/93"
       : resolvedVariant === "green"
-        ? "bg-(--apple-green)"
+        ? "bg-(--apple-green)/93"
         : resolvedVariant === "glass"
           ? "bg-(--apple-green)/84 md:bg-(--apple-blue)/86 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]"
-          : "bg-(--apple-green) md:bg-(--apple-blue)"
+          : "bg-(--apple-green)/93 md:bg-(--apple-blue)/93"
 
   return (
     <SwitchPrimitive.Root
@@ -424,7 +415,7 @@ function Switch({
           "pointer-events-none absolute inset-0 overflow-hidden rounded-full",
           resolvedVariant === "glass"
             ? "bg-(--liquid-surface) shadow-[inset_0_1px_2px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.08),inset_0_-0.5px_0_rgba(255,255,255,0.5)] [backdrop-filter:blur(4px)_saturate(1.4)] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.45),0_0_0_0.5px_rgba(255,255,255,0.16)]"
-            : "bg-[rgba(142,142,152,0.42)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)] dark:bg-[rgba(120,120,128,0.46)] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)]"
+            : "bg-[rgba(148,148,159,0.47)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.28)]"
         )}
       >
         <span
@@ -459,13 +450,12 @@ function Switch({
           blur={geo.blur}
           specularOpacity={SPECULAR_OPACITY}
           specularSaturation={SPECULAR_SATURATION}
-          colouredRimOpacity={COLOURED_RIM_OPACITY}
           dispersion={dispersion}
           scaleRef={scaleRef}
         />
       ) : null}
 
-      {/* Single pre-scaled capsule thumb that swells and melts into a clean MENISCUS glass lens */}
+      {/* Single pre-scaled capsule thumb that swells and melts into a LIP glass lens */}
       <SwitchPrimitive.Thumb
         ref={thumbRef}
         data-slot="switch-thumb"

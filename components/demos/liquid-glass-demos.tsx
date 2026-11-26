@@ -82,47 +82,59 @@ export function LiquidGlassScopedCompareDemo() {
   return (
     <div className="grid w-full max-w-2xl grid-cols-1 gap-4 md:grid-cols-2">
       <LiquidGlassProvider syncToRoot={false} defaultTint="clear">
-        <div className="flex flex-col items-center gap-3 rounded-3xl border border-white/25 bg-black/5 p-5 backdrop-blur-xs dark:bg-white/5">
-          <span className="rounded-full bg-background/80 px-2.5 py-0.5 text-[11px] font-medium text-foreground">
-            透明 Clear (tint = 0)
-          </span>
-          <Tabs defaultValue="glass">
-            <TabsList variant="glass">
-              <TabsTrigger value="glass">液态</TabsTrigger>
-              <TabsTrigger value="optics">通透</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" glass size="sm">
-              次要操作
-            </Button>
-            <Button glass size="sm">
-              <SparklesIcon />
-              主操作
-            </Button>
+        <div className="relative rounded-3xl">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] border border-white/25 bg-black/5 backdrop-blur-xs dark:bg-white/5"
+          />
+          <div className="relative z-10 flex flex-col items-center gap-3 p-5">
+            <span className="rounded-full bg-background/80 px-2.5 py-0.5 text-[11px] font-medium text-foreground">
+              透明 Clear (tint = 0)
+            </span>
+            <Tabs defaultValue="glass">
+              <TabsList variant="glass">
+                <TabsTrigger value="glass">液态</TabsTrigger>
+                <TabsTrigger value="optics">通透</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" glass size="sm">
+                次要操作
+              </Button>
+              <Button glass size="sm">
+                <SparklesIcon />
+                主操作
+              </Button>
+            </div>
           </div>
         </div>
       </LiquidGlassProvider>
 
       <LiquidGlassProvider syncToRoot={false} defaultTint="tinted">
-        <div className="flex flex-col items-center gap-3 rounded-3xl border border-white/25 bg-black/5 p-5 backdrop-blur-xs dark:bg-white/5">
-          <span className="rounded-full bg-background/80 px-2.5 py-0.5 text-[11px] font-medium text-foreground">
-            色调 Tinted (tint = 1)
-          </span>
-          <Tabs defaultValue="glass">
-            <TabsList variant="glass">
-              <TabsTrigger value="glass">液态</TabsTrigger>
-              <TabsTrigger value="optics">高对比</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" glass size="sm">
-              次要操作
-            </Button>
-            <Button glass size="sm">
-              <SparklesIcon />
-              主操作
-            </Button>
+        <div className="relative rounded-3xl">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] border border-white/25 bg-black/5 backdrop-blur-xs dark:bg-white/5"
+          />
+          <div className="relative z-10 flex flex-col items-center gap-3 p-5">
+            <span className="rounded-full bg-background/80 px-2.5 py-0.5 text-[11px] font-medium text-foreground">
+              色调 Tinted (tint = 1)
+            </span>
+            <Tabs defaultValue="glass">
+              <TabsList variant="glass">
+                <TabsTrigger value="glass">液态</TabsTrigger>
+                <TabsTrigger value="optics">高对比</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" glass size="sm">
+                次要操作
+              </Button>
+              <Button glass size="sm">
+                <SparklesIcon />
+                主操作
+              </Button>
+            </div>
           </div>
         </div>
       </LiquidGlassProvider>
