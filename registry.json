@@ -1,7 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
   "name": "apple-liquid-ui",
-  "homepage": "https://apple-liquid-ui.dev",
+  "homepage": "https://github.com/createagle/apple-liquid-ui",
   "items": [
     {
       "name": "liquid-glass",

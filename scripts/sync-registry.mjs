@@ -7,7 +7,8 @@ const OUTPUT_PATH = path.resolve(ROOT_DIR, 'registry.json');
 
 const REGISTRY_NAME = 'apple-liquid-ui';
 const REGISTRY_NAMESPACE = '@apple-liquid';
-const REGISTRY_HOMEPAGE = process.env.REGISTRY_HOMEPAGE || 'https://apple-liquid-ui.dev';
+const REGISTRY_HOMEPAGE =
+  process.env.REGISTRY_HOMEPAGE || 'https://github.com/createagle/apple-liquid-ui';
 const REGISTRY_BASE_URL = process.env.REGISTRY_BASE_URL?.replace(/\/+$/, '') || '';
 
 const BUILTIN_PACKAGES = new Set(['react', 'react-dom', 'next']);

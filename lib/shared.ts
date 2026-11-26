@@ -5,9 +5,9 @@ export const docsRoute = '/docs';
 export const docsImageRoute = '/og/docs';
 
 export const gitConfig = {
-  user: 'your-org',
+  user: 'createagle',
   repo: 'apple-liquid-ui',
-  branch: 'main',
+  branch: 'master',
 };
 
 const getImageUrl = createGetUrl(docsImageRoute);
