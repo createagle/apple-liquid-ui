@@ -14,6 +14,7 @@ import {
   TabletIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { withBasePath } from '@/lib/shared';
 import { DEMO_REGISTRY, type DemoName } from '@/lib/demos';
 import {
   BACKDROP_MESSAGE_TYPE,
@@ -84,7 +85,7 @@ export function ComponentPreviewClient({
   const iframeRef = React.useRef<HTMLIFrameElement | null>(null);
 
   const hasCode = Boolean(code);
-  const previewUrl = name ? `/preview/${name}` : null;
+  const previewUrl = name ? withBasePath(`/preview/${name}`) : null;
   const DemoComponent = name ? DEMO_REGISTRY[name].component : null;
 
   const syncSettingsToIframe = React.useCallback(() => {
