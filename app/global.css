@@ -96,6 +96,7 @@ html > body[data-scroll-locked] {
   /* Apple macOS 27 & iOS 27 Official System Colors + Luminous Liquid Glass Overrides */
   --apple-blue: #0088ff;
   --apple-blue-pressed: #0078f0;
+  --apple-green: #34c759;
   --apple-red: #ff383c;
   --apple-red-pressed: #e5292d;
   --apple-fill-bordered-mac: rgba(0, 0, 0, 0.08);
@@ -139,6 +140,7 @@ html > body[data-scroll-locked] {
 .dark {
   --apple-blue: #0091ff;
   --apple-blue-pressed: #0a99ff;
+  --apple-green: #30d158;
   --apple-red: #ff4245;
   --apple-red-pressed: #ff5a5d;
   --apple-fill-bordered-mac: rgba(255, 255, 255, 0.08);

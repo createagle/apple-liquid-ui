@@ -574,12 +574,15 @@ function TabsList({
           transition={{ duration: showLiquidLens ? 0.12 : 0.18 }}
         >
           <LiquidLens
+            profile="lip"
+            rim="crystal"
             radius={resolvedVariant === "default" && !isMobile ? 12 : 999}
-            bezel={isMobile ? 14 : 11}
+            bezel={isMobile ? 15 : 12}
             refraction={refraction}
             dispersion={dispersion}
             blur={0}
-            saturation={1.05}
+            brightness={1.04}
+            saturation={1.08}
             className="absolute -inset-x-2 -inset-y-1.5"
           />
         </motion.div>

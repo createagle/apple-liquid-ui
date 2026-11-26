@@ -24,6 +24,18 @@ import {
   LiquidGlassScopedCompareDemo,
   LiquidGlassSettingsDemo,
 } from '@/components/demos/liquid-glass-demos';
+import {
+  SwitchLiquidHeroDemo,
+  SwitchSettingsPanelDemo,
+  SwitchSizesDemo,
+  SwitchVariantsDemo,
+} from '@/components/demos/switch-demos';
+import {
+  SliderControlCenterDemo,
+  SliderLiquidHeroDemo,
+  SliderRangeDemo,
+  SliderTicksDemo,
+} from '@/components/demos/slider-demos';
 
 export interface DemoRegistryEntry {
   title: string;
@@ -159,6 +171,72 @@ export const DEMO_REGISTRY = {
     exportName: 'LiquidGlassScopedCompareDemo',
     mobileHeight: 520,
     tabletHeight: 380,
+  },
+  'switch-liquid-hero': {
+    title: '液态玻璃折射开关',
+    component: SwitchLiquidHeroDemo,
+    filePath: 'components/demos/switch-demos.tsx',
+    exportName: 'SwitchLiquidHeroDemo',
+    installCommand: 'npx shadcn@latest add @apple-liquid/switch',
+    mobileHeight: 340,
+    tabletHeight: 300,
+  },
+  'switch-variants': {
+    title: '色彩变体与无障碍标识',
+    component: SwitchVariantsDemo,
+    filePath: 'components/demos/switch-demos.tsx',
+    exportName: 'SwitchVariantsDemo',
+    mobileHeight: 420,
+    tabletHeight: 380,
+  },
+  'switch-sizes': {
+    title: '尺寸阶梯与禁用态',
+    component: SwitchSizesDemo,
+    filePath: 'components/demos/switch-demos.tsx',
+    exportName: 'SwitchSizesDemo',
+    mobileHeight: 300,
+    tabletHeight: 260,
+  },
+  'switch-settings-panel': {
+    title: '系统设置联动面板',
+    component: SwitchSettingsPanelDemo,
+    filePath: 'components/demos/switch-demos.tsx',
+    exportName: 'SwitchSettingsPanelDemo',
+    mobileHeight: 480,
+    tabletHeight: 440,
+  },
+  'slider-liquid-hero': {
+    title: '液态玻璃折射滑块',
+    component: SliderLiquidHeroDemo,
+    filePath: 'components/demos/slider-demos.tsx',
+    exportName: 'SliderLiquidHeroDemo',
+    installCommand: 'npx shadcn@latest add @apple-liquid/slider',
+    mobileHeight: 300,
+    tabletHeight: 260,
+  },
+  'slider-ticks': {
+    title: 'macOS 刻度吸附（Ticks）',
+    component: SliderTicksDemo,
+    filePath: 'components/demos/slider-demos.tsx',
+    exportName: 'SliderTicksDemo',
+    mobileHeight: 280,
+    tabletHeight: 240,
+  },
+  'slider-range': {
+    title: '双滑块区间（Range）',
+    component: SliderRangeDemo,
+    filePath: 'components/demos/slider-demos.tsx',
+    exportName: 'SliderRangeDemo',
+    mobileHeight: 260,
+    tabletHeight: 220,
+  },
+  'slider-control-center': {
+    title: '控制中心玻璃轨道（Glass）',
+    component: SliderControlCenterDemo,
+    filePath: 'components/demos/slider-demos.tsx',
+    exportName: 'SliderControlCenterDemo',
+    mobileHeight: 360,
+    tabletHeight: 320,
   },
 } as const satisfies Record<string, DemoRegistryEntry>;
 
