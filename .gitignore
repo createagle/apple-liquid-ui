@@ -24,3 +24,6 @@ yarn-error.log*
 .env*.local
 .vercel
 next-env.d.ts
+
+# Apple official Sketch UI kits (too large for git, download from Apple Design Resources)
+/sketch/

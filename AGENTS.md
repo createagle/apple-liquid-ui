@@ -11,9 +11,10 @@
 ### 核心目标
 1. **将全部 shadcn/ui 基础组件升级为 Apple Liquid Glass 风格**：
    - 目前 `components/ui/` 中已通过 shadcn CLI 安装了完整的 63+ 个基础组件，需要将它们逐步按 **Apple macOS 27 UI Kit**（桌面端）与 **Apple iOS 27 UI Kit**（移动端）的尺寸、材质、交互与动效规范完成重构。
-   - 项目内官方设计稿路径（可直接用 Python `zipfile` + `json` 解析内部图层色值/圆角/模糊/间距）：
+   - 官方设计稿本地存放路径（已加入 `.gitignore`，不提交至 Git；可直接用 Python `zipfile` + `json` 解析内部图层色值/圆角/模糊/间距）：
      - `sketch/Apple macOS 27 UI Kit.sketch`
      - `sketch/Apple iOS 27 UI Kit.sketch`
+     - 若本地 `sketch/` 目录不存在或为空，请前往苹果官方设计资源页下载对应的 macOS / iOS Sketch UI Kit 并放入 `sketch/` 目录：https://developer.apple.com/design/resources/
 2. **原生视口响应式跨端形态切换**：
    - 桌面端（`>= 768px`）遵循 macOS 27 交互与密度，移动端（`< 768px`）自动切换 iOS 27 触控人体工学或交互形态（例如 `Select` 在桌面端为悬浮下拉菜单，移动端自动切换为可下滑关闭的浮动 `Drawer` 列表）。
 3. **全局 Liquid Glass 通透度可配置（透明 Clear ↔ 色调 Tinted）**：
@@ -77,7 +78,7 @@
 | `app/global.css` | Tailwind v4 主题、`@liqui-design/glass/tokens.css`、Apple 颜色与通透度 CSS Token |
 | `scripts/sync-registry.mjs` | 自动扫描 `components/ui/*.tsx` 生成 `registry.json`（含 `liquid-glass` 样式基础包） |
 | `content/docs/` | Fumadocs 文档站 MDX 内容与侧边栏 `meta.json`（frontmatter 支持中文 `keywords` 写入静态全文搜索） |
-| `sketch/` | 项目内置 Apple 官方设计稿原件（`Apple macOS 27 UI Kit.sketch` 与 `Apple iOS 27 UI Kit.sketch`） |
+| `sketch/` | 本地 Apple 官方设计稿目录（已 `.gitignore`，缺失时从 [Apple Design Resources](https://developer.apple.com/design/resources/) 下载 `Apple macOS 27 UI Kit.sketch` 与 `Apple iOS 27 UI Kit.sketch` 放入） |
 
 ---
 
@@ -98,7 +99,7 @@ pnpm start           # 启动静态产物预览服务 (serve out)
 
 每推进一个新组件时，按以下步骤执行以保持全库质量一致：
 
-1. **提取官方设计参数**：检查 `sketch/Apple macOS 27 UI Kit.sketch` 与 `sketch/Apple iOS 27 UI Kit.sketch` 对应控件的尺寸、圆角、字号、填充色、阴影及交互态。
+1. **提取官方设计参数**：检查 `sketch/Apple macOS 27 UI Kit.sketch` 与 `sketch/Apple iOS 27 UI Kit.sketch` 对应控件的尺寸、圆角、字号、填充色、阴影及交互态（若 `sketch/` 目录为空，先从 https://developer.apple.com/design/resources/ 下载放入）。
 2. **改造源码 `components/ui/<name>.tsx`**：
    - 使用 Tailwind `md:` 响应式样式 + 必要时的 `useIsMobile()` 结构切换；
    - 接入 `--liquid-surface*` / `--liquid-blur` / `--liquid-saturate` 或 `useLiquidGlass()`；
