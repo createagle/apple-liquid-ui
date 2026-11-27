@@ -104,7 +104,9 @@ function Tabs({
 
 const tabsListVariants = cva(
   [
-    "group/tabs-list relative inline-flex w-fit items-center justify-center select-none",
+    // `isolate` keeps the pill / label / droplet z-layers inside the list so they
+    // never paint over the host page's sticky headers or popovers
+    "group/tabs-list relative isolate inline-flex w-fit items-center justify-center select-none",
     "group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col group-data-vertical/tabs:items-stretch",
   ].join(" "),
   {

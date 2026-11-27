@@ -365,7 +365,8 @@ function Slider({
       <SliderPrimitive.Control
         data-slot="slider-control"
         className={cn(
-          "relative flex cursor-pointer touch-none items-center select-none data-disabled:cursor-not-allowed data-disabled:opacity-45",
+          // `isolate` contains the z-10 thumb within the slider
+          "relative isolate flex cursor-pointer touch-none items-center select-none data-disabled:cursor-not-allowed data-disabled:opacity-45",
           "data-horizontal:w-full data-horizontal:py-3 md:data-horizontal:py-2.5",
           "data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col data-vertical:px-3 md:data-vertical:px-2.5"
         )}

@@ -94,7 +94,8 @@ const SWITCH_GEOMETRY: Record<
 
 const switchVariants = cva(
   [
-    "peer group/switch relative inline-flex shrink-0 cursor-pointer items-center rounded-full outline-none select-none",
+    // `isolate` contains the z-10 lens thumb within the switch
+    "peer group/switch relative isolate inline-flex shrink-0 cursor-pointer items-center rounded-full outline-none select-none",
     "focus-visible:ring-3 focus-visible:ring-(--apple-blue)/45 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
     "aria-invalid:ring-3 aria-invalid:ring-destructive/30",
     "data-disabled:cursor-not-allowed data-disabled:opacity-45",

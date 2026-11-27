@@ -235,7 +235,7 @@ export function ComponentPreviewClient({
   return (
     <div
       data-slot="component-preview"
-      className="not-prose my-6 overflow-hidden rounded-2xl border border-border bg-card shadow-xs"
+      className="not-prose isolate my-6 overflow-hidden rounded-2xl border border-border bg-card shadow-xs"
     >
       {/* Top toolbar: Preview | Code + Title on left, PC / Mobile Switcher & Actions on right */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/35 px-3 py-2">
