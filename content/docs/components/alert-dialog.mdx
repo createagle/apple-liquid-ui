@@ -1,0 +1,101 @@
+---
+title: AlertDialog 警示框
+description: 响应式 Apple Liquid Glass 警示确认框：桌面端还原 macOS 27 26px 圆角紧凑警示框与 28px 胶囊按钮，移动端自动呈现 iOS 27 34px 大圆角居中液态 Alert 与 48px 独立胶囊操作按钮。
+keywords:
+  - AlertDialog
+  - Alert
+  - 警示框
+  - 确认框
+  - 删除确认
+  - 二次确认
+  - macOS 27
+  - iOS 27
+  - 响应式组件
+  - Liquid Glass
+---
+
+严格对照 Apple macOS 27 与 iOS 27 官方 Sketch UI Kit 打造，基于 `@base-ui/react/alert-dialog` 实现强中断确认语义（禁止误触外部关闭，强制明确选择），并通过 Tailwind 原生 `md:` 断点完成双端形态适配：
+
+- **桌面端（`>= 768px` · macOS 27）**：`26px` 圆角、`340px`（`size="sm"` 为 `300px`）液态玻璃警示框，左对齐标题（`15px`）与描述（`13.5px`），底部配备 `36px` 全圆角胶囊按钮（2 按钮等宽并排，3 个及以上自动纵向堆叠）。
+- **移动端（`< 768px` · iOS 27）**：居中悬浮的 `34px` 大圆角液态玻璃 Alert，居中 `17px` 标题与描述，底部升级为 iOS 27 标志性的 **`48px` 全宽独立胶囊按钮**，默认每行一个纵向堆叠（双按钮时主操作在上、取消在下，便于单手拇指触达）。
+
+## 响应式实时预览
+
+默认呈现 macOS 27 警示框；点击预览栏右上角的 **移动端图标** 即可对比 iOS 27 的 `34px` 圆角与 `48px` 独立胶囊按钮，也可拖动侧边栏「玻璃通透度」观察不同透明层级：
+
+<ComponentPreview name="alert-dialog-liquid-hero" />
+
+## 安装（Shadcn Registry）
+
+```bash
+# 通过配置好的 @apple-liquid 命名空间安装（自动关联 button 与 liquid-glass）
+npx shadcn@latest add @apple-liquid/alert-dialog
+
+# 或直接通过 URL 安装
+npx shadcn@latest add https://your-domain.com/r/alert-dialog.json
+```
+
+## 危险操作确认（Destructive）
+
+为 `<AlertDialogAction>` 传入 `variant="destructive"` 即可呈现 Apple Red 危险确认按钮，配合 `size="sm"` 紧凑宽度与 `<AlertDialogMedia>` 图标容器，清晰警示不可逆操作：
+
+<ComponentPreview name="alert-dialog-destructive" />
+
+## 多按钮堆叠（Stacked）
+
+当 `<AlertDialogFooter>` 内包含 **3 个及以上**操作按钮时，组件会自动从 2 列并排切换为纵向堆叠布局（还原 Apple 27 Sketch `Stacked` 规范）：
+
+<ComponentPreview name="alert-dialog-stacked" />
+
+## 使用方式
+
+```tsx
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+
+export function Example() {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger render={<Button variant="destructive">删除备份</Button>} />
+      <AlertDialogContent size="sm">
+        <AlertDialogHeader>
+          <AlertDialogTitle>永久删除此备份？</AlertDialogTitle>
+          <AlertDialogDescription>
+            删除后将无法恢复历史快照，此操作不可撤销。
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>保留</AlertDialogCancel>
+          <AlertDialogAction variant="destructive">删除</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+```
+
+## Props API
+
+### `AlertDialogContent`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `size` | `'default' \| 'sm'` | `'default'` | 桌面端宽度：`default` 为 `340px`，`sm` 为 `300px` |
+
+### `AlertDialogAction` / `AlertDialogCancel`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `variant` | `ButtonProps['variant']` | Action: `'default'` / Cancel: `'secondary'` | 支持 `'default'`、`'destructive'`、`'secondary'` 等全部 Button 语义变体 |
+| `glass` | `boolean` | `false` | 可选开启液态光学折射材质按钮 |
+| `disableMotion` | `boolean` | `false` | 禁用按钮按压弹簧动效 |

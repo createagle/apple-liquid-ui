@@ -1,4 +1,13 @@
 {
   "title": "组件",
-  "pages": ["index", "button", "tabs", "select", "switch", "slider"]
+  "pages": [
+    "index",
+    "alert-dialog",
+    "button",
+    "dialog",
+    "select",
+    "slider",
+    "switch",
+    "tabs"
+  ]
 }

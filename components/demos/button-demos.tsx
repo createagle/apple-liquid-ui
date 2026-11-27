@@ -17,30 +17,30 @@ export function ButtonLiquidHeroDemo() {
   return (
     <div className="flex flex-col items-center gap-5">
       <div className="flex flex-wrap items-center justify-center gap-3">
-        <Button glass>
+        <Button>
           <SparklesIcon />
-          Liquid Primary
+          立即体验
         </Button>
-        <Button variant="secondary" glass>
-          Liquid Glass
+        <Button variant="secondary">
+          了解更多
           <ArrowRightIcon />
         </Button>
-        <Button variant="destructive" glass>
+        <Button variant="destructive">
           <Trash2Icon />
           删除项目
         </Button>
       </div>
       <div className="flex flex-wrap items-center justify-center gap-3">
-        <Button variant="secondary" glass size="icon" aria-label="播放">
+        <Button variant="secondary" size="icon" aria-label="播放">
           <PlayIcon />
         </Button>
-        <Button variant="secondary" glass size="icon" aria-label="喜欢">
+        <Button variant="secondary" size="icon" aria-label="喜欢">
           <HeartIcon />
         </Button>
-        <Button variant="secondary" glass size="icon" aria-label="分享">
+        <Button variant="secondary" size="icon" aria-label="分享">
           <ShareIcon />
         </Button>
-        <Button glass size="icon" aria-label="新建">
+        <Button size="icon" aria-label="新建">
           <PlusIcon />
         </Button>
       </div>
@@ -81,16 +81,16 @@ export function ButtonSizesDemo() {
   return (
     <div className="flex flex-col items-center gap-5">
       <div className="flex flex-wrap items-center justify-center gap-3">
-        <Button variant="secondary" glass size="xs">
+        <Button variant="secondary" size="xs">
           XS
         </Button>
-        <Button variant="secondary" glass size="sm">
+        <Button variant="secondary" size="sm">
           Small
         </Button>
-        <Button variant="secondary" glass size="default">
+        <Button variant="secondary" size="default">
           Default
         </Button>
-        <Button variant="secondary" glass size="lg">
+        <Button variant="secondary" size="lg">
           Large
         </Button>
       </div>
@@ -109,16 +109,16 @@ export function ButtonSizesDemo() {
         </Button>
       </div>
       <div className="flex flex-wrap items-center justify-center gap-3">
-        <Button variant="secondary" glass size="icon-xs" aria-label="XS 图标">
+        <Button variant="secondary" size="icon-xs" aria-label="XS 图标">
           <PlusIcon />
         </Button>
-        <Button variant="secondary" glass size="icon-sm" aria-label="Small 图标">
+        <Button variant="secondary" size="icon-sm" aria-label="Small 图标">
           <PlusIcon />
         </Button>
-        <Button variant="secondary" glass size="icon" aria-label="Default 图标">
+        <Button variant="secondary" size="icon" aria-label="Default 图标">
           <PlusIcon />
         </Button>
-        <Button variant="secondary" glass size="icon-lg" aria-label="Large 图标">
+        <Button variant="secondary" size="icon-lg" aria-label="Large 图标">
           <PlusIcon />
         </Button>
       </div>

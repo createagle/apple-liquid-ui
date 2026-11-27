@@ -109,30 +109,30 @@ html > body[data-scroll-locked] {
 
   /* Apple Liquid Glass Transparency <-> Tint (0 = Clear 透明, 0.5 = Regular 标准, 1 = Tinted 色调) */
   --liquid-glass-tint: 0.5;
-  --liquid-surface-alpha: calc(0.24 + var(--liquid-glass-tint, 0.5) * 0.64);
-  --liquid-surface-menu-alpha: calc(0.42 + var(--liquid-glass-tint, 0.5) * 0.52);
-  --liquid-surface-sheet-alpha: calc(0.52 + var(--liquid-glass-tint, 0.5) * 0.44);
+  --liquid-surface-alpha: calc(0.16 + var(--liquid-glass-tint, 0.5) * 0.7);
+  --liquid-surface-menu-alpha: calc(0.22 + var(--liquid-glass-tint, 0.5) * 0.68);
+  --liquid-surface-sheet-alpha: calc(0.2 + var(--liquid-glass-tint, 0.5) * 0.7);
   --liquid-surface: rgb(240 242 246 / var(--liquid-surface-alpha));
   --liquid-surface-hover: rgb(246 247 250 / min(0.98, calc(var(--liquid-surface-alpha) + 0.1)));
   --liquid-surface-menu: rgb(255 255 255 / var(--liquid-surface-menu-alpha));
   --liquid-surface-sheet: rgb(255 255 255 / var(--liquid-surface-sheet-alpha));
-  --liquid-blur: calc(10px + var(--liquid-glass-tint, 0.5) * 26px);
-  --liquid-saturate: calc(1.45 + var(--liquid-glass-tint, 0.5) * 0.55);
+  --liquid-blur: calc(4px + var(--liquid-glass-tint, 0.5) * 26px);
+  --liquid-saturate: calc(1.55 + var(--liquid-glass-tint, 0.5) * 0.45);
 
   --lq-tint: rgb(255 255 255 / calc(0.12 + var(--liquid-glass-tint, 0.5) * 0.62));
   --lq-tint-deep: rgb(255 255 255 / calc(0.05 + var(--liquid-glass-tint, 0.5) * 0.28));
 }
 
 [data-liquid-glass-scope] {
-  --liquid-surface-alpha: calc(0.24 + var(--liquid-glass-tint, 0.5) * 0.64);
-  --liquid-surface-menu-alpha: calc(0.42 + var(--liquid-glass-tint, 0.5) * 0.52);
-  --liquid-surface-sheet-alpha: calc(0.52 + var(--liquid-glass-tint, 0.5) * 0.44);
+  --liquid-surface-alpha: calc(0.16 + var(--liquid-glass-tint, 0.5) * 0.7);
+  --liquid-surface-menu-alpha: calc(0.22 + var(--liquid-glass-tint, 0.5) * 0.68);
+  --liquid-surface-sheet-alpha: calc(0.2 + var(--liquid-glass-tint, 0.5) * 0.7);
   --liquid-surface: rgb(240 242 246 / var(--liquid-surface-alpha));
   --liquid-surface-hover: rgb(246 247 250 / min(0.98, calc(var(--liquid-surface-alpha) + 0.1)));
   --liquid-surface-menu: rgb(255 255 255 / var(--liquid-surface-menu-alpha));
   --liquid-surface-sheet: rgb(255 255 255 / var(--liquid-surface-sheet-alpha));
-  --liquid-blur: calc(10px + var(--liquid-glass-tint, 0.5) * 26px);
-  --liquid-saturate: calc(1.45 + var(--liquid-glass-tint, 0.5) * 0.55);
+  --liquid-blur: calc(4px + var(--liquid-glass-tint, 0.5) * 26px);
+  --liquid-saturate: calc(1.55 + var(--liquid-glass-tint, 0.5) * 0.45);
   --lq-tint: rgb(255 255 255 / calc(0.12 + var(--liquid-glass-tint, 0.5) * 0.62));
   --lq-tint-deep: rgb(255 255 255 / calc(0.05 + var(--liquid-glass-tint, 0.5) * 0.28));
 }
@@ -152,15 +152,15 @@ html > body[data-scroll-locked] {
   --apple-fill-over-glass-pressed: rgba(255, 255, 255, 0.24);
 
   /* Matches Apple iOS 27 Dark Glass (luminous translucent glass responsive to --liquid-glass-tint) */
-  --liquid-surface-alpha: calc(0.22 + var(--liquid-glass-tint, 0.5) * 0.62);
-  --liquid-surface-menu-alpha: calc(0.4 + var(--liquid-glass-tint, 0.5) * 0.52);
-  --liquid-surface-sheet-alpha: calc(0.5 + var(--liquid-glass-tint, 0.5) * 0.44);
+  --liquid-surface-alpha: calc(0.16 + var(--liquid-glass-tint, 0.5) * 0.68);
+  --liquid-surface-menu-alpha: calc(0.22 + var(--liquid-glass-tint, 0.5) * 0.66);
+  --liquid-surface-sheet-alpha: calc(0.2 + var(--liquid-glass-tint, 0.5) * 0.68);
   --liquid-surface: rgb(26 26 30 / var(--liquid-surface-alpha));
   --liquid-surface-hover: rgb(38 38 44 / min(0.96, calc(var(--liquid-surface-alpha) + 0.1)));
   --liquid-surface-menu: rgb(26 26 30 / var(--liquid-surface-menu-alpha));
   --liquid-surface-sheet: rgb(22 22 26 / var(--liquid-surface-sheet-alpha));
-  --liquid-blur: calc(10px + var(--liquid-glass-tint, 0.5) * 26px);
-  --liquid-saturate: calc(1.45 + var(--liquid-glass-tint, 0.5) * 0.55);
+  --liquid-blur: calc(4px + var(--liquid-glass-tint, 0.5) * 26px);
+  --liquid-saturate: calc(1.55 + var(--liquid-glass-tint, 0.5) * 0.45);
 
   --lq-tint: rgb(255 255 255 / calc(0.06 + var(--liquid-glass-tint, 0.5) * 0.36));
   --lq-tint-deep: rgb(160 160 175 / calc(0.04 + var(--liquid-glass-tint, 0.5) * 0.22));
@@ -199,15 +199,15 @@ html > body[data-scroll-locked] {
 
 .dark [data-liquid-glass-scope],
 [data-liquid-glass-scope].dark {
-  --liquid-surface-alpha: calc(0.22 + var(--liquid-glass-tint, 0.5) * 0.62);
-  --liquid-surface-menu-alpha: calc(0.4 + var(--liquid-glass-tint, 0.5) * 0.52);
-  --liquid-surface-sheet-alpha: calc(0.5 + var(--liquid-glass-tint, 0.5) * 0.44);
+  --liquid-surface-alpha: calc(0.16 + var(--liquid-glass-tint, 0.5) * 0.68);
+  --liquid-surface-menu-alpha: calc(0.22 + var(--liquid-glass-tint, 0.5) * 0.66);
+  --liquid-surface-sheet-alpha: calc(0.2 + var(--liquid-glass-tint, 0.5) * 0.68);
   --liquid-surface: rgb(26 26 30 / var(--liquid-surface-alpha));
   --liquid-surface-hover: rgb(38 38 44 / min(0.96, calc(var(--liquid-surface-alpha) + 0.1)));
   --liquid-surface-menu: rgb(26 26 30 / var(--liquid-surface-menu-alpha));
   --liquid-surface-sheet: rgb(22 22 26 / var(--liquid-surface-sheet-alpha));
-  --liquid-blur: calc(10px + var(--liquid-glass-tint, 0.5) * 26px);
-  --liquid-saturate: calc(1.45 + var(--liquid-glass-tint, 0.5) * 0.55);
+  --liquid-blur: calc(4px + var(--liquid-glass-tint, 0.5) * 26px);
+  --liquid-saturate: calc(1.55 + var(--liquid-glass-tint, 0.5) * 0.45);
   --lq-tint: rgb(255 255 255 / calc(0.06 + var(--liquid-glass-tint, 0.5) * 0.36));
   --lq-tint-deep: rgb(160 160 175 / calc(0.04 + var(--liquid-glass-tint, 0.5) * 0.22));
 }

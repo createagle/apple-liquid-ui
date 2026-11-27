@@ -9,15 +9,14 @@ import {
   ChevronDownIcon,
   ChevronsUpDownIcon,
   ChevronUpIcon,
-  XIcon,
 } from "lucide-react"
 import { motion, useReducedMotion } from "motion/react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { LIQUID_PRESS_SCALE, LIQUID_SPRINGS } from "@/lib/liquid-motion"
+import { LiquidSurfaceBackdrop } from "@/components/ui/liquid-surface"
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
@@ -232,21 +231,41 @@ function Select({
 
 function SelectGroup({
   className,
+  children,
   ...props
 }: React.ComponentProps<"div"> & SelectPrimitive.Group.Props) {
   const { isMobile } = useSelectContext()
 
   if (isMobile) {
+    const labelNodes: React.ReactNode[] = []
+    const itemNodes: React.ReactNode[] = []
+
+    React.Children.forEach(children, (child) => {
+      if (
+        React.isValidElement(child) &&
+        (child.type as { displayName?: string } | null)?.displayName ===
+          "SelectLabel"
+      ) {
+        labelNodes.push(child)
+      } else {
+        itemNodes.push(child)
+      }
+    })
+
     return (
       <div
         data-slot="select-group"
         role="group"
-        className={cn(
-          "overflow-hidden rounded-2xl bg-black/[0.04] divide-y divide-black/[0.06] dark:bg-white/[0.07] dark:divide-white/[0.08]",
-          className
-        )}
+        className={cn("flex flex-col gap-1.5", className)}
         {...(props as React.ComponentProps<"div">)}
-      />
+      >
+        {labelNodes}
+        {itemNodes.length > 0 ? (
+          <div className="overflow-hidden rounded-2xl bg-black/[0.04] divide-y divide-black/[0.06] dark:bg-white/[0.07] dark:divide-white/[0.08]">
+            {itemNodes}
+          </div>
+        ) : null}
+      </div>
     )
   }
 
@@ -255,7 +274,9 @@ function SelectGroup({
       data-slot="select-group"
       className={cn("scroll-my-1", className)}
       {...props}
-    />
+    >
+      {children}
+    </SelectPrimitive.Group>
   )
 }
 
@@ -464,27 +485,22 @@ function SelectContent({
     return (
       <DrawerContent
         data-slot="select-content"
+        backdrop={<LiquidSurfaceBackdrop radius={32} bezel={24} />}
         className={cn(
-          // Apple iOS 27 Floating Liquid Glass Bottom Sheet (r=32px, detached inset, responds to --liquid-glass-tint)
-          "[--drawer-inset:10px] [--drawer-bleed-background:transparent]",
-          "rounded-[32px]! border-0! bg-(--liquid-surface-sheet)! text-neutral-900 [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))]",
-          "shadow-[0_24px_64px_-12px_rgba(0,0,0,0.22),0_4px_16px_-4px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.95)]",
-          "dark:text-white dark:shadow-[0_24px_64px_-12px_rgba(0,0,0,0.68),0_0_0_0.5px_rgba(255,255,255,0.16),inset_0_1px_0_rgba(255,255,255,0.22)]",
+          // Apple iOS 27 Edge-to-Edge Liquid Glass Bottom Sheet (r-top=32px, flush left/right/bottom, true optical bezel refraction)
+          "[--drawer-inset:0px] [--drawer-bleed-background:transparent]",
+          "rounded-t-[32px]! rounded-b-none! border-0! bg-transparent! text-neutral-900",
+          "shadow-[0_-16px_48px_-12px_rgba(0,0,0,0.22),0_0_0_0.5px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.92)]",
+          "dark:text-white dark:shadow-[0_-20px_56px_-12px_rgba(0,0,0,0.68),0_0_0_0.5px_rgba(255,255,255,0.16),inset_0_1px_0_rgba(255,255,255,0.22)]",
           "[&_[data-slot=drawer-swipe-handle]]:h-4 [&_[data-slot=drawer-swipe-handle]]:after:h-[5px] [&_[data-slot=drawer-swipe-handle]]:after:w-9 [&_[data-slot=drawer-swipe-handle]]:after:bg-black/20 dark:[&_[data-slot=drawer-swipe-handle]]:after:bg-white/25",
           "after:hidden",
           className
         )}
       >
-        <DrawerHeader className="flex-row items-center justify-between px-5 pt-3 pb-2 text-left">
-          <DrawerTitle className="text-[17px] font-semibold tracking-[-0.015em] text-foreground">
+        <DrawerHeader className="items-center px-5 pt-3 pb-2 text-center">
+          <DrawerTitle className="text-[18px] leading-snug font-semibold tracking-[-0.015em] text-foreground">
             {title ?? "请选择"}
           </DrawerTitle>
-          <DrawerClose
-            aria-label="关闭"
-            className="inline-flex size-8 cursor-pointer items-center justify-center rounded-full bg-black/[0.06] text-foreground/75 transition-colors active:bg-black/[0.12] dark:bg-white/[0.12] dark:text-white/80 dark:active:bg-white/[0.2]"
-          >
-            <XIcon className="size-4" />
-          </DrawerClose>
         </DrawerHeader>
 
         <div
@@ -511,9 +527,8 @@ function SelectContent({
           data-slot="select-content"
           data-align-trigger={alignItemWithTrigger}
           className={cn(
-            // Apple macOS 27 Spotless Liquid Glass Floating Menu (r=14px, responds to --liquid-glass-tint)
-            "relative isolate z-50 max-h-(--available-height) min-w-[max(var(--anchor-width),11rem)] origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-[14px] p-1.5",
-            "bg-(--liquid-surface-menu) text-neutral-900 [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))]",
+            // Apple macOS 27 Spotless Liquid Glass Floating Menu (r=14px, true optical bezel refraction)
+            "relative isolate z-50 max-h-(--available-height) min-w-[max(var(--anchor-width),11rem)] origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-[14px] bg-transparent p-1.5 text-neutral-900",
             "shadow-[0_18px_44px_-10px_rgba(0,0,0,0.18),0_4px_12px_-2px_rgba(0,0,0,0.08),0_0_0_0.5px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.92)]",
             "dark:text-white dark:shadow-[0_20px_48px_-10px_rgba(0,0,0,0.58),0_0_0_0.5px_rgba(255,255,255,0.16),inset_0_1px_0_rgba(255,255,255,0.2)]",
             "transition-[transform,opacity] duration-180 ease-[cubic-bezier(0.22,1,0.36,1)]",
@@ -522,6 +537,7 @@ function SelectContent({
           )}
           {...props}
         >
+          <LiquidSurfaceBackdrop radius={14} bezel={14} tone="menu" />
           <SelectScrollUpButton />
           <SelectPrimitive.List className="flex flex-col gap-0.5">
             {children}
@@ -544,7 +560,7 @@ function SelectLabel({
       <div
         data-slot="select-label"
         className={cn(
-          "px-4 pt-2.5 pb-1 text-xs font-semibold tracking-wide text-muted-foreground",
+          "px-2 pt-1 text-[13px] font-semibold tracking-[-0.01em] text-foreground/85",
           className
         )}
         {...(props as React.ComponentProps<"div">)}
@@ -563,6 +579,7 @@ function SelectLabel({
     />
   )
 }
+SelectLabel.displayName = "SelectLabel"
 
 function SelectItem({
   className,

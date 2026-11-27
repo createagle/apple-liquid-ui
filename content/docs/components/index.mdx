@@ -30,14 +30,19 @@ keywords:
 
 <Cards>
   <Card
+    title="AlertDialog 警示框"
+    description="严格还原 Apple 27 官方警示框规范：桌面端 26px 圆角紧凑布局，移动端 34px 大圆角与 48px 独立胶囊操作按钮。"
+    href="/docs/components/alert-dialog"
+  />
+  <Card
     title="Button 按钮"
     description="按设备尺寸自动切换 iOS 27 / macOS 27 形态的响应式按钮，保持 shadcn 6 种标准语义变体并支持正交 glass 液态玻璃材质。"
     href="/docs/components/button"
   />
   <Card
-    title="Tabs 选项卡"
-    description="支持悬浮玻璃胶囊、iOS 27 悬浮 Tab Bar 与分段控制器，按住滑块拖动可体验液态折射透镜放大与速度拉伸。"
-    href="/docs/components/tabs"
+    title="Dialog 对话框"
+    description="桌面端呈现 macOS 27 居中液态玻璃弹窗，移动端自动切换为可下滑关闭的 iOS 27 底部液态玻璃 Sheet。"
+    href="/docs/components/dialog"
   />
   <Card
     title="Select 选择器"
@@ -45,14 +50,19 @@ keywords:
     href="/docs/components/select"
   />
   <Card
+    title="Slider 滑块"
+    description="macOS 27 / iOS 27 横胶囊液态玻璃滑块，拖动时膨胀为透明折射水滴，支持等距刻度、双滑块区间与控制中心玻璃轨道。"
+    href="/docs/components/slider"
+  />
+  <Card
     title="Switch 开关"
     description="按住或拖动滑块时膨胀为透明液态折射水滴，支持实时轨道色彩渐变、速度拉伸与响应式 iOS / macOS 尺寸与色彩切换。"
     href="/docs/components/switch"
   />
   <Card
-    title="Slider 滑块"
-    description="macOS 27 / iOS 27 横胶囊液态玻璃滑块，拖动时膨胀为透明折射水滴，支持等距刻度、双滑块区间与控制中心玻璃轨道。"
-    href="/docs/components/slider"
+    title="Tabs 选项卡"
+    description="支持悬浮玻璃胶囊、iOS 27 悬浮 Tab Bar 与分段控制器，按住滑块拖动可体验液态折射透镜放大与速度拉伸。"
+    href="/docs/components/tabs"
   />
 </Cards>
 
@@ -73,3 +83,5 @@ keywords:
 - `public/r/select.json`：响应式 Select（自动关联 `@apple-liquid/drawer`、`hooks/use-mobile.ts` 与 `@apple-liquid/liquid-glass`）
 - `public/r/switch.json`：响应式 Liquid Glass Switch（自动关联 `@apple-liquid/liquid-lens`、`hooks/use-mobile.ts` 与 `@apple-liquid/liquid-glass`）
 - `public/r/slider.json`：响应式 Liquid Glass Slider（自动关联 `@apple-liquid/liquid-lens`、`hooks/use-mobile.ts` 与 `@apple-liquid/liquid-glass`）
+- `public/r/dialog.json`：响应式 Liquid Glass Dialog（自动关联 `@apple-liquid/drawer`、`@apple-liquid/button`、`hooks/use-mobile.ts` 与 `@apple-liquid/liquid-glass`）
+- `public/r/alert-dialog.json`：响应式 Liquid Glass AlertDialog（自动关联 `@apple-liquid/button` 与 `@apple-liquid/liquid-glass`）

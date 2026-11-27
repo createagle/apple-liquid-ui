@@ -1,0 +1,103 @@
+---
+title: Dialog 对话框
+description: 响应式 Apple Liquid Glass 对话框：桌面端呈现 macOS 27 居中悬浮液态玻璃弹窗，移动端自动切换为可下滑关闭的 iOS 27 底部浮动液态 Sheet。
+keywords:
+  - Dialog
+  - 对话框
+  - 弹窗
+  - Modal
+  - Sheet
+  - 底部抽屉
+  - macOS 27
+  - iOS 27
+  - 响应式组件
+  - Liquid Glass
+---
+
+完全兼容 shadcn/ui 标准 JSX API（`<Dialog>` / `<DialogTrigger>` / `<DialogContent>` / `<DialogHeader>` / `<DialogTitle>` / `<DialogDescription>` / `<DialogFooter>` / `<DialogClose>`），无需手写端判断，通过 `useIsMobile()`（`768px`）自动按视口切换交互形态：
+
+- **桌面端（`>= 768px` · macOS 27）**：基于 `@base-ui/react/dialog` 呈现居中悬浮的 `26px` 大圆角液态玻璃窗口，配备柔和内高光、圆形磨砂关闭按钮与通透一体的操作区，实时响应全局通透度滑块（`--liquid-glass-tint`）。
+- **移动端（`< 768px` · iOS 27）**：自动切换为基于 `@base-ui/react/drawer` 的**悬浮底部液态玻璃 Sheet（`32px` 圆角、四周留白）**，支持手势下滑关闭、顶部拖拽手柄与安全区适配。
+
+## 响应式实时预览
+
+默认展示桌面端 macOS 27 居中弹窗；点击预览栏右上角的 **移动端图标** 即可体验 iOS 27 可下滑关闭的底部浮动 Sheet，也可在左侧边栏拖动「玻璃通透度」实时对比透明与色调材质：
+
+<ComponentPreview name="dialog-liquid-hero" />
+
+## 安装（Shadcn Registry）
+
+```bash
+# 通过配置好的 @apple-liquid 命名空间安装（自动关联 drawer、button、use-mobile 与 liquid-glass）
+npx shadcn@latest add @apple-liquid/dialog
+
+# 或直接通过 URL 安装
+npx shadcn@latest add https://your-domain.com/r/dialog.json
+```
+
+## 共享设置弹窗
+
+支持在液态玻璃表面内部自然组合 `Switch`、`Button` 与轻量半透明分组卡片，且可通过 `DialogFooter` 的 `showCloseButton` 快速挂载关闭按钮：
+
+<ComponentPreview name="dialog-share-sheet" />
+
+## 长内容滚动弹窗
+
+支持通过 `className` 灵活扩展最大宽度（如 `md:max-w-lg`），在桌面与移动端均能安全处理长文本滚动：
+
+<ComponentPreview name="dialog-scrollable" />
+
+## 使用方式
+
+```tsx
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+
+export function Example() {
+  return (
+    <Dialog>
+      <DialogTrigger render={<Button variant="secondary">打开弹窗</Button>} />
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>编辑个人资料</DialogTitle>
+          <DialogDescription>
+            修改后的信息将同步到你的所有设备。
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose render={<Button variant="secondary" surface="over-glass" />}>
+            取消
+          </DialogClose>
+          <DialogClose render={<Button variant="default" />}>
+            存储更改
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+```
+
+## Props API
+
+### `DialogContent`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `showCloseButton` | `boolean` | 桌面 `true` / 移动 `false` | 是否在右上角渲染 Apple 圆形关闭按钮（移动端默认使用下滑手势与底部操作关闭） |
+| `className` | `string` | — | 自定义面板宽度、圆角或间距（桌面端默认 `md:max-w-md`） |
+
+### `DialogFooter`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `showCloseButton` | `boolean` | `false` | 是否在操作区末尾自动渲染一个“关闭”次级按钮 |

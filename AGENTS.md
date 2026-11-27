@@ -53,6 +53,11 @@
 - **防止 SVG 滤镜变黑/发灰（Alpha 3 倍叠加问题）**：多通道色散滤镜合成时，**只能由 G 通道保留 `1×Alpha`**，R/B 通道矩阵的 Alpha 行必须为 `0`，否则半透明背景在 `tint = 0` 下叠加后会被压暗成深灰块。
 - **禁止在包含 `<LiquidLens>` 的父元素上直接挂 `backdrop-filter`**：这会在 Chromium 中形成嵌套 Backdrop Root，截断 `LiquidLens` 对下方背景文字的采样。若外框需要毛玻璃，请将其拆为**独立的同级背景层**（参见 `components/ui/tabs.tsx` 中的 `data-slot="tabs-glass-backdrop"`）。
 - **菜单与选择列表对齐规则**：无论是桌面端悬浮菜单还是移动端列表，**选中勾选图标（`✓`）统一放在右侧**，使左侧图标与文字和分组标题对齐。
+- **移动端底部 Drawer 统一标准（所有浮层/选择器通用）**：
+  - 采用贴边顶部大圆角液态玻璃底部 Sheet（`[--drawer-inset:0px]`、`rounded-t-[32px]! rounded-b-none!`、顶部拖拽手柄 `showSwipeHandle`、底层挂载 `<LiquidSurfaceBackdrop radius={32} bezel={24} />`）；
+  - 头部标题与描述文字**水平居中**，**默认不渲染右上角关闭按钮**（由下滑手势、点击遮罩或底部按钮关闭）；
+  - 分组列表（Inset Grouped List）的**分组标题（Label）直接以纯文字形式置于圆角卡片外部上方**，禁止将分组标题包进背景框内，仅将列表项包在半透明圆角卡片容器中。
+- **按钮展示克制规则**：在组件文档与 Demo 中，除非明确演示 `Button` 的 `glass` 材质对比，否则常规触发按钮与示例按钮默认**不叠加 `glass`**。
 - **Motion 动效与无障碍**：使用 `lib/liquid-motion.ts` 中的 `LIQUID_SPRINGS` 与 `LIQUID_PRESS_SCALE`，并始终配合 `useReducedMotion()` 与 `disableMotion` prop。
 
 ### 2.5 纯静态导出与 Registry 兼容性
@@ -68,6 +73,7 @@
 | `components/ui/` | 组件库核心源码（全量 65 个组件及基础文件，`scripts/sync-registry.mjs` 自动扫描源） |
 | `components/ui/liquid-glass-provider.tsx` | 全局/局部 Liquid Glass 通透度 `LiquidGlassProvider`、`useLiquidGlass` 与 `LiquidGlassTintSlider` |
 | `components/ui/liquid-lens.tsx` | 零脏边/零灰化圆角 SDF 光学凸透镜折射水滴组件（含安全单通道 Alpha SVG 滤镜） |
+| `components/ui/liquid-surface.tsx` | 大面积浮层容器通用光学折射基座（`LiquidSurfaceBackdrop`，边缘 SDF 折射 + 中心平整 + 联动 `--liquid-glass-tint`） |
 | `lib/liquid-motion.ts` | Apple macOS 27 / iOS 27 Motion 弹簧阻尼预设（`macosPress` / `iosPress` / `morph` / `specular`） |
 | `hooks/use-mobile.ts` | 基于 `768px` 断点的设备宽度检测 Hook（`useIsMobile()`） |
 | `components/demos/*-demos.tsx` | 文档站交互 Demo 组件 |

@@ -36,6 +36,16 @@ import {
   SliderRangeDemo,
   SliderTicksDemo,
 } from '@/components/demos/slider-demos';
+import {
+  DialogLiquidHeroDemo,
+  DialogScrollableDemo,
+  DialogShareSheetDemo,
+} from '@/components/demos/dialog-demos';
+import {
+  AlertDialogDestructiveDemo,
+  AlertDialogLiquidHeroDemo,
+  AlertDialogStackedDemo,
+} from '@/components/demos/alert-dialog-demos';
 
 export interface DemoRegistryEntry {
   title: string;
@@ -237,6 +247,56 @@ export const DEMO_REGISTRY = {
     exportName: 'SliderControlCenterDemo',
     mobileHeight: 360,
     tabletHeight: 320,
+  },
+  'dialog-liquid-hero': {
+    title: '响应式液态弹窗（桌面 Dialog ↔ 移动 Sheet）',
+    component: DialogLiquidHeroDemo,
+    filePath: 'components/demos/dialog-demos.tsx',
+    exportName: 'DialogLiquidHeroDemo',
+    installCommand: 'npx shadcn@latest add @apple-liquid/dialog',
+    mobileHeight: 540,
+    tabletHeight: 420,
+  },
+  'dialog-share-sheet': {
+    title: '共享设置弹窗',
+    component: DialogShareSheetDemo,
+    filePath: 'components/demos/dialog-demos.tsx',
+    exportName: 'DialogShareSheetDemo',
+    mobileHeight: 520,
+    tabletHeight: 400,
+  },
+  'dialog-scrollable': {
+    title: '长内容滚动弹窗',
+    component: DialogScrollableDemo,
+    filePath: 'components/demos/dialog-demos.tsx',
+    exportName: 'DialogScrollableDemo',
+    mobileHeight: 560,
+    tabletHeight: 460,
+  },
+  'alert-dialog-liquid-hero': {
+    title: '响应式液态警示框（macOS 27 ↔ iOS 27）',
+    component: AlertDialogLiquidHeroDemo,
+    filePath: 'components/demos/alert-dialog-demos.tsx',
+    exportName: 'AlertDialogLiquidHeroDemo',
+    installCommand: 'npx shadcn@latest add @apple-liquid/alert-dialog',
+    mobileHeight: 460,
+    tabletHeight: 380,
+  },
+  'alert-dialog-destructive': {
+    title: '危险操作确认（Destructive）',
+    component: AlertDialogDestructiveDemo,
+    filePath: 'components/demos/alert-dialog-demos.tsx',
+    exportName: 'AlertDialogDestructiveDemo',
+    mobileHeight: 460,
+    tabletHeight: 380,
+  },
+  'alert-dialog-stacked': {
+    title: '多按钮堆叠警示框（Stacked）',
+    component: AlertDialogStackedDemo,
+    filePath: 'components/demos/alert-dialog-demos.tsx',
+    exportName: 'AlertDialogStackedDemo',
+    mobileHeight: 500,
+    tabletHeight: 420,
   },
 } as const satisfies Record<string, DemoRegistryEntry>;
 
