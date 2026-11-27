@@ -3,13 +3,20 @@
   "pages": [
     "index",
     "alert-dialog",
+    "badge",
     "button",
+    "card",
+    "checkbox",
     "context-menu",
     "dialog",
     "dropdown-menu",
+    "input",
+    "popover",
+    "radio-group",
     "select",
     "slider",
     "switch",
-    "tabs"
+    "tabs",
+    "textarea"
   ]
 }

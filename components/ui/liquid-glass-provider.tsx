@@ -3,6 +3,9 @@
 import * as React from "react"
 import { cn } from "cn"
 
+import { Badge } from "@/components/ui/badge"
+import { Slider } from "@/components/ui/slider"
+
 export const LIQUID_GLASS_PRESETS = {
   clear: 0,
   regular: 0.5,
@@ -11,9 +14,89 @@ export const LIQUID_GLASS_PRESETS = {
 
 export type LiquidGlassPreset = keyof typeof LIQUID_GLASS_PRESETS
 
+// Apple 27 UI Kit "System Colors" (pressed = "Light Vibrant" / "Dark plus-lighter" swatches).
+// Pink follows the macOS System Settings accent (`controlAccentColor` #F74F9E), since
+// systemPink (#FF2D55) is nearly indistinguishable from systemRed next to it.
+// Yellow light stays deepened (#F5A600 vs kit #FFCC00) to keep white labels legible.
+export const LIQUID_GLASS_ACCENTS = {
+  blue: {
+    label: "蓝色",
+    light: "#0088ff",
+    dark: "#0091ff",
+    pressedLight: "#0078f0",
+    pressedDark: "#0a99ff",
+  },
+  purple: {
+    label: "紫色",
+    light: "#cb30e0",
+    dark: "#db34f2",
+    pressedLight: "#b72bc9",
+    pressedDark: "#e647fc",
+  },
+  pink: {
+    label: "粉色",
+    light: "#f74f9e",
+    dark: "#f74f9e",
+    pressedLight: "#d93b86",
+    pressedDark: "#ff59a8",
+  },
+  red: {
+    label: "红色",
+    light: "#ff383c",
+    dark: "#ff4245",
+    pressedLight: "#f52f32",
+    pressedDark: "#ff4747",
+  },
+  orange: {
+    label: "橙色",
+    light: "#ff8d28",
+    dark: "#ff9230",
+    pressedLight: "#f58625",
+    pressedDark: "#ff9e33",
+  },
+  yellow: {
+    label: "黄色",
+    light: "#f5a600",
+    dark: "#ffd600",
+    pressedLight: "#dc9200",
+    pressedDark: "#ffe014",
+  },
+  green: {
+    label: "绿色",
+    light: "#34c759",
+    dark: "#30d158",
+    pressedLight: "#26bf4d",
+    pressedDark: "#3bdb63",
+  },
+  graphite: {
+    label: "石墨灰",
+    light: "#8e8e93",
+    dark: "#98989d",
+    pressedLight: "#848489",
+    pressedDark: "#a2a2a7",
+  },
+} as const
+
+export type LiquidGlassAccentPreset = keyof typeof LIQUID_GLASS_ACCENTS
+export type LiquidGlassAccent = LiquidGlassAccentPreset | (string & {})
+
+export const LIQUID_GLASS_ACCENT_NAMES = Object.keys(
+  LIQUID_GLASS_ACCENTS
+) as LiquidGlassAccentPreset[]
+
+export function isLiquidGlassAccentPreset(
+  value: unknown
+): value is LiquidGlassAccentPreset {
+  return typeof value === "string" && value in LIQUID_GLASS_ACCENTS
+}
+
 export const LIQUID_GLASS_STORAGE_KEY = "apple-liquid-ui:glass-tint"
 export const LIQUID_GLASS_MESSAGE_TYPE = "apple-liquid:set-glass-tint"
+export const LIQUID_GLASS_ACCENT_STORAGE_KEY = "apple-liquid-ui:accent"
+export const LIQUID_GLASS_ACCENT_MESSAGE_TYPE = "apple-liquid:set-accent"
+
 const DEFAULT_TINT: number = LIQUID_GLASS_PRESETS.regular
+const DEFAULT_ACCENT: LiquidGlassAccentPreset = "blue"
 
 export function clampLiquidGlassTint(value: number): number {
   if (!Number.isFinite(value)) return DEFAULT_TINT
@@ -29,6 +112,16 @@ export function resolveLiquidGlassTint(
     return LIQUID_GLASS_PRESETS[value]
   }
   return clampLiquidGlassTint(fallback)
+}
+
+export function resolveLiquidGlassAccent(
+  value: LiquidGlassAccent | undefined,
+  fallback: LiquidGlassAccent = DEFAULT_ACCENT
+): LiquidGlassAccent {
+  if (typeof value === "string" && value.trim().length > 0) {
+    return value.trim()
+  }
+  return fallback
 }
 
 export function getLiquidGlassPresetName(
@@ -61,6 +154,18 @@ export interface LiquidGlassContextValue {
    * Reset tint back to the provider's `defaultTint`.
    */
   resetTint: () => void
+  /**
+   * Active Apple accent color preset name (e.g. `"blue"`, `"purple"`) or custom CSS color string.
+   */
+  accent: LiquidGlassAccent
+  /**
+   * Update the active accent color across all Liquid Glass components.
+   */
+  setAccent: (next: LiquidGlassAccent) => void
+  /**
+   * Reset accent color back to the provider's `defaultAccent`.
+   */
+  resetAccent: () => void
 }
 
 const LiquidGlassContext = React.createContext<LiquidGlassContextValue | null>(
@@ -83,13 +188,32 @@ export interface LiquidGlassProviderProps {
    */
   onTintChange?: (tint: number) => void
   /**
-   * Persist user preference in `localStorage`. Pass `false` to disable persistence.
+   * Initial Apple accent color preset or custom CSS color string.
+   * @default "blue"
+   */
+  defaultAccent?: LiquidGlassAccent
+  /**
+   * Controlled accent color preset or custom CSS color string.
+   */
+  accent?: LiquidGlassAccent
+  /**
+   * Callback fired whenever the accent color changes.
+   */
+  onAccentChange?: (accent: LiquidGlassAccent) => void
+  /**
+   * Persist user tint preference in `localStorage`. Pass `false` to disable persistence.
    * Automatically disabled when `syncToRoot={false}` unless explicitly provided.
    * @default "apple-liquid-ui:glass-tint"
    */
   storageKey?: string | false
   /**
-   * When `true` (default), writes `--liquid-glass-tint` onto `document.documentElement`
+   * Persist user accent color preference in `localStorage`. Pass `false` to disable persistence.
+   * Automatically disabled when `syncToRoot={false}` unless explicitly provided.
+   * @default "apple-liquid-ui:accent"
+   */
+  accentStorageKey?: string | false
+  /**
+   * When `true` (default), writes `--liquid-glass-tint` & `data-apple-accent` onto `document.documentElement`
    * so all components and portaled overlays (Select dropdowns, Drawers, Dialogs, Popovers)
    * stay in sync. Set to `false` to isolate a local subtree (e.g. side-by-side comparison).
    * @default true
@@ -106,11 +230,17 @@ export function LiquidGlassProvider({
   defaultTint = DEFAULT_TINT,
   tint: controlledTint,
   onTintChange,
+  defaultAccent = DEFAULT_ACCENT,
+  accent: controlledAccent,
+  onAccentChange,
   storageKey,
+  accentStorageKey,
   syncToRoot = true,
   className,
 }: LiquidGlassProviderProps) {
   const initialTint = resolveLiquidGlassTint(defaultTint, DEFAULT_TINT)
+  const initialAccent = resolveLiquidGlassAccent(defaultAccent, DEFAULT_ACCENT)
+
   const resolvedStorageKey =
     storageKey !== undefined
       ? storageKey
@@ -118,51 +248,104 @@ export function LiquidGlassProvider({
         ? LIQUID_GLASS_STORAGE_KEY
         : false
 
+  const resolvedAccentStorageKey =
+    accentStorageKey !== undefined
+      ? accentStorageKey
+      : syncToRoot
+        ? LIQUID_GLASS_ACCENT_STORAGE_KEY
+        : false
+
   const isControlled = controlledTint !== undefined
   const [uncontrolledTint, setUncontrolledTint] =
     React.useState<number>(initialTint)
+
+  const isAccentControlled = controlledAccent !== undefined
+  const [uncontrolledAccent, setUncontrolledAccent] =
+    React.useState<LiquidGlassAccent>(initialAccent)
 
   const currentTint = isControlled
     ? clampLiquidGlassTint(controlledTint)
     : uncontrolledTint
 
-  // Hydrate persisted preference and listen for cross-tab / iframe sync
-  React.useEffect(() => {
-    if (isControlled || !resolvedStorageKey) return
+  const currentAccent = isAccentControlled
+    ? resolveLiquidGlassAccent(controlledAccent, DEFAULT_ACCENT)
+    : uncontrolledAccent
 
-    try {
-      const saved = window.localStorage.getItem(resolvedStorageKey)
-      if (saved !== null) {
-        const parsed = Number.parseFloat(saved)
+  // Hydrate persisted tint & accent preferences and listen for cross-tab / iframe sync
+  React.useEffect(() => {
+    if (!isControlled && resolvedStorageKey) {
+      try {
+        const saved = window.localStorage.getItem(resolvedStorageKey)
+        if (saved !== null) {
+          const parsed = Number.parseFloat(saved)
+          if (Number.isFinite(parsed)) {
+            setUncontrolledTint(clampLiquidGlassTint(parsed))
+          }
+        }
+      } catch {
+        // Ignore storage access errors
+      }
+    }
+
+    if (!isAccentControlled && resolvedAccentStorageKey) {
+      try {
+        const savedAccent = window.localStorage.getItem(
+          resolvedAccentStorageKey
+        )
+        if (savedAccent && savedAccent.trim().length > 0) {
+          setUncontrolledAccent(savedAccent.trim())
+        }
+      } catch {
+        // Ignore storage access errors
+      }
+    }
+
+    const handleStorage = (event: StorageEvent) => {
+      if (
+        !isControlled &&
+        resolvedStorageKey &&
+        event.key === resolvedStorageKey &&
+        event.newValue !== null
+      ) {
+        const parsed = Number.parseFloat(event.newValue)
         if (Number.isFinite(parsed)) {
           setUncontrolledTint(clampLiquidGlassTint(parsed))
         }
       }
-    } catch {
-      // Ignore storage access errors
-    }
-
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key !== resolvedStorageKey || event.newValue === null) return
-      const parsed = Number.parseFloat(event.newValue)
-      if (Number.isFinite(parsed)) {
-        setUncontrolledTint(clampLiquidGlassTint(parsed))
+      if (
+        !isAccentControlled &&
+        resolvedAccentStorageKey &&
+        event.key === resolvedAccentStorageKey &&
+        event.newValue
+      ) {
+        setUncontrolledAccent(event.newValue.trim())
       }
     }
 
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return
       const data = event.data as
-        | { type?: unknown; tint?: unknown }
+        | { type?: unknown; tint?: unknown; accent?: unknown }
         | null
         | undefined
+      if (!data) return
+
       if (
-        data &&
+        !isControlled &&
         data.type === LIQUID_GLASS_MESSAGE_TYPE &&
         typeof data.tint === "number" &&
         Number.isFinite(data.tint)
       ) {
         setUncontrolledTint(clampLiquidGlassTint(data.tint))
+      }
+
+      if (
+        !isAccentControlled &&
+        data.type === LIQUID_GLASS_ACCENT_MESSAGE_TYPE &&
+        typeof data.accent === "string" &&
+        data.accent.trim().length > 0
+      ) {
+        setUncontrolledAccent(data.accent.trim())
       }
     }
 
@@ -172,14 +355,39 @@ export function LiquidGlassProvider({
       window.removeEventListener("storage", handleStorage)
       window.removeEventListener("message", handleMessage)
     }
-  }, [isControlled, resolvedStorageKey])
+  }, [
+    isAccentControlled,
+    isControlled,
+    resolvedAccentStorageKey,
+    resolvedStorageKey,
+  ])
 
-  // Sync CSS custom property to `:root` so portaled overlays inherit automatically
+  // Sync tint CSS custom property to `:root` so portaled overlays inherit automatically
+  React.useEffect(() => {
+    if (!syncToRoot) return
+    document.documentElement.style.setProperty(
+      "--liquid-glass-tint",
+      String(currentTint)
+    )
+  }, [currentTint, syncToRoot])
+
+  // Sync accent color attribute / custom CSS property to `:root`
   React.useEffect(() => {
     if (!syncToRoot) return
     const root = document.documentElement
-    root.style.setProperty("--liquid-glass-tint", String(currentTint))
-  }, [currentTint, syncToRoot])
+    if (isLiquidGlassAccentPreset(currentAccent)) {
+      root.setAttribute("data-apple-accent", currentAccent)
+      root.style.removeProperty("--apple-accent")
+      root.style.removeProperty("--apple-accent-pressed")
+    } else {
+      root.setAttribute("data-apple-accent", "custom")
+      root.style.setProperty("--apple-accent", currentAccent)
+      root.style.setProperty(
+        "--apple-accent-pressed",
+        `color-mix(in srgb, ${currentAccent} 86%, black)`
+      )
+    }
+  }, [currentAccent, syncToRoot])
 
   const setTint = React.useCallback(
     (next: number | LiquidGlassPreset) => {
@@ -210,6 +418,33 @@ export function LiquidGlassProvider({
     setTint(initialTint)
   }, [initialTint, setTint])
 
+  const setAccent = React.useCallback(
+    (next: LiquidGlassAccent) => {
+      const resolved = resolveLiquidGlassAccent(next, currentAccent)
+      if (!isAccentControlled) {
+        setUncontrolledAccent(resolved)
+      }
+      if (resolvedAccentStorageKey) {
+        try {
+          window.localStorage.setItem(resolvedAccentStorageKey, resolved)
+        } catch {
+          // Ignore storage access errors
+        }
+      }
+      onAccentChange?.(resolved)
+    },
+    [
+      currentAccent,
+      isAccentControlled,
+      onAccentChange,
+      resolvedAccentStorageKey,
+    ]
+  )
+
+  const resetAccent = React.useCallback(() => {
+    setAccent(initialAccent)
+  }, [initialAccent, setAccent])
+
   const value = React.useMemo<LiquidGlassContextValue>(
     () => ({
       tint: currentTint,
@@ -217,18 +452,39 @@ export function LiquidGlassProvider({
       preset: getLiquidGlassPresetName(currentTint),
       setPreset,
       resetTint,
+      accent: currentAccent,
+      setAccent,
+      resetAccent,
     }),
-    [currentTint, resetTint, setPreset, setTint]
+    [
+      currentAccent,
+      currentTint,
+      resetAccent,
+      resetTint,
+      setAccent,
+      setPreset,
+      setTint,
+    ]
   )
 
   if (!syncToRoot) {
+    const isPreset = isLiquidGlassAccentPreset(currentAccent)
+    const scopedStyle: React.CSSProperties = {
+      "--liquid-glass-tint": String(currentTint),
+      ...(isPreset
+        ? null
+        : {
+            "--apple-accent": currentAccent,
+            "--apple-accent-pressed": `color-mix(in srgb, ${currentAccent} 86%, black)`,
+          }),
+    } as React.CSSProperties
+
     return (
       <LiquidGlassContext.Provider value={value}>
         <div
           data-liquid-glass-scope=""
-          style={
-            { "--liquid-glass-tint": String(currentTint) } as React.CSSProperties
-          }
+          data-apple-accent={isPreset ? currentAccent : "custom"}
+          style={scopedStyle}
           className={className}
         >
           {children}
@@ -245,8 +501,8 @@ export function LiquidGlassProvider({
 }
 
 /**
- * Access and control the active Liquid Glass transparency / tint level.
- * Gracefully falls back to default `tint = 0.5` when used outside `<LiquidGlassProvider>`.
+ * Access and control the active Liquid Glass transparency / tint level and Apple accent color.
+ * Gracefully falls back to default `tint = 0.5` and `accent = "blue"` when used outside `<LiquidGlassProvider>`.
  */
 export function useLiquidGlass(): LiquidGlassContextValue {
   const ctx = React.useContext(LiquidGlassContext)
@@ -258,6 +514,9 @@ export function useLiquidGlass(): LiquidGlassContextValue {
     preset: "regular",
     setPreset: () => {},
     resetTint: () => {},
+    accent: DEFAULT_ACCENT,
+    setAccent: () => {},
+    resetAccent: () => {},
   }
 }
 
@@ -378,16 +637,20 @@ export function LiquidGlassTintSlider({
           >
             {label}
           </span>
-          <span
-            className={cn(
-              "font-mono tabular-nums",
-              compact
-                ? "text-[10px] text-muted-foreground"
-                : "rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-            )}
-          >
-            {modeLabel}
-          </span>
+          {compact ? (
+            <span className="font-mono text-[10px] text-muted-foreground tabular-nums">
+              {modeLabel}
+            </span>
+          ) : (
+            <Badge
+              variant="secondary"
+              glass={false}
+              size="sm"
+              className="font-mono text-muted-foreground tabular-nums"
+            >
+              {modeLabel}
+            </Badge>
+          )}
         </div>
       ) : null}
 
@@ -395,8 +658,8 @@ export function LiquidGlassTintSlider({
         className={cn(
           "flex items-center",
           compact
-            ? "gap-2 rounded-lg bg-background/70 px-2 py-1.5 ring-1 ring-border/70"
-            : "gap-3 rounded-full bg-black/[0.06] px-4 py-2.5 dark:bg-white/[0.1]"
+            ? "gap-2 rounded-lg bg-background/70 px-2 py-0.5 ring-1 ring-border/70"
+            : "gap-3 rounded-full bg-black/[0.06] px-4 py-1 dark:bg-white/[0.1]"
         )}
       >
         <button
@@ -414,56 +677,19 @@ export function LiquidGlassTintSlider({
           <ClearGlassIcon className={compact ? "size-3.5" : "size-5"} />
         </button>
 
-        <div className="relative flex flex-1 items-center py-1">
-          {/* Background track */}
-          <div
-            aria-hidden="true"
-            className={cn(
-              "relative w-full overflow-hidden rounded-full bg-black/14 dark:bg-white/18",
-              compact ? "h-1" : "h-1.5"
-            )}
-          >
-            <div
-              className="h-full rounded-full bg-(--apple-blue) transition-[width] duration-75"
-              style={{ width: `${percent}%` }}
-            />
-          </div>
-
-          {/* Apple-style tick marks (Clear / Regular / Tinted) */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-1 -bottom-0.5 flex justify-between"
-          >
-            <span className="size-[3px] rounded-full bg-foreground/25" />
-            <span className="size-[3px] rounded-full bg-foreground/25" />
-            <span className="size-[3px] rounded-full bg-foreground/25" />
-          </div>
-
-          {/* Visual Apple pill thumb */}
-          <div
-            aria-hidden="true"
-            className={cn(
-              "pointer-events-none absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.22),0_0_0_0.5px_rgba(0,0,0,0.08)] transition-[left] duration-75",
-              compact ? "h-3.5 w-5" : "h-5 w-8"
-            )}
-            style={{
-              left: `clamp(${compact ? "10px" : "16px"}, ${percent}%, calc(100% - ${compact ? "10px" : "16px"}))`,
-            }}
-          />
-
-          {/* Accessible native range input overlay */}
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.01}
-            value={tint}
-            aria-label="Liquid Glass 通透度（0 为透明，1 为色调）"
-            aria-valuetext={`${modeLabel}（${percent}%）`}
-            onChange={(e) => setTint(Number.parseFloat(e.target.value))}
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-          />
-        </div>
+        <Slider
+          value={tint}
+          onValueChange={(val) =>
+            setTint(Array.isArray(val) ? (val[0] ?? DEFAULT_TINT) : val)
+          }
+          min={0}
+          max={1}
+          step={0.01}
+          ticks={3}
+          size={compact ? "sm" : "default"}
+          aria-label="Liquid Glass 通透度（0 为透明，1 为色调）"
+          className="flex-1"
+        />
 
         <button
           type="button"
@@ -486,6 +712,122 @@ export function LiquidGlassTintSlider({
           “透明”更通透，“色调”可增加不透明度，提升内容和控制项的对比度。
         </p>
       ) : null}
+    </div>
+  )
+}
+
+export interface LiquidGlassAccentPickerProps {
+  /**
+   * Compact presentation for toolbars and sidebars.
+   */
+  compact?: boolean
+  /**
+   * Show the header label and active color name.
+   */
+  showLabel?: boolean
+  /**
+   * Custom label text.
+   * @default "强调色"
+   */
+  label?: React.ReactNode
+  className?: string
+}
+
+/**
+ * Ready-to-use Apple macOS System Settings style Accent Color swatch picker.
+ * Automatically reads and updates the nearest `<LiquidGlassProvider>`.
+ */
+export function LiquidGlassAccentPicker({
+  compact = false,
+  showLabel = true,
+  label = "强调色",
+  className,
+}: LiquidGlassAccentPickerProps) {
+  const { accent, setAccent } = useLiquidGlass()
+  const activeLabel = isLiquidGlassAccentPreset(accent)
+    ? LIQUID_GLASS_ACCENTS[accent].label
+    : "自定义"
+
+  return (
+    <div
+      data-slot="liquid-glass-accent-picker"
+      className={cn("flex flex-col", compact ? "gap-1.5" : "gap-2.5", className)}
+    >
+      {showLabel ? (
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className={cn(
+              "font-medium",
+              compact
+                ? "text-[11px] text-muted-foreground"
+                : "text-sm text-foreground"
+            )}
+          >
+            {label}
+          </span>
+          {compact ? (
+            <span className="text-[10px] text-muted-foreground">
+              {activeLabel}
+            </span>
+          ) : (
+            <Badge
+              variant="secondary"
+              glass={false}
+              size="sm"
+              className="text-muted-foreground"
+            >
+              {activeLabel}
+            </Badge>
+          )}
+        </div>
+      ) : null}
+
+      <div
+        role="radiogroup"
+        aria-label="主题强调色"
+        className={cn(
+          "flex flex-wrap items-center justify-between",
+          compact
+            ? "gap-1 rounded-lg bg-background/70 px-2 py-1.5 ring-1 ring-border/70"
+            : "gap-2 rounded-full bg-black/[0.06] px-3.5 py-2 dark:bg-white/[0.1]"
+        )}
+      >
+        {LIQUID_GLASS_ACCENT_NAMES.map((name) => {
+          const swatch = LIQUID_GLASS_ACCENTS[name]
+          const isActive = accent === name
+          return (
+            <button
+              key={name}
+              type="button"
+              role="radio"
+              aria-checked={isActive}
+              aria-label={`强调色：${swatch.label}`}
+              title={swatch.label}
+              onClick={() => setAccent(name)}
+              className={cn(
+                "relative inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full transition-transform duration-150 outline-none hover:scale-110 active:scale-95 focus-visible:ring-2 focus-visible:ring-(--apple-blue) focus-visible:ring-offset-1",
+                compact ? "size-4" : "size-5.5"
+              )}
+              style={{
+                backgroundColor: swatch.light,
+                boxShadow: isActive
+                  ? `0 0 0 2px var(--background), 0 0 0 3.5px ${swatch.light}`
+                  : "inset 0 1px 1px rgba(255,255,255,0.4), inset 0 -1px 1px rgba(0,0,0,0.16)",
+              }}
+            >
+              {isActive ? (
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.28)]",
+                    compact ? "size-1.5" : "size-2"
+                  )}
+                />
+              ) : null}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

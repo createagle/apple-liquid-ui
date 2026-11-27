@@ -16,6 +16,7 @@ import {
   WifiIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -178,18 +179,15 @@ export function DropdownMenuCheckboxesDemo() {
       <div className="flex flex-wrap items-center justify-center gap-1.5">
         {activeLabels.length > 0 ? (
           activeLabels.map((label) => (
-            <span
-              key={String(label)}
-              className="inline-flex items-center gap-1 rounded-full bg-background/75 px-2.5 py-0.5 text-[11px] font-medium text-foreground/80 backdrop-blur-md"
-            >
-              <CheckCircle2Icon className="size-3 text-(--apple-blue)" />
+            <Badge key={String(label)} variant="secondary" size="sm">
+              <CheckCircle2Icon data-icon="inline-start" className="text-(--apple-blue)" />
               {label}
-            </span>
+            </Badge>
           ))
         ) : (
-          <span className="rounded-full bg-background/70 px-2.5 py-0.5 text-[11px] text-muted-foreground backdrop-blur-md">
+          <Badge variant="secondary" size="sm" className="font-normal text-muted-foreground">
             未启用任何界面元素
-          </span>
+          </Badge>
         )}
       </div>
     </div>

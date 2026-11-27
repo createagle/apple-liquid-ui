@@ -1,0 +1,68 @@
+---
+title: Badge 徽章
+description: 响应式 Apple Liquid Glass 全圆角胶囊徽章：保持 shadcn 6 种语义变体，默认开启液态玻璃质感并联动全局主题强调色，支持 glass={false} 切回实体。
+keywords:
+  - Badge
+  - 徽章
+  - 标签
+  - Tag
+  - Pill
+  - macOS 27
+  - iOS 27
+  - 响应式组件
+  - Liquid Glass
+---
+
+完全兼容 shadcn/ui 标准 JSX API（`<Badge>`，支持 `render` 多态渲染为 `<a>` 等元素），保留原生 6 种语义变体并默认接入 Apple Liquid Glass 与动态主题强调色：
+
+- **全圆角胶囊造型**：统一采用 `rounded-full`，内置 `sm` / `default` / `lg` 三档响应式尺寸。
+- **默认液态玻璃材质**：默认 `glass={true}`，实时响应全局「玻璃通透度」与「主题强调色」；传入 `glass={false}` 可随时切换为高对比度实体徽章。
+
+## 全部语义变体
+
+支持在左侧边栏切换「主题强调色」与「玻璃通透度」，实时观察各变体表现：
+
+<ComponentPreview name="badge-liquid-hero" />
+
+## 安装（Shadcn Registry）
+
+```bash
+npx shadcn@latest add @apple-liquid/badge
+```
+
+## 尺寸阶梯
+
+提供 `sm`、`default`、`lg` 三档胶囊尺寸：
+
+<ComponentPreview name="badge-sizes" />
+
+## 液态玻璃 vs 实体对比
+
+上方为默认 `glass={true}` 液态玻璃胶囊，下方为传入 `glass={false}` 后的实体效果：
+
+<ComponentPreview name="badge-glass-compare" />
+
+## 使用方式
+
+```tsx
+import { Badge } from '@/components/ui/badge';
+
+export function Example() {
+  return (
+    <div className="flex gap-2">
+      <Badge>Liquid Glass</Badge>
+      <Badge variant="secondary">macOS 27</Badge>
+      <Badge variant="destructive">需要更新</Badge>
+    </div>
+  );
+}
+```
+
+## Props API
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `variant` | `'default' \| 'secondary' \| 'destructive' \| 'outline' \| 'ghost' \| 'link'` | `'default'` | shadcn 标准 6 种语义变体（`default` 与 `link` 自动联动全局主题强调色） |
+| `size` | `'sm' \| 'default' \| 'lg'` | `'default'` | 胶囊尺寸阶梯 |
+| `glass` | `boolean` | `true` | 默认开启液态玻璃质感；传入 `false` 切回实体表面 |
+| `render` | `ReactElement` | — | Base UI 多态渲染，例如 `render={<a href="..." />}` |

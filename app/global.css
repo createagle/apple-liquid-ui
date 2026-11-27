@@ -93,9 +93,11 @@ html > body[data-scroll-locked] {
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* Apple macOS 27 & iOS 27 Official System Colors + Luminous Liquid Glass Overrides */
-  --apple-blue: #0088ff;
-  --apple-blue-pressed: #0078f0;
+  /* Apple macOS 27 & iOS 27 Official System Colors + Dynamic Accent Color */
+  --apple-accent: #0088ff;
+  --apple-accent-pressed: #0078f0;
+  --apple-blue: var(--apple-accent);
+  --apple-blue-pressed: var(--apple-accent-pressed);
   --apple-green: #34c759;
   --apple-red: #ff383c;
   --apple-red-pressed: #e5292d;
@@ -106,6 +108,12 @@ html > body[data-scroll-locked] {
   --apple-fill-bordered-ios-pressed: rgba(118, 118, 128, 0.22);
   --apple-fill-over-glass: rgba(0, 0, 0, 0.12);
   --apple-fill-over-glass-pressed: rgba(0, 0, 0, 0.2);
+  /* Destructive tinted button: iOS 27 Bordered (14%) -> macOS 27 Alert Destructive (23%) */
+  --apple-fill-destructive-ios: rgba(255, 56, 60, 0.14);
+  --apple-fill-destructive-ios-pressed: rgba(255, 56, 60, 0.22);
+  --apple-fill-destructive-mac: rgba(245, 47, 50, 0.23);
+  --apple-fill-destructive-mac-pressed: rgba(245, 47, 50, 0.31);
+  --apple-label-destructive-mac: #f52f32;
 
   /* Apple Liquid Glass Transparency <-> Tint (0 = Clear 透明, 0.5 = Regular 标准, 1 = Tinted 色调) */
   --liquid-glass-tint: 0.5;
@@ -119,11 +127,49 @@ html > body[data-scroll-locked] {
   --liquid-blur: calc(4px + var(--liquid-glass-tint, 0.5) * 26px);
   --liquid-saturate: calc(1.55 + var(--liquid-glass-tint, 0.5) * 0.45);
 
+  --lq-accent: var(--apple-accent);
   --lq-tint: rgb(255 255 255 / calc(0.12 + var(--liquid-glass-tint, 0.5) * 0.62));
   --lq-tint-deep: rgb(255 255 255 / calc(0.05 + var(--liquid-glass-tint, 0.5) * 0.28));
 }
 
+/* Apple Official Accent Color Presets (Light Mode) */
+[data-apple-accent="blue"] {
+  --apple-accent: #0088ff;
+  --apple-accent-pressed: #0078f0;
+}
+[data-apple-accent="purple"] {
+  --apple-accent: #cb30e0;
+  --apple-accent-pressed: #b72bc9;
+}
+[data-apple-accent="pink"] {
+  --apple-accent: #f74f9e;
+  --apple-accent-pressed: #d93b86;
+}
+[data-apple-accent="red"] {
+  --apple-accent: #ff383c;
+  --apple-accent-pressed: #f52f32;
+}
+[data-apple-accent="orange"] {
+  --apple-accent: #ff8d28;
+  --apple-accent-pressed: #f58625;
+}
+[data-apple-accent="yellow"] {
+  --apple-accent: #f5a600;
+  --apple-accent-pressed: #dc9200;
+}
+[data-apple-accent="green"] {
+  --apple-accent: #34c759;
+  --apple-accent-pressed: #26bf4d;
+}
+[data-apple-accent="graphite"] {
+  --apple-accent: #8e8e93;
+  --apple-accent-pressed: #848489;
+}
+
 [data-liquid-glass-scope] {
+  --apple-blue: var(--apple-accent);
+  --apple-blue-pressed: var(--apple-accent-pressed);
+  --lq-accent: var(--apple-accent);
   --liquid-surface-alpha: calc(0.16 + var(--liquid-glass-tint, 0.5) * 0.7);
   --liquid-surface-menu-alpha: calc(0.22 + var(--liquid-glass-tint, 0.5) * 0.68);
   --liquid-surface-sheet-alpha: calc(0.2 + var(--liquid-glass-tint, 0.5) * 0.7);
@@ -138,8 +184,10 @@ html > body[data-scroll-locked] {
 }
 
 .dark {
-  --apple-blue: #0091ff;
-  --apple-blue-pressed: #0a99ff;
+  --apple-accent: #0091ff;
+  --apple-accent-pressed: #0a99ff;
+  --apple-blue: var(--apple-accent);
+  --apple-blue-pressed: var(--apple-accent-pressed);
   --apple-green: #30d158;
   --apple-red: #ff4245;
   --apple-red-pressed: #ff5a5d;
@@ -150,6 +198,11 @@ html > body[data-scroll-locked] {
   --apple-fill-bordered-ios-pressed: rgba(120, 120, 128, 0.38);
   --apple-fill-over-glass: rgba(255, 255, 255, 0.15);
   --apple-fill-over-glass-pressed: rgba(255, 255, 255, 0.24);
+  --apple-fill-destructive-ios: rgba(255, 66, 69, 0.14);
+  --apple-fill-destructive-ios-pressed: rgba(255, 66, 69, 0.22);
+  --apple-fill-destructive-mac: rgba(255, 71, 71, 0.25);
+  --apple-fill-destructive-mac-pressed: rgba(255, 71, 71, 0.33);
+  --apple-label-destructive-mac: #ff4747;
 
   /* Matches Apple iOS 27 Dark Glass (luminous translucent glass responsive to --liquid-glass-tint) */
   --liquid-surface-alpha: calc(0.16 + var(--liquid-glass-tint, 0.5) * 0.68);
@@ -197,8 +250,53 @@ html > body[data-scroll-locked] {
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Apple Official Accent Color Presets (Dark Mode) */
+.dark[data-apple-accent="blue"],
+.dark [data-apple-accent="blue"] {
+  --apple-accent: #0091ff;
+  --apple-accent-pressed: #0a99ff;
+}
+.dark[data-apple-accent="purple"],
+.dark [data-apple-accent="purple"] {
+  --apple-accent: #db34f2;
+  --apple-accent-pressed: #e647fc;
+}
+.dark[data-apple-accent="pink"],
+.dark [data-apple-accent="pink"] {
+  --apple-accent: #f74f9e;
+  --apple-accent-pressed: #ff59a8;
+}
+.dark[data-apple-accent="red"],
+.dark [data-apple-accent="red"] {
+  --apple-accent: #ff4245;
+  --apple-accent-pressed: #ff4747;
+}
+.dark[data-apple-accent="orange"],
+.dark [data-apple-accent="orange"] {
+  --apple-accent: #ff9230;
+  --apple-accent-pressed: #ff9e33;
+}
+.dark[data-apple-accent="yellow"],
+.dark [data-apple-accent="yellow"] {
+  --apple-accent: #ffd600;
+  --apple-accent-pressed: #ffe014;
+}
+.dark[data-apple-accent="green"],
+.dark [data-apple-accent="green"] {
+  --apple-accent: #30d158;
+  --apple-accent-pressed: #3bdb63;
+}
+.dark[data-apple-accent="graphite"],
+.dark [data-apple-accent="graphite"] {
+  --apple-accent: #98989d;
+  --apple-accent-pressed: #a2a2a7;
+}
+
 .dark [data-liquid-glass-scope],
 [data-liquid-glass-scope].dark {
+  --apple-blue: var(--apple-accent);
+  --apple-blue-pressed: var(--apple-accent-pressed);
+  --lq-accent: var(--apple-accent);
   --liquid-surface-alpha: calc(0.16 + var(--liquid-glass-tint, 0.5) * 0.68);
   --liquid-surface-menu-alpha: calc(0.22 + var(--liquid-glass-tint, 0.5) * 0.66);
   --liquid-surface-sheet-alpha: calc(0.2 + var(--liquid-glass-tint, 0.5) * 0.68);

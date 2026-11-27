@@ -69,6 +69,7 @@ export default function RootLayout({
 ```tsx
 'use client';
 
+import { Button } from '@/components/ui/button';
 import {
   LiquidGlassTintSlider,
   useLiquidGlass,
@@ -83,11 +84,13 @@ export function AppearanceSettings() {
       <LiquidGlassTintSlider showDescription />
 
       {/* 也可以用 Hook 绑定自定义按钮或预设 */}
-      <div className="flex items-center gap-2 text-xs">
-        <button onClick={() => setPreset('clear')}>透明</button>
-        <button onClick={() => setPreset('regular')}>标准</button>
-        <button onClick={() => setPreset('tinted')}>色调</button>
-        <button onClick={resetTint}>重置（当前：{Math.round(tint * 100)}% / {preset}）</button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="sm" variant="secondary" onClick={() => setPreset('clear')}>透明</Button>
+        <Button size="sm" variant="secondary" onClick={() => setPreset('regular')}>标准</Button>
+        <Button size="sm" variant="secondary" onClick={() => setPreset('tinted')}>色调</Button>
+        <Button size="sm" variant="ghost" onClick={resetTint}>
+          重置（当前：{Math.round(tint * 100)}% / {preset}）
+        </Button>
       </div>
     </div>
   );

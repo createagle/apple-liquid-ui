@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { SparklesIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 export default function HomePage() {
@@ -10,10 +11,10 @@ export default function HomePage() {
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(at_20%_25%,oklch(0.86_0.15_245/0.35)_0px,transparent_52%),radial-gradient(at_80%_20%,oklch(0.84_0.17_320/0.32)_0px,transparent_48%),radial-gradient(at_50%_85%,oklch(0.86_0.14_195/0.3)_0px,transparent_54%)] dark:bg-[radial-gradient(at_20%_25%,oklch(0.42_0.2_255/0.35)_0px,transparent_52%),radial-gradient(at_80%_20%,oklch(0.42_0.22_325/0.32)_0px,transparent_48%),radial-gradient(at_50%_85%,oklch(0.4_0.16_195/0.28)_0px,transparent_54%)]"
       />
       <div className="mx-auto max-w-2xl space-y-6">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-3.5 py-1 text-xs font-medium text-foreground/85 backdrop-blur-md">
-          <SparklesIcon className="size-3.5 text-(--apple-blue)" />
+        <Badge variant="secondary" size="lg" className="gap-1.5">
+          <SparklesIcon className="text-(--apple-blue)" />
           macOS 27 & iOS 27 Responsive · @liqui-design/glass · Motion · shadcn Registry
-        </div>
+        </Badge>
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
           Apple Liquid UI
         </h1>

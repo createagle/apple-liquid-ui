@@ -31,6 +31,8 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 export function ContextMenuLiquidHeroDemo() {
   const [starred, setStarred] = React.useState(false);
@@ -41,7 +43,10 @@ export function ContextMenuLiquidHeroDemo() {
   return (
     <div className="flex w-full max-w-sm flex-col items-center gap-3">
       <ContextMenu>
-        <ContextMenuTrigger className="w-full cursor-context-menu rounded-2xl border border-white/45 bg-(--liquid-surface) p-5 text-left shadow-[0_12px_32px_-8px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.85)] transition-transform duration-150 active:scale-[0.99] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:border-white/15 dark:shadow-[0_16px_36px_-10px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.18)]">
+        <ContextMenuTrigger
+          render={<Card />}
+          className="w-full cursor-context-menu gap-0 p-5 text-left transition-transform duration-150 active:scale-[0.99]"
+        >
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-(--apple-blue)/14 text-(--apple-blue)">
@@ -154,17 +159,20 @@ export function ContextMenuViewOptionsDemo() {
     <div className="flex w-full max-w-sm flex-col items-center gap-3">
       <ContextMenu>
         <ContextMenuTrigger
-          className="relative flex h-44 w-full cursor-context-menu flex-col items-center justify-center overflow-hidden rounded-2xl border border-white/45 bg-(--liquid-surface) p-5 text-center shadow-[0_12px_32px_-8px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.85)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:border-white/15 dark:shadow-[0_16px_36px_-10px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.18)]"
-          style={
-            showGrid
-              ? {
-                  backgroundImage:
-                    'radial-gradient(circle, currentColor 0.75px, transparent 0.75px)',
-                  backgroundSize: '16px 16px',
-                }
-              : undefined
-          }
+          render={<Card />}
+          className="h-44 w-full cursor-context-menu items-center justify-center gap-0 p-5 text-center"
         >
+          {showGrid ? (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 -z-1"
+              style={{
+                backgroundImage:
+                  'radial-gradient(circle, currentColor 0.75px, transparent 0.75px)',
+                backgroundSize: '16px 16px',
+              }}
+            />
+          ) : null}
           {showRulers ? (
             <>
               <div className="pointer-events-none absolute inset-x-0 top-0 flex h-4 items-center justify-around border-b border-foreground/10 bg-background/40 text-[9px] text-muted-foreground">
@@ -181,10 +189,12 @@ export function ContextMenuViewOptionsDemo() {
             </>
           ) : null}
 
-          <div className="flex items-center gap-1.5 rounded-full bg-background/75 px-3 py-1 text-xs font-medium text-foreground shadow-xs backdrop-blur-md">
-            {locked ? <LockIcon className="size-3.5 text-(--apple-blue)" /> : null}
-            <span>画布视图 · {zoom}%</span>
-          </div>
+          <Badge variant="secondary">
+            {locked ? (
+              <LockIcon data-icon="inline-start" className="text-(--apple-blue)" />
+            ) : null}
+            画布视图 · {zoom}%
+          </Badge>
           <p className="mt-2 rounded-full bg-background/60 px-2.5 py-0.5 text-[11px] text-muted-foreground backdrop-blur-sm">
             右键或长按调整网格、标尺与缩放比例
           </p>

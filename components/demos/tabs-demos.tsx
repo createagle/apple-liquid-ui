@@ -18,6 +18,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
 
 export function TabsLiquidHeroDemo() {
   return (
@@ -39,36 +40,36 @@ export function TabsLiquidHeroDemo() {
         </TabsList>
 
         <TabsContent value="glass" className="w-full">
-          <div className="rounded-3xl bg-(--liquid-surface) p-5 text-left shadow-[0_10px_28px_-8px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:shadow-[0_12px_30px_-8px_rgba(0,0,0,0.45),0_0_0_0.5px_rgba(255,255,255,0.14)]">
+          <Card className="p-5 text-left gap-0">
             <p className="text-sm font-semibold text-foreground">
               静止干净通透 · 按住左右拖动浮起棱镜水滴
             </p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
               静止状态下四边与四角干净利落；按住滑块左右拖动或切换时，透明折射透镜水滴会突出悬浮在标签之上，以零灰底和彩虹色散边缘实时折弯下方图标与文字。
             </p>
-          </div>
+          </Card>
         </TabsContent>
 
         <TabsContent value="optics" className="w-full">
-          <div className="rounded-3xl bg-(--liquid-surface) p-5 text-left shadow-[0_10px_28px_-8px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:shadow-[0_12px_30px_-8px_rgba(0,0,0,0.45),0_0_0_0.5px_rgba(255,255,255,0.14)]">
+          <Card className="p-5 text-left gap-0">
             <p className="text-sm font-semibold text-foreground">
               纯向内 SDF 折射贴图（零脏边、零灰底）
             </p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
               通过向内采样圆角 SDF 并在最外沿平滑归零，配合 toneLift=0 / toneRoll=0 跳过灰阶压缩，彻底消除边缘采样脏色与四角发灰。
             </p>
-          </div>
+          </Card>
         </TabsContent>
 
         <TabsContent value="motion" className="w-full">
-          <div className="rounded-3xl bg-(--liquid-surface) p-5 text-left shadow-[0_10px_28px_-8px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:shadow-[0_12px_30px_-8px_rgba(0,0,0,0.45),0_0_0_0.5px_rgba(255,255,255,0.14)]">
+          <Card className="p-5 text-left gap-0">
             <p className="text-sm font-semibold text-foreground">
               速度感应液态拉伸（Squash &amp; Stretch）
             </p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
               基于 Motion useVelocity 与 useSpring，快速拖拽或点击切换时水滴会沿运动方向自然拉长，松手后弹回目标位并平滑融入干净激活态。
             </p>
-          </div>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
@@ -148,7 +149,7 @@ export function TabsSegmentedDemo() {
 
 export function TabsLineDemo() {
   return (
-    <div className="w-full max-w-md rounded-2xl border border-border/60 bg-background/85 p-5 backdrop-blur-xl">
+    <Card className="w-full max-w-md gap-0 p-5">
       <Tabs defaultValue="overview">
         <TabsList variant="line" className="w-full justify-start">
           <TabsTrigger value="overview" className="flex-none">
@@ -171,7 +172,7 @@ export function TabsLineDemo() {
           100% 兼容 @base-ui/react/tabs 与 shadcn/ui 标准受控/非受控 API，支持键盘方向键切换。
         </TabsContent>
       </Tabs>
-    </div>
+    </Card>
   );
 }
 
@@ -199,28 +200,28 @@ export function TabsVerticalDemo() {
         </TabsList>
 
         <TabsContent value="appearance">
-          <div className="h-full rounded-3xl bg-(--liquid-surface) p-5 shadow-[0_10px_28px_-8px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.06)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:shadow-[0_12px_30px_-8px_rgba(0,0,0,0.45),0_0_0_0.5px_rgba(255,255,255,0.14)]">
+          <Card className="h-full p-5 gap-0">
             <p className="text-sm font-semibold">外观与液态玻璃</p>
             <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
               支持纵向侧边玻璃选项卡（orientation=&quot;vertical&quot;），点击切换时玻璃透镜沿纵轴顺滑弹跳。
             </p>
-          </div>
+          </Card>
         </TabsContent>
         <TabsContent value="layout">
-          <div className="h-full rounded-3xl bg-(--liquid-surface) p-5 shadow-[0_10px_28px_-8px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.06)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:shadow-[0_12px_30px_-8px_rgba(0,0,0,0.45),0_0_0_0.5px_rgba(255,255,255,0.14)]">
+          <Card className="h-full p-5 gap-0">
             <p className="text-sm font-semibold">响应式断点</p>
             <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
               通过原生 Tailwind md: 断点与 useIsMobile()，无需手传任何平台属性即可适配桌面与移动端。
             </p>
-          </div>
+          </Card>
         </TabsContent>
         <TabsContent value="prefs">
-          <div className="h-full rounded-3xl bg-(--liquid-surface) p-5 shadow-[0_10px_28px_-8px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.06)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:shadow-[0_12px_30px_-8px_rgba(0,0,0,0.45),0_0_0_0.5px_rgba(255,255,255,0.14)]">
+          <Card className="h-full p-5 gap-0">
             <p className="text-sm font-semibold">高级设置</p>
             <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
               自动尊重系统 prefers-reduced-motion 无障碍偏好，并可通过 refraction / dispersion 调节棱镜色散强度。
             </p>
-          </div>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

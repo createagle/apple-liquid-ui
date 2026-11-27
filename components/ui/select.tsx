@@ -632,7 +632,7 @@ function SelectItem({
         // Apple macOS 27 Menu Item (r=8px, 13px Medium, #0069F9 active/hover highlight, trailing checkmark)
         "relative flex w-full cursor-default items-center gap-2 rounded-[8px] py-1.5 pr-8 pl-2.5 text-[13px] font-medium text-foreground/90 outline-hidden select-none",
         "transition-colors duration-75",
-        "data-highlighted:bg-[#0069f9] data-highlighted:text-white dark:data-highlighted:bg-(--apple-blue) dark:data-highlighted:text-white",
+        "data-highlighted:bg-(--apple-blue) data-highlighted:text-white dark:data-highlighted:bg-(--apple-blue) dark:data-highlighted:text-white",
         "data-disabled:pointer-events-none data-disabled:opacity-40",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
         className

@@ -51,6 +51,8 @@ npx shadcn@latest add https://your-domain.com/r/button.json
 
 <ComponentPreview name="button-all-variants" />
 
+其中 `destructive` 对照 Apple 原生的浅红底 + 红色文字样式：桌面端取自 macOS 27 Alert 的 Destructive 按钮（浅色 `#F52F32` 23% 底、深色 `#FF4747` 25% 底），移动端取自 iOS 27 Bordered Destructive（14% 红色底）；叠加 `glass` 时对应 iOS 27 Glass / Destructive，即透明玻璃 + 红色文字。
+
 ## 尺寸阶梯
 
 同一套 `xs / sm / default / lg` 与图标按钮，在移动端与桌面端自动按各自平台规范缩放：
@@ -87,7 +89,7 @@ export function Example() {
 | 属性 | 类型 | 默认值 | 说明 |
 | :--- | :--- | :--- | :--- |
 | `variant` | `'default' \| 'secondary' \| 'outline' \| 'ghost' \| 'destructive' \| 'link'` | `'default'` | 标准 shadcn 语义变体 |
-| `glass` | `boolean` | `false` | 开启 Apple Liquid Glass 光学折射材质（自动按语义适配蓝/白/红玻璃，并联动全局通透度） |
+| `glass` | `boolean` | `false` | 开启 Apple Liquid Glass 光学折射材质（自动按语义适配：`default` 为蓝色玻璃，其余为透明玻璃，`destructive` 叠加红色文字；并联动全局通透度） |
 | `size` | `'xs' \| 'sm' \| 'default' \| 'lg' \| 'icon-xs' \| 'icon-sm' \| 'icon' \| 'icon-lg'` | `'default'` | 响应式尺寸阶梯（移动端自动匹配 iOS 27，桌面端自动匹配 macOS 27） |
 | `surface` | `'content' \| 'over-glass'` | `'content'` | 按钮所处表面语境（对照 macOS 27 Content Area 与 Over-glass 规范） |
 | `glassProps` | `Pick<LiquiGlassProps, 'material' \| 'profile' \| 'finish' \| 'frost' \| 'refraction' \| 'bezel' \| 'blur' \| 'dispersion' \| 'specular' \| 'saturation' \| 'elevated'>` | — | 透传给 `@liqui-design/glass` 的光学微调参数（仅 `glass={true}` 时生效） |

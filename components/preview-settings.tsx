@@ -1,9 +1,25 @@
 'use client';
 
 import * as React from 'react';
-import { PaletteIcon } from 'lucide-react';
+import { RotateCcwIcon, SlidersHorizontalIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { LiquidGlassTintSlider } from '@/components/ui/liquid-glass-provider';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  isLiquidGlassAccentPreset,
+  LIQUID_GLASS_ACCENTS,
+  LiquidGlassAccentPicker,
+  LiquidGlassTintSlider,
+  useLiquidGlass,
+} from '@/components/ui/liquid-glass-provider';
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 export type BackdropPreset = 'wallpaper' | 'editorial' | 'aurora' | 'clean';
 
@@ -189,53 +205,146 @@ export function PreviewScene({ preset }: { preset: BackdropPreset }) {
 
 export function GlobalBackdropPicker() {
   const { backdrop, setBackdrop } = usePreviewSettings();
+  const { tint, accent, resetTint, resetAccent } = useLiquidGlass();
+
+  const activeBackdrop =
+    BACKDROP_OPTIONS.find((item) => item.value === backdrop) ??
+    BACKDROP_OPTIONS[0];
+  const accentSwatchColor = isLiquidGlassAccentPreset(accent)
+    ? LIQUID_GLASS_ACCENTS[accent].light
+    : accent;
+  const tintPercent = Math.round(tint * 100);
+  const tintBadge =
+    tintPercent <= 10 ? '透明' : tintPercent >= 90 ? '色调' : `${tintPercent}%`;
+
+  const isDefault =
+    backdrop === 'wallpaper' && Math.abs(tint - 0.5) <= 0.01 && accent === 'blue';
+
+  const handleReset = () => {
+    setBackdrop('wallpaper');
+    resetTint();
+    resetAccent();
+  };
 
   return (
-    <div
-      data-slot="global-backdrop-picker"
-      className="mt-2 rounded-lg border bg-fd-secondary/50 p-2 text-xs"
-    >
-      <div className="mb-1.5 flex items-center gap-1.5 px-1 text-[11px] font-medium text-fd-muted-foreground">
-        <PaletteIcon className="size-3.5 shrink-0" />
-        <span>全局预览背景</span>
-      </div>
-      <div
-        role="radiogroup"
-        aria-label="全局预览背景"
-        className="grid grid-cols-2 gap-1"
-      >
-        {BACKDROP_OPTIONS.map((option) => {
-          const active = backdrop === option.value;
-          return (
-            <button
-              key={option.value}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => setBackdrop(option.value)}
-              className={cn(
-                'flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-[11px] font-medium transition-colors',
-                active
-                  ? 'bg-fd-background text-fd-foreground shadow-xs ring-1 ring-fd-border'
-                  : 'text-fd-muted-foreground hover:bg-fd-background/60 hover:text-fd-foreground'
-              )}
-            >
+    <div data-slot="global-backdrop-picker" className="mt-1.5">
+      <Popover>
+        <PopoverTrigger
+          render={
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label="自定义主题与预览外观"
+              className="h-9 w-full justify-between rounded-lg border-fd-border bg-fd-secondary/45 px-2.5 text-xs font-medium text-fd-foreground shadow-none backdrop-blur-none hover:bg-fd-secondary md:h-9 md:px-2.5 md:text-xs"
+            />
+          }
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="flex shrink-0 items-center -space-x-1" aria-hidden="true">
               <span
-                aria-hidden="true"
                 className={cn(
-                  'size-2.5 shrink-0 rounded-full',
-                  option.swatchClass
+                  'size-3.5 rounded-full ring-2 ring-fd-background',
+                  activeBackdrop.swatchClass
                 )}
               />
-              <span className="truncate">{option.label}</span>
-            </button>
-          );
-        })}
-      </div>
+              <span
+                className="size-3.5 rounded-full ring-2 ring-fd-background"
+                style={{ backgroundColor: accentSwatchColor }}
+              />
+            </span>
+            <span className="truncate">主题与外观</span>
+          </span>
 
-      <div className="mt-2 border-t border-fd-border/70 pt-2">
-        <LiquidGlassTintSlider compact label="玻璃通透度" />
-      </div>
+          <span className="flex shrink-0 items-center gap-1.5 text-[11px] text-fd-muted-foreground">
+            <span className="font-mono tabular-nums">{tintBadge}</span>
+            <SlidersHorizontalIcon className="size-3.5" />
+          </span>
+        </PopoverTrigger>
+
+        <PopoverContent
+          side="top"
+          align="start"
+          sideOffset={10}
+          className="w-[310px] gap-4"
+        >
+          <div className="flex items-start justify-between gap-2">
+            <PopoverHeader className="items-start text-left">
+              <PopoverTitle>主题与外观</PopoverTitle>
+              <PopoverDescription>
+                实时调整全站强调色、玻璃通透度与预览壁纸。
+              </PopoverDescription>
+            </PopoverHeader>
+            {!isDefault ? (
+              <Button
+                variant="secondary"
+                surface="over-glass"
+                size="xs"
+                onClick={handleReset}
+                aria-label="重置默认外观"
+                title="重置默认"
+              >
+                <RotateCcwIcon className="size-3" />
+                <span>重置</span>
+              </Button>
+            ) : null}
+          </div>
+
+          <LiquidGlassAccentPicker label="主题强调色" />
+
+          <LiquidGlassTintSlider label="玻璃通透度" showDescription />
+
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-foreground">
+                预览背景
+              </span>
+              <Badge
+                variant="secondary"
+                glass={false}
+                size="sm"
+                className="text-muted-foreground"
+              >
+                {activeBackdrop.label}
+              </Badge>
+            </div>
+            <div
+              role="radiogroup"
+              aria-label="全局预览背景"
+              className="grid grid-cols-2 gap-1.5"
+            >
+              {BACKDROP_OPTIONS.map((option) => {
+                const active = backdrop === option.value;
+                return (
+                  <Button
+                    key={option.value}
+                    variant="secondary"
+                    surface="over-glass"
+                    size="sm"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setBackdrop(option.value)}
+                    className={cn(
+                      'h-9 w-full justify-start gap-2 rounded-xl px-2.5 text-left text-xs font-medium md:h-9 md:px-2.5 md:text-xs',
+                      active
+                        ? 'text-foreground ring-1 ring-(--apple-blue)/55'
+                        : 'bg-black/[0.035] text-muted-foreground hover:bg-black/[0.06] hover:text-foreground dark:bg-white/[0.05] dark:hover:bg-white/[0.09]'
+                    )}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        'size-4 shrink-0 rounded-full shadow-xs',
+                        option.swatchClass
+                      )}
+                    />
+                    <span className="truncate">{option.label}</span>
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

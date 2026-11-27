@@ -14,7 +14,7 @@ import { useLiquidGlass } from "@/components/ui/liquid-glass-provider"
 const MotionButtonPrimitive = motion.create(ButtonPrimitive)
 const MotionLiquiGlass = motion.create(LiquiGlass)
 
-type GlassTone = "clear" | "prominent" | "destructive"
+type GlassTone = "clear" | "prominent"
 
 const sizeClasses = {
   // Mobile iOS 27 Small (28px, 14px) -> Desktop macOS 27 (24px, 11.5px)
@@ -84,11 +84,12 @@ const buttonVariants = cva(
           "md:text-foreground md:hover:bg-(--apple-fill-bordered-mac) md:active:bg-(--apple-fill-bordered-mac-pressed)",
         ].join(" "),
 
-        // Destructive action: Solid Apple Red (combines with `glass` for red Liquid Glass)
+        // Destructive action: tinted red fill + red label
+        // iOS 27 Bordered Destructive (14%) -> macOS 27 Alert Destructive (23% / 25%)
+        // (combines with `glass` for clear Liquid Glass with a red label)
         destructive: [
-          "bg-(--apple-red) text-white",
-          "shadow-[0_1px_2px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.24)]",
-          "hover:brightness-[1.05] active:bg-(--apple-red-pressed) active:brightness-95",
+          "bg-(--apple-fill-destructive-ios) text-(--apple-red) active:bg-(--apple-fill-destructive-ios-pressed)",
+          "md:bg-(--apple-fill-destructive-mac) md:text-(--apple-label-destructive-mac) md:active:bg-(--apple-fill-destructive-mac-pressed)",
           "focus-visible:ring-(--apple-red)/40",
         ].join(" "),
 
@@ -136,7 +137,7 @@ export interface ButtonProps
   /**
    * Enables Apple Liquid Glass optical refraction material orthogonally on top of
    * any semantic `variant` (`default` -> blue glass, `secondary`/`outline`/`ghost`
-   * -> clear luminous glass, `destructive` -> red glass).
+   * -> clear luminous glass, `destructive` -> clear glass with a red label).
    */
   glass?: boolean
   /**
@@ -157,9 +158,8 @@ export interface ButtonProps
 function getGlassTone(
   variant: NonNullable<ButtonProps["variant"]>
 ): GlassTone {
-  if (variant === "default") return "prominent"
-  if (variant === "destructive") return "destructive"
-  return "clear"
+  // `destructive` follows the iOS 27 kit "Glass / Destructive": clear glass + red label.
+  return variant === "default" ? "prominent" : "clear"
 }
 
 function getGlassTintStyle(
@@ -169,10 +169,7 @@ function getGlassTintStyle(
   if (tone === "clear") return undefined
   const primaryPct = Math.round(68 + tint * 30)
   const deepPct = Math.round(58 + tint * 32)
-  const colorVar =
-    tone === "prominent"
-      ? "var(--lq-accent, #0088ff)"
-      : "var(--lq-danger, #ff383c)"
+  const colorVar = "var(--lq-accent, #0088ff)"
 
   return {
     ["--lq-tint" as string]: `color-mix(in srgb, ${colorVar} ${primaryPct}%, transparent)`,
@@ -212,7 +209,7 @@ function getGlassOptics(
     }
   }
 
-  // Tinted prominent / destructive glass: vibrant Apple System Blue / Red
+  // Tinted prominent glass: vibrant Apple System Blue (accent)
   return {
     profile: "squircle",
     finish: "classic",
@@ -266,6 +263,11 @@ function Button({
 
   if (useGlass) {
     const tone = getGlassTone(resolvedVariant)
+    const isIconSize =
+      size === "icon" ||
+      size === "icon-xs" ||
+      size === "icon-sm" ||
+      size === "icon-lg"
     const optics = {
       ...getGlassOptics(tone, size, isMobile, tint),
       ...glassProps,
@@ -289,9 +291,7 @@ function Button({
           ["--lq-shadow" as string]:
             tone === "clear"
               ? "0 8px 20px -4px rgba(10, 15, 40, 0.14), 0 2px 6px rgba(10, 15, 40, 0.08)"
-              : tone === "prominent"
-                ? "0 8px 20px -4px rgba(0, 136, 255, 0.28), 0 2px 6px rgba(0, 0, 0, 0.1)"
-                : "0 8px 20px -4px rgba(255, 56, 60, 0.28), 0 2px 6px rgba(0, 0, 0, 0.1)",
+              : "0 8px 20px -4px rgba(0, 136, 255, 0.28), 0 2px 6px rgba(0, 0, 0, 0.1)",
           ...style,
         }}
       >
@@ -303,11 +303,16 @@ function Button({
           data-surface={surface}
           disabled={disabled}
           className={cn(
-            buttonVariants({ variant: resolvedVariant, size }),
-            "w-full rounded-full border-0 bg-transparent shadow-none",
+            // The glass material replaces the variant's own fills, borders and
+            // shadows (incl. `md:` / `dark:` ones), so only base + size classes apply.
+            buttonVariants({ variant: null, size }),
+            !isIconSize && "w-full",
+            "rounded-full border-0",
             tone === "clear"
               ? "text-(--lq-text) hover:bg-white/14 active:bg-black/6 dark:text-white dark:hover:bg-white/10 dark:active:bg-white/16"
-              : "text-white hover:bg-white/10 hover:brightness-100 active:bg-black/12 active:brightness-100"
+              : "text-white hover:bg-white/10 active:bg-black/12",
+            resolvedVariant === "destructive" &&
+              "text-(--apple-red) focus-visible:ring-(--apple-red)/40 dark:text-(--apple-red)"
           )}
           {...props}
         >

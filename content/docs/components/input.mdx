@@ -1,0 +1,63 @@
+---
+title: Input 输入框
+description: 响应式 Apple Liquid Glass 单行输入框：对齐 macOS 27 与 iOS 27 Text Fields 规范，配备 3.5px Apple Blue 聚焦光环、防 Safari 缩放字号以及 glass 与 over-glass 双材质适配。
+keywords:
+  - Input
+  - 输入框
+  - Text Field
+  - 文本框
+  - 表单
+  - 搜索框
+  - macOS 27
+  - iOS 27
+  - 响应式组件
+  - Liquid Glass
+---
+
+完全兼容 shadcn/ui 标准 JSX API（`<Input>`），按 Apple macOS 27 与 iOS 27 `Text Fields` 官方设计规范实现纯视口响应式切换：
+
+- **桌面端（`>= 768px` · macOS 27）**：默认采用全圆角胶囊造型（`rounded-full`），紧凑精密高度（`sm: 28px` / `default: 34px` / `lg: 40px`）、`13px` 字号与 `3.5px` Apple Blue 聚焦光环及蓝色光标；如需小圆角可直接通过 `className` 覆盖。
+- **移动端（`< 768px` · iOS 27）**：保持一致的全圆角胶囊形态，自动放大为宽裕触控高度（`36/44/48px`）与 `16px` 字号（避免 iOS Safari 聚焦时触发页面自动缩放）。
+- **默认液态玻璃材质**：开箱即为实时响应 `--liquid-glass-tint` 的液态玻璃表面，Chromium 内核浏览器中胶囊边缘带与 Dialog / 下拉菜单同源的 SDF 光学折射与微弱色散（偏移量按输入框高度收敛，Safari / Firefox 自动回退为毛玻璃）；如需实体高对比度输入框，传入 `glass={false}` 即可取消；置于 `Dialog` / `Popover` 等玻璃容器内部时，使用 `surface="over-glass"` 自动切换为无嵌套模糊的半透明凹槽。
+
+## 响应式实时预览
+
+上方为默认全圆角液态玻璃搜索框，下方为嵌套在玻璃面板中的 `surface="over-glass"` 输入框；切换右上角 **桌面 / 移动端** 设备框即可体验双端高度与字号自适应：
+
+<ComponentPreview name="input-liquid-hero" />
+
+## 安装（Shadcn Registry）
+
+```bash
+npx shadcn@latest add @apple-liquid/input
+```
+
+## 尺寸阶梯
+
+提供 `sm`、`default`、`lg` 三档响应式尺寸：
+
+<ComponentPreview name="input-sizes" />
+
+## 校验、禁用与密码态
+
+支持 `aria-invalid` Apple Red 错误提示环、`disabled` 禁用态以及密码、文件等全部原生 `<input>` 类型：
+
+<ComponentPreview name="input-states" />
+
+## 使用方式
+
+```tsx
+import { Input } from '@/components/ui/input';
+
+export function Example() {
+  return <Input type="email" placeholder="name@icloud.com" />;
+}
+```
+
+## Props API
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `size` | `'sm' \| 'default' \| 'lg'` | `'default'` | 尺寸阶梯（移动 `36/44/48px` ↔ 桌面 `28/34/40px`） |
+| `glass` | `boolean` | `true` | 默认开启液态玻璃表面（含边缘光学折射）并响应全局 `--liquid-glass-tint`；传入 `false` 切换为实体输入框 |
+| `surface` | `'default' \| 'over-glass'` | `'default'` | 置于液态玻璃容器内部时设为 `'over-glass'`（自动关闭嵌套模糊并切换半透明凹槽） |

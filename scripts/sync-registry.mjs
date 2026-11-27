@@ -78,6 +78,49 @@ function formatRegistryDep(name) {
   return `${REGISTRY_NAMESPACE}/${name}`;
 }
 
+/**
+ * `LiquidGlassProvider` applies accent presets by setting `data-apple-accent`
+ * on the root, so consumers need the matching CSS rules. They are generated
+ * from `LIQUID_GLASS_ACCENTS` (single source of truth) and shipped unlayered with
+ * `:root` / `:root.dark` specificity so they override the default `cssVars`.
+ */
+function buildAccentPresetCss() {
+  const providerPath = assertWithinRoot(
+    path.join(UI_DIR, 'liquid-glass-provider.tsx')
+  );
+  const source = fs.readFileSync(providerPath, 'utf8');
+  const block = source.match(
+    /export const LIQUID_GLASS_ACCENTS = \{([\s\S]*?)\n\} as const/
+  );
+  if (!block) {
+    throw new Error('LIQUID_GLASS_ACCENTS not found in liquid-glass-provider.tsx');
+  }
+
+  const HEX = '"(#[0-9a-fA-F]{3,8})"';
+  const entry = new RegExp(
+    `(\\w+): \\{[^}]*?light: ${HEX},[^}]*?dark: ${HEX},[^}]*?pressedLight: ${HEX},[^}]*?pressedDark: ${HEX}`,
+    'g'
+  );
+
+  const css = {};
+  for (const [, name, light, dark, pressedLight, pressedDark] of block[1].matchAll(entry)) {
+    const attr = `[data-apple-accent="${name}"]`;
+    css[`:root${attr}, ${attr}`] = {
+      '--apple-accent': light,
+      '--apple-accent-pressed': pressedLight,
+    };
+    css[`:root.dark${attr}, .dark${attr}, .dark ${attr}`] = {
+      '--apple-accent': dark,
+      '--apple-accent-pressed': pressedDark,
+    };
+  }
+
+  if (Object.keys(css).length === 0) {
+    throw new Error('No accent presets parsed from LIQUID_GLASS_ACCENTS');
+  }
+  return css;
+}
+
 function buildLiquidFoundationItem() {
   const files = [];
   for (const [relPath, type] of [['lib/liquid-motion.ts', 'registry:lib']]) {
@@ -95,10 +138,13 @@ function buildLiquidFoundationItem() {
       'Apple macOS 27 & iOS 27 system color tokens, @liqui-design/glass refraction tokens, and Motion spring physics.',
     dependencies: ['@liqui-design/glass', 'motion'],
     files,
+    css: buildAccentPresetCss(),
     cssVars: {
       light: {
-        'apple-blue': '#0088ff',
-        'apple-blue-pressed': '#0078f0',
+        'apple-accent': '#0088ff',
+        'apple-accent-pressed': '#0078f0',
+        'apple-blue': 'var(--apple-accent)',
+        'apple-blue-pressed': 'var(--apple-accent-pressed)',
         'apple-green': '#34c759',
         'apple-red': '#ff383c',
         'apple-red-pressed': '#e5292d',
@@ -109,6 +155,11 @@ function buildLiquidFoundationItem() {
         'apple-fill-bordered-ios-pressed': 'rgba(118, 118, 128, 0.22)',
         'apple-fill-over-glass': 'rgba(0, 0, 0, 0.12)',
         'apple-fill-over-glass-pressed': 'rgba(0, 0, 0, 0.2)',
+        'apple-fill-destructive-ios': 'rgba(255, 56, 60, 0.14)',
+        'apple-fill-destructive-ios-pressed': 'rgba(255, 56, 60, 0.22)',
+        'apple-fill-destructive-mac': 'rgba(245, 47, 50, 0.23)',
+        'apple-fill-destructive-mac-pressed': 'rgba(245, 47, 50, 0.31)',
+        'apple-label-destructive-mac': '#f52f32',
         'liquid-glass-tint': '0.5',
         'liquid-surface-alpha': 'calc(0.16 + var(--liquid-glass-tint, 0.5) * 0.7)',
         'liquid-surface-menu-alpha': 'calc(0.22 + var(--liquid-glass-tint, 0.5) * 0.68)',
@@ -130,14 +181,16 @@ function buildLiquidFoundationItem() {
         'lq-highlight': 'rgba(255, 255, 255, 0.5)',
         'lq-control': 'rgba(255, 255, 255, 0.72)',
         'lq-control-rim': 'rgba(28, 28, 40, 0.16)',
-        'lq-accent': '#0088ff',
+        'lq-accent': 'var(--apple-accent)',
         'lq-danger': '#ff383c',
         'lq-danger-text': '#e0262b',
         'lq-scrim': 'rgba(12, 14, 28, 0.32)',
       },
       dark: {
-        'apple-blue': '#0091ff',
-        'apple-blue-pressed': '#0a99ff',
+        'apple-accent': '#0091ff',
+        'apple-accent-pressed': '#0a99ff',
+        'apple-blue': 'var(--apple-accent)',
+        'apple-blue-pressed': 'var(--apple-accent-pressed)',
         'apple-green': '#30d158',
         'apple-red': '#ff4245',
         'apple-red-pressed': '#ff5a5d',
@@ -148,6 +201,11 @@ function buildLiquidFoundationItem() {
         'apple-fill-bordered-ios-pressed': 'rgba(120, 120, 128, 0.38)',
         'apple-fill-over-glass': 'rgba(255, 255, 255, 0.15)',
         'apple-fill-over-glass-pressed': 'rgba(255, 255, 255, 0.24)',
+        'apple-fill-destructive-ios': 'rgba(255, 66, 69, 0.14)',
+        'apple-fill-destructive-ios-pressed': 'rgba(255, 66, 69, 0.22)',
+        'apple-fill-destructive-mac': 'rgba(255, 71, 71, 0.25)',
+        'apple-fill-destructive-mac-pressed': 'rgba(255, 71, 71, 0.33)',
+        'apple-label-destructive-mac': '#ff4747',
         'liquid-surface-alpha': 'calc(0.16 + var(--liquid-glass-tint, 0.5) * 0.68)',
         'liquid-surface-menu-alpha': 'calc(0.22 + var(--liquid-glass-tint, 0.5) * 0.66)',
         'liquid-surface-sheet-alpha': 'calc(0.2 + var(--liquid-glass-tint, 0.5) * 0.68)',
@@ -168,7 +226,7 @@ function buildLiquidFoundationItem() {
         'lq-highlight': 'rgba(255, 255, 255, 0.18)',
         'lq-control': 'rgba(126, 128, 146, 0.3)',
         'lq-control-rim': 'rgba(255, 255, 255, 0.22)',
-        'lq-accent': '#0091ff',
+        'lq-accent': 'var(--apple-accent)',
         'lq-danger': '#ff4245',
         'lq-danger-text': '#ff6467',
         'lq-scrim': 'rgba(0, 0, 6, 0.48)',

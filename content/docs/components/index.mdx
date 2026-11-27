@@ -23,6 +23,18 @@ keywords:
   - ContextMenu
   - 上下文菜单
   - 右键菜单
+  - Popover
+  - 气泡卡片
+  - Checkbox
+  - 复选框
+  - RadioGroup
+  - 单选框
+  - Input
+  - 输入框
+  - Textarea
+  - 多行文本框
+  - Badge
+  - 徽章
   - Card
   - 卡片
   - 液态玻璃组件
@@ -40,9 +52,24 @@ keywords:
     href="/docs/components/alert-dialog"
   />
   <Card
+    title="Badge 徽章"
+    description="全圆角胶囊液态玻璃徽章，保持 shadcn 6 种语义变体并默认开启 glass 材质与动态主题色联动。"
+    href="/docs/components/badge"
+  />
+  <Card
     title="Button 按钮"
     description="按设备尺寸自动切换 iOS 27 / macOS 27 形态的响应式按钮，保持 shadcn 6 种标准语义变体并支持正交 glass 液态玻璃材质。"
     href="/docs/components/button"
+  />
+  <Card
+    title="Card 卡片"
+    description="默认开启独立层液态玻璃（不截断内部 Switch / Slider 光学折射），支持 refract 边缘折射、glass={false} 实体模式与 over-glass 嵌套分组卡片。"
+    href="/docs/components/card"
+  />
+  <Card
+    title="Checkbox 复选框"
+    description="全端统一圆角方框语义（方框复选、圆圈单选），移动端放大触控热区 ↔ 桌面端 macOS 27 精密比例，支持半选（Indeterminate）、正交 glass 材质与弹簧勾选动效。"
+    href="/docs/components/checkbox"
   />
   <Card
     title="ContextMenu 上下文菜单"
@@ -58,6 +85,21 @@ keywords:
     title="DropdownMenu 下拉菜单"
     description="桌面端呈现 macOS 27 悬浮液态下拉菜单，移动端自动切换为 iOS 27 底部液态玻璃 Drawer 与分组列表，支持二级子菜单返回导航。"
     href="/docs/components/dropdown-menu"
+  />
+  <Card
+    title="Input 输入框"
+    description="对齐 macOS 27 与 iOS 27 Text Fields 规范，支持 3.5px Apple Blue 聚焦光环、防 Safari 缩放字号以及 glass 与 over-glass 双材质适配。"
+    href="/docs/components/input"
+  />
+  <Card
+    title="Popover 气泡卡片"
+    description="桌面端呈现 macOS 27 20px 圆角液态玻璃悬浮面板，移动端自动切换为可下滑关闭的 iOS 27 底部液态玻璃 Sheet。"
+    href="/docs/components/popover"
+  />
+  <Card
+    title="RadioGroup 单选框组"
+    description="移动端 22px 触控圆环 ↔ 桌面端 16px macOS 27 精密单选圆环，支持组级 size / glass 透传与弹性立体内圆点。"
+    href="/docs/components/radio-group"
   />
   <Card
     title="Select 选择器"
@@ -78,6 +120,11 @@ keywords:
     title="Tabs 选项卡"
     description="支持悬浮玻璃胶囊、iOS 27 悬浮 Tab Bar 与分段控制器，按住滑块拖动可体验液态折射透镜放大与速度拉伸。"
     href="/docs/components/tabs"
+  />
+  <Card
+    title="Textarea 多行文本框"
+    description="支持 CSS field-sizing-content 自动增高、Apple Blue 聚焦光环，以及 default / over-glass / glass 三态材质适配。"
+    href="/docs/components/textarea"
   />
 </Cards>
 
@@ -102,3 +149,10 @@ keywords:
 - `public/r/alert-dialog.json`：响应式 Liquid Glass AlertDialog（自动关联 `@apple-liquid/button` 与 `@apple-liquid/liquid-glass`）
 - `public/r/dropdown-menu.json`：响应式 Liquid Glass DropdownMenu（自动关联 `@apple-liquid/drawer`、`@apple-liquid/liquid-surface`、`hooks/use-mobile.ts` 与 `@apple-liquid/liquid-glass`）
 - `public/r/context-menu.json`：响应式 Liquid Glass ContextMenu（自动关联 `@apple-liquid/drawer`、`@apple-liquid/liquid-surface`、`hooks/use-mobile.ts` 与 `@apple-liquid/liquid-glass`）
+- `public/r/popover.json`：响应式 Liquid Glass Popover（自动关联 `@apple-liquid/drawer`、`@apple-liquid/liquid-surface`、`hooks/use-mobile.ts` 与 `@apple-liquid/liquid-glass`）
+- `public/r/checkbox.json`：响应式 Liquid Glass Checkbox（自动关联 `lib/liquid-motion.ts` 与 `@apple-liquid/liquid-glass`）
+- `public/r/radio-group.json`：响应式 Liquid Glass RadioGroup（自动关联 `lib/liquid-motion.ts` 与 `@apple-liquid/liquid-glass`）
+- `public/r/input.json`：响应式 Liquid Glass Input（自动关联 `@apple-liquid/liquid-glass`）
+- `public/r/textarea.json`：响应式 Liquid Glass Textarea（自动关联 `@apple-liquid/liquid-glass`）
+- `public/r/card.json`：响应式 Liquid Glass Card（自动关联 `@apple-liquid/liquid-surface` 与 `@apple-liquid/liquid-glass`）
+- `public/r/badge.json`：响应式 Liquid Glass Badge（自动关联 `@apple-liquid/liquid-glass`）

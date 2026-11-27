@@ -9,7 +9,10 @@ import {
   ShareIcon,
   SparklesIcon,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   LiquidGlassProvider,
   LiquidGlassTintSlider,
@@ -28,52 +31,78 @@ export function LiquidGlassSettingsDemo() {
 
           {/* Floating Liquid Glass toolbar over bright scene (macOS 27 preview style) */}
           <div className="relative z-10 flex items-center gap-2">
-            <div className="inline-flex h-10 items-center gap-3 rounded-full bg-(--liquid-surface) px-3.5 text-neutral-900 shadow-[0_8px_24px_-6px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.85)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:text-white">
-              <ShareIcon className="size-4" />
-              <EllipsisIcon className="size-4" />
-            </div>
-            <div className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-(--liquid-surface) text-neutral-900 shadow-[0_8px_24px_-6px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.85)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:text-white">
-              <CopyIcon className="size-4" />
-            </div>
-            <div className="flex h-10 flex-1 items-center gap-2 rounded-full bg-(--liquid-surface) px-3.5 text-sm text-neutral-800/80 shadow-[0_8px_24px_-6px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.85)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] dark:text-white/85">
-              <SearchIcon className="size-4 shrink-0 opacity-75" />
-              <span className="truncate">搜索</span>
+            <Button
+              variant="secondary"
+              glass
+              size="icon"
+              aria-label="分享"
+            >
+              <ShareIcon />
+            </Button>
+            <Button
+              variant="secondary"
+              glass
+              size="icon"
+              aria-label="更多操作"
+            >
+              <EllipsisIcon />
+            </Button>
+            <Button
+              variant="secondary"
+              glass
+              size="icon"
+              aria-label="复制"
+            >
+              <CopyIcon />
+            </Button>
+            <div className="relative min-w-0 flex-1">
+              <SearchIcon className="pointer-events-none absolute top-1/2 left-3.5 z-10 size-4 -translate-y-1/2 text-muted-foreground md:left-3 md:size-3.5" />
+              <Input
+                placeholder="搜索"
+                aria-label="搜索"
+                className="pl-10 md:pl-8.5"
+              />
             </div>
           </div>
         </div>
 
-        {/* Lower dark content area with overlapping glass controls (iOS 27 preview style) */}
-        <div className="relative bg-neutral-900 px-5 pt-4 pb-5 text-left text-white">
+        {/* Lower dark content area with Liquid Glass controls (iOS 27 preview style) */}
+        <div className="dark relative bg-neutral-900 px-5 pt-4 pb-5 text-left text-white">
           <p className="text-lg font-semibold tracking-tight">
             欢迎来到 Apple Park
           </p>
           <p className="mt-0.5 text-sm text-white/60">加利福尼亚，库比蒂诺</p>
-          <p className="mt-2 text-xs leading-relaxed text-white/45">
+          <p className="mt-2 text-xs leading-relaxed text-white/55">
             探索 Apple Park 的设计与历史，领略其独特的自然之美与通透玻璃层次。
           </p>
 
-          <div className="-mt-7 flex items-center gap-2.5">
+          <div className="mt-4 flex items-center gap-2.5">
             <Button
               variant="secondary"
               glass
               size="icon"
               aria-label="菜单"
-              className="dark text-white"
             >
               <MenuIcon />
             </Button>
-            <div className="dark flex h-10 flex-1 items-center gap-2 rounded-full bg-(--liquid-surface) px-4 text-sm text-white/90 shadow-[0_10px_28px_-6px_rgba(0,0,0,0.48),0_0_0_0.5px_rgba(255,255,255,0.18),inset_0_1px_0_rgba(255,255,255,0.22)] [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))]">
-              <SearchIcon className="size-4 shrink-0 opacity-80" />
-              <span>搜索内容与控制项</span>
+            <div className="relative min-w-0 flex-1">
+              <SearchIcon className="pointer-events-none absolute top-1/2 left-3.5 z-10 size-4 -translate-y-1/2 text-white/65 md:left-3 md:size-3.5" />
+              <Input
+                placeholder="搜索内容与控制项"
+                aria-label="搜索内容与控制项"
+                className="pl-10 text-white placeholder:text-white/65 md:pl-8.5"
+              />
             </div>
           </div>
         </div>
       </div>
 
       {/* Live Apple Settings Clear <-> Tinted Slider controlling global LiquidGlassProvider */}
-      <div className="rounded-2xl bg-background/85 p-3.5 shadow-xs ring-1 ring-border/70 backdrop-blur-md">
-        <LiquidGlassTintSlider showDescription />
-      </div>
+      <Card size="sm" className="w-full">
+        <CardContent>
+          <LiquidGlassTintSlider showDescription />
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -82,15 +111,11 @@ export function LiquidGlassScopedCompareDemo() {
   return (
     <div className="grid w-full max-w-2xl grid-cols-1 gap-4 md:grid-cols-2">
       <LiquidGlassProvider syncToRoot={false} defaultTint="clear">
-        <div className="relative rounded-3xl">
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] border border-white/25 bg-black/5 backdrop-blur-xs dark:bg-white/5"
-          />
-          <div className="relative z-10 flex flex-col items-center gap-3 p-5">
-            <span className="rounded-full bg-background/80 px-2.5 py-0.5 text-[11px] font-medium text-foreground">
+        <Card size="sm" className="w-full">
+          <CardContent className="flex flex-col items-center gap-3 py-2">
+            <Badge variant="secondary" size="sm" glass={false}>
               透明 Clear (tint = 0)
-            </span>
+            </Badge>
             <Tabs defaultValue="glass">
               <TabsList variant="glass">
                 <TabsTrigger value="glass">液态</TabsTrigger>
@@ -106,20 +131,16 @@ export function LiquidGlassScopedCompareDemo() {
                 主操作
               </Button>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </LiquidGlassProvider>
 
       <LiquidGlassProvider syncToRoot={false} defaultTint="tinted">
-        <div className="relative rounded-3xl">
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] border border-white/25 bg-black/5 backdrop-blur-xs dark:bg-white/5"
-          />
-          <div className="relative z-10 flex flex-col items-center gap-3 p-5">
-            <span className="rounded-full bg-background/80 px-2.5 py-0.5 text-[11px] font-medium text-foreground">
+        <Card size="sm" className="w-full">
+          <CardContent className="flex flex-col items-center gap-3 py-2">
+            <Badge variant="secondary" size="sm" glass={false}>
               色调 Tinted (tint = 1)
-            </span>
+            </Badge>
             <Tabs defaultValue="glass">
               <TabsList variant="glass">
                 <TabsTrigger value="glass">液态</TabsTrigger>
@@ -135,8 +156,8 @@ export function LiquidGlassScopedCompareDemo() {
                 主操作
               </Button>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </LiquidGlassProvider>
     </div>
   );

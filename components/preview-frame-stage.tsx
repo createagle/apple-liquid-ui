@@ -14,12 +14,14 @@ export function PreviewFrameStage({ name }: { name: DemoName }) {
     <LiquiBackdrop
       backdrop={<PreviewScene preset={backdrop} />}
       className={cn(
-        'relative flex min-h-dvh w-full items-center justify-center p-5',
+        'relative h-dvh w-full overflow-hidden',
         backdrop === 'aurora' && 'dark text-white'
       )}
     >
-      <div className="relative z-10 flex w-full items-center justify-center">
-        <Demo />
+      <div className="relative z-10 size-full overflow-y-auto overscroll-contain">
+        <div className="flex min-h-full w-full items-center justify-center p-5">
+          <Demo />
+        </div>
       </div>
     </LiquiBackdrop>
   );

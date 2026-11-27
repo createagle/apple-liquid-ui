@@ -25,9 +25,12 @@ import {
   usePreviewSettings,
 } from '@/components/preview-settings';
 import {
+  LIQUID_GLASS_ACCENT_MESSAGE_TYPE,
   LIQUID_GLASS_MESSAGE_TYPE,
   useLiquidGlass,
 } from '@/components/ui/liquid-glass-provider';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type PreviewTab = 'preview' | 'code';
 type DeviceMode = 'desktop' | 'mobile';
@@ -91,7 +94,7 @@ export function ComponentPreviewClient({
 }: ComponentPreviewClientProps) {
   const isMobileViewport = useIsMobile();
   const { backdrop } = usePreviewSettings();
-  const { tint } = useLiquidGlass();
+  const { tint, accent } = useLiquidGlass();
   const [tab, setTab] = React.useState<PreviewTab>('preview');
   const [device, setDevice] = React.useState<DeviceMode>('desktop');
   const [refreshKey, setRefreshKey] = React.useState(0);
@@ -106,8 +109,8 @@ export function ComponentPreviewClient({
   const previewUrl = name ? withBasePath(`/preview/${name}`) : null;
   const DemoComponent = name ? DEMO_REGISTRY[name].component : null;
   const displayAddress = name
-    ? `apple-liquid.ui/preview/${name}`
-    : 'apple-liquid.ui';
+    ? `apple-liquid-ui/preview/${name}`
+    : 'apple-liquid-ui';
 
   // Keep default device aligned with host viewport until the user explicitly switches.
   React.useEffect(() => {
@@ -153,10 +156,14 @@ export function ComponentPreviewClient({
         { type: LIQUID_GLASS_MESSAGE_TYPE, tint },
         window.location.origin
       );
+      win.postMessage(
+        { type: LIQUID_GLASS_ACCENT_MESSAGE_TYPE, accent },
+        window.location.origin
+      );
     } catch {
       // Ignore cross-frame messaging errors during unmount
     }
-  }, [backdrop, tint]);
+  }, [accent, backdrop, tint]);
 
   React.useEffect(() => {
     if (isIframeMode) {
@@ -209,16 +216,18 @@ export function ComponentPreviewClient({
     <LiquiBackdrop
       backdrop={<PreviewScene preset={backdrop} />}
       className={cn(
-        'relative flex size-full items-center justify-center p-6 sm:p-8',
+        'relative size-full overflow-hidden',
         backdrop === 'aurora' && 'dark text-white',
         className
       )}
     >
-      <div
-        key={refreshKey}
-        className="relative z-10 flex w-full items-center justify-center"
-      >
-        {DemoComponent ? <DemoComponent /> : children}
+      <div className="relative z-10 size-full overflow-y-auto overscroll-contain">
+        <div
+          key={refreshKey}
+          className="flex min-h-full w-full items-center justify-center p-6 sm:p-8"
+        >
+          {DemoComponent ? <DemoComponent /> : children}
+        </div>
       </div>
     </LiquiBackdrop>
   );
@@ -231,44 +240,27 @@ export function ComponentPreviewClient({
       {/* Top toolbar: Preview | Code + Title on left, PC / Mobile Switcher & Actions on right */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/35 px-3 py-2">
         <div className="flex min-w-0 items-center gap-2.5">
-          <div
-            role="tablist"
-            aria-label="预览与代码切换"
-            className="inline-flex h-8 shrink-0 items-center rounded-lg bg-muted p-0.5 text-xs font-medium"
+          <Tabs
+            value={tab}
+            onValueChange={(next) => setTab(next as PreviewTab)}
+            className="gap-0"
           >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === 'preview'}
-              onClick={() => setTab('preview')}
-              className={cn(
-                'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-2.5 transition-all',
-                tab === 'preview'
-                  ? 'bg-background text-foreground shadow-xs'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
+            <TabsList
+              aria-label="预览与代码切换"
+              className="h-8 md:h-8"
             >
-              <EyeIcon className="size-3.5" />
-              <span>Preview</span>
-            </button>
-            {hasCode ? (
-              <button
-                type="button"
-                role="tab"
-                aria-selected={tab === 'code'}
-                onClick={() => setTab('code')}
-                className={cn(
-                  'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-2.5 transition-all',
-                  tab === 'code'
-                    ? 'bg-background text-foreground shadow-xs'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                <Code2Icon className="size-3.5" />
-                <span>Code</span>
-              </button>
-            ) : null}
-          </div>
+              <TabsTrigger value="preview" className="px-2.5 text-xs md:px-2.5 md:text-xs">
+                <EyeIcon className="size-3.5" />
+                <span>Preview</span>
+              </TabsTrigger>
+              {hasCode ? (
+                <TabsTrigger value="code" className="px-2.5 text-xs md:px-2.5 md:text-xs">
+                  <Code2Icon className="size-3.5" />
+                  <span>Code</span>
+                </TabsTrigger>
+              ) : null}
+            </TabsList>
+          </Tabs>
 
           {title ? (
             <>
@@ -287,66 +279,72 @@ export function ComponentPreviewClient({
           {tab === 'preview' ? (
             <>
               {previewUrl ? (
-                <div
-                  role="group"
-                  aria-label="设备视口切换"
-                  className="inline-flex h-8 items-center gap-0.5 rounded-lg border border-border bg-background p-0.5"
+                <Tabs
+                  value={device}
+                  onValueChange={(next) => handleSelectDevice(next as DeviceMode)}
+                  className="gap-0"
                 >
-                  {DEVICE_OPTIONS.map((opt) => {
-                    const Icon = opt.icon;
-                    const active = device === opt.value;
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        aria-label={opt.label}
-                        aria-pressed={active}
-                        title={opt.label}
-                        onClick={() => handleSelectDevice(opt.value)}
-                        className={cn(
-                          'inline-flex size-7 cursor-pointer items-center justify-center rounded-md transition-colors',
-                          active
-                            ? 'bg-muted text-foreground shadow-2xs'
-                            : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
-                        )}
-                      >
-                        <Icon className="size-3.5" />
-                      </button>
-                    );
-                  })}
-                </div>
+                  <TabsList
+                    aria-label="设备视口切换"
+                    className="h-8 md:h-8"
+                  >
+                    {DEVICE_OPTIONS.map((opt) => {
+                      const Icon = opt.icon;
+                      return (
+                        <TabsTrigger
+                          key={opt.value}
+                          value={opt.value}
+                          aria-label={opt.label}
+                          title={opt.label}
+                          className="px-2 md:px-2"
+                        >
+                          <Icon className="size-3.5" />
+                        </TabsTrigger>
+                      );
+                    })}
+                  </TabsList>
+                </Tabs>
               ) : null}
 
               <div className="inline-flex h-8 items-center gap-0.5 rounded-lg border border-border bg-background p-0.5">
                 {previewUrl ? (
-                  <a
-                    href={previewUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    nativeButton={false}
                     aria-label="在新标签页打开预览"
                     title="在新标签页打开预览"
-                    className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                    className="size-7 rounded-md text-muted-foreground hover:text-foreground md:size-7"
+                    render={
+                      <a
+                        href={previewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      />
+                    }
                   >
                     <ExternalLinkIcon className="size-3.5" />
-                  </a>
+                  </Button>
                 ) : null}
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
                   aria-label="刷新预览"
                   title="刷新预览"
                   onClick={() => setRefreshKey((k) => k + 1)}
-                  className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                  className="size-7 rounded-md text-muted-foreground hover:text-foreground md:size-7"
                 >
                   <RotateCwIcon className="size-3.5" />
-                </button>
+                </Button>
               </div>
             </>
           ) : (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="xs"
               onClick={handleCopyCode}
               aria-label={copied ? '已复制代码' : '复制代码'}
-              className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+              className="h-8 md:h-8"
             >
               {copied ? (
                 <>
@@ -359,7 +357,7 @@ export function ComponentPreviewClient({
                   <span>复制代码</span>
                 </>
               )}
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -548,7 +546,7 @@ export function ComponentPreviewClient({
                           <ChevronLeftIcon className="size-3.5 opacity-55" />
                           <span className="flex items-center gap-1 truncate">
                             <LockIcon className="size-2.5 shrink-0 opacity-65" />
-                            <span className="truncate">apple-liquid.ui</span>
+                            <span className="truncate">apple-liquid-ui</span>
                           </span>
                           <span className="font-mono text-[10px] opacity-65">
                             {scaleBadge ?? '9:19.5'}

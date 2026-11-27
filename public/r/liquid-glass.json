@@ -16,8 +16,10 @@
   ],
   "cssVars": {
     "light": {
-      "apple-blue": "#0088ff",
-      "apple-blue-pressed": "#0078f0",
+      "apple-accent": "#0088ff",
+      "apple-accent-pressed": "#0078f0",
+      "apple-blue": "var(--apple-accent)",
+      "apple-blue-pressed": "var(--apple-accent-pressed)",
       "apple-green": "#34c759",
       "apple-red": "#ff383c",
       "apple-red-pressed": "#e5292d",
@@ -28,6 +30,11 @@
       "apple-fill-bordered-ios-pressed": "rgba(118, 118, 128, 0.22)",
       "apple-fill-over-glass": "rgba(0, 0, 0, 0.12)",
       "apple-fill-over-glass-pressed": "rgba(0, 0, 0, 0.2)",
+      "apple-fill-destructive-ios": "rgba(255, 56, 60, 0.14)",
+      "apple-fill-destructive-ios-pressed": "rgba(255, 56, 60, 0.22)",
+      "apple-fill-destructive-mac": "rgba(245, 47, 50, 0.23)",
+      "apple-fill-destructive-mac-pressed": "rgba(245, 47, 50, 0.31)",
+      "apple-label-destructive-mac": "#f52f32",
       "liquid-glass-tint": "0.5",
       "liquid-surface-alpha": "calc(0.16 + var(--liquid-glass-tint, 0.5) * 0.7)",
       "liquid-surface-menu-alpha": "calc(0.22 + var(--liquid-glass-tint, 0.5) * 0.68)",
@@ -48,14 +55,16 @@
       "lq-highlight": "rgba(255, 255, 255, 0.5)",
       "lq-control": "rgba(255, 255, 255, 0.72)",
       "lq-control-rim": "rgba(28, 28, 40, 0.16)",
-      "lq-accent": "#0088ff",
+      "lq-accent": "var(--apple-accent)",
       "lq-danger": "#ff383c",
       "lq-danger-text": "#e0262b",
       "lq-scrim": "rgba(12, 14, 28, 0.32)"
     },
     "dark": {
-      "apple-blue": "#0091ff",
-      "apple-blue-pressed": "#0a99ff",
+      "apple-accent": "#0091ff",
+      "apple-accent-pressed": "#0a99ff",
+      "apple-blue": "var(--apple-accent)",
+      "apple-blue-pressed": "var(--apple-accent-pressed)",
       "apple-green": "#30d158",
       "apple-red": "#ff4245",
       "apple-red-pressed": "#ff5a5d",
@@ -66,6 +75,11 @@
       "apple-fill-bordered-ios-pressed": "rgba(120, 120, 128, 0.38)",
       "apple-fill-over-glass": "rgba(255, 255, 255, 0.15)",
       "apple-fill-over-glass-pressed": "rgba(255, 255, 255, 0.24)",
+      "apple-fill-destructive-ios": "rgba(255, 66, 69, 0.14)",
+      "apple-fill-destructive-ios-pressed": "rgba(255, 66, 69, 0.22)",
+      "apple-fill-destructive-mac": "rgba(255, 71, 71, 0.25)",
+      "apple-fill-destructive-mac-pressed": "rgba(255, 71, 71, 0.33)",
+      "apple-label-destructive-mac": "#ff4747",
       "liquid-surface-alpha": "calc(0.16 + var(--liquid-glass-tint, 0.5) * 0.68)",
       "liquid-surface-menu-alpha": "calc(0.22 + var(--liquid-glass-tint, 0.5) * 0.66)",
       "liquid-surface-sheet-alpha": "calc(0.2 + var(--liquid-glass-tint, 0.5) * 0.68)",
@@ -85,10 +99,76 @@
       "lq-highlight": "rgba(255, 255, 255, 0.18)",
       "lq-control": "rgba(126, 128, 146, 0.3)",
       "lq-control-rim": "rgba(255, 255, 255, 0.22)",
-      "lq-accent": "#0091ff",
+      "lq-accent": "var(--apple-accent)",
       "lq-danger": "#ff4245",
       "lq-danger-text": "#ff6467",
       "lq-scrim": "rgba(0, 0, 6, 0.48)"
+    }
+  },
+  "css": {
+    ":root[data-apple-accent=\"blue\"], [data-apple-accent=\"blue\"]": {
+      "--apple-accent": "#0088ff",
+      "--apple-accent-pressed": "#0078f0"
+    },
+    ":root.dark[data-apple-accent=\"blue\"], .dark[data-apple-accent=\"blue\"], .dark [data-apple-accent=\"blue\"]": {
+      "--apple-accent": "#0091ff",
+      "--apple-accent-pressed": "#0a99ff"
+    },
+    ":root[data-apple-accent=\"purple\"], [data-apple-accent=\"purple\"]": {
+      "--apple-accent": "#cb30e0",
+      "--apple-accent-pressed": "#b72bc9"
+    },
+    ":root.dark[data-apple-accent=\"purple\"], .dark[data-apple-accent=\"purple\"], .dark [data-apple-accent=\"purple\"]": {
+      "--apple-accent": "#db34f2",
+      "--apple-accent-pressed": "#e647fc"
+    },
+    ":root[data-apple-accent=\"pink\"], [data-apple-accent=\"pink\"]": {
+      "--apple-accent": "#f74f9e",
+      "--apple-accent-pressed": "#d93b86"
+    },
+    ":root.dark[data-apple-accent=\"pink\"], .dark[data-apple-accent=\"pink\"], .dark [data-apple-accent=\"pink\"]": {
+      "--apple-accent": "#f74f9e",
+      "--apple-accent-pressed": "#ff59a8"
+    },
+    ":root[data-apple-accent=\"red\"], [data-apple-accent=\"red\"]": {
+      "--apple-accent": "#ff383c",
+      "--apple-accent-pressed": "#f52f32"
+    },
+    ":root.dark[data-apple-accent=\"red\"], .dark[data-apple-accent=\"red\"], .dark [data-apple-accent=\"red\"]": {
+      "--apple-accent": "#ff4245",
+      "--apple-accent-pressed": "#ff4747"
+    },
+    ":root[data-apple-accent=\"orange\"], [data-apple-accent=\"orange\"]": {
+      "--apple-accent": "#ff8d28",
+      "--apple-accent-pressed": "#f58625"
+    },
+    ":root.dark[data-apple-accent=\"orange\"], .dark[data-apple-accent=\"orange\"], .dark [data-apple-accent=\"orange\"]": {
+      "--apple-accent": "#ff9230",
+      "--apple-accent-pressed": "#ff9e33"
+    },
+    ":root[data-apple-accent=\"yellow\"], [data-apple-accent=\"yellow\"]": {
+      "--apple-accent": "#f5a600",
+      "--apple-accent-pressed": "#dc9200"
+    },
+    ":root.dark[data-apple-accent=\"yellow\"], .dark[data-apple-accent=\"yellow\"], .dark [data-apple-accent=\"yellow\"]": {
+      "--apple-accent": "#ffd600",
+      "--apple-accent-pressed": "#ffe014"
+    },
+    ":root[data-apple-accent=\"green\"], [data-apple-accent=\"green\"]": {
+      "--apple-accent": "#34c759",
+      "--apple-accent-pressed": "#26bf4d"
+    },
+    ":root.dark[data-apple-accent=\"green\"], .dark[data-apple-accent=\"green\"], .dark [data-apple-accent=\"green\"]": {
+      "--apple-accent": "#30d158",
+      "--apple-accent-pressed": "#3bdb63"
+    },
+    ":root[data-apple-accent=\"graphite\"], [data-apple-accent=\"graphite\"]": {
+      "--apple-accent": "#8e8e93",
+      "--apple-accent-pressed": "#848489"
+    },
+    ":root.dark[data-apple-accent=\"graphite\"], .dark[data-apple-accent=\"graphite\"], .dark [data-apple-accent=\"graphite\"]": {
+      "--apple-accent": "#98989d",
+      "--apple-accent-pressed": "#a2a2a7"
     }
   },
   "type": "registry:style"

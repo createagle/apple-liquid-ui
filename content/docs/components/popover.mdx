@@ -1,0 +1,92 @@
+---
+title: Popover 气泡卡片
+description: 响应式 Apple Liquid Glass 气泡卡片：桌面端呈现 macOS 27 20px 圆角液态玻璃悬浮面板，移动端自动切换为可下滑关闭的 iOS 27 底部液态玻璃 Sheet。
+keywords:
+  - Popover
+  - 气泡卡片
+  - 浮层面板
+  - 弹出框
+  - Sheet
+  - 底部抽屉
+  - macOS 27
+  - iOS 27
+  - 响应式组件
+  - Liquid Glass
+---
+
+完全兼容 shadcn/ui 标准 JSX API（`<Popover>` / `<PopoverTrigger>` / `<PopoverContent>` / `<PopoverHeader>` / `<PopoverTitle>` / `<PopoverDescription>` / `<PopoverClose>`），遵循 Apple 27 官方人机交互规范，通过 `useIsMobile()`（`768px`）自动完成双端形态切换：
+
+- **桌面端（`>= 768px` · macOS 27）**：基于 `@base-ui/react/popover` 锚定在触发元素四周，采用 macOS 27 官方 `20px` 圆角与 `<LiquidSurfaceBackdrop tone="menu" />` 真实边缘折射基座，内部嵌套 `Switch`、`Slider` 等 `LiquidLens` 控件不会产生 Backdrop Root 冲突。
+- **移动端（`< 768px` · iOS 27）**：对应官方 UI Kit 中“Popover 仅用于宽屏，紧凑屏自适应 Sheet”的规范，自动切换为贴边 `32px` 顶圆角液态玻璃底部 `Drawer`，支持手势下滑关闭与安全区适配。
+
+## 响应式实时预览
+
+在液态玻璃气泡内直接组合 `Slider` 与 `Switch`；点击预览栏右上角切换 **桌面 / 平板 / 移动端**，并拖动左侧「玻璃通透度」观察透明 ↔ 色调的实时光学折射变化：
+
+<ComponentPreview name="popover-liquid-hero" />
+
+## 安装（Shadcn Registry）
+
+```bash
+# 通过配置好的 @apple-liquid 命名空间安装（自动关联 drawer、liquid-surface、use-mobile 与 liquid-glass）
+npx shadcn@latest add @apple-liquid/popover
+```
+
+## 多方向锚定（Placement）
+
+支持 `side="top" | "bottom" | "left" | "right"` 与 `align="start" | "center" | "end"`，桌面端根据空间自动避让边界，移动端则统一收口为底部液态玻璃抽屉：
+
+<ComponentPreview name="popover-alignment" />
+
+## 紧凑参数表单
+
+适合工具栏或检查器中的轻量参数设置，搭配 `PopoverClose` 可在点击“取消 / 完成”后直接关闭浮层：
+
+<ComponentPreview name="popover-quick-form" />
+
+## 使用方式
+
+```tsx
+import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverClose,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+
+export function Example() {
+  return (
+    <Popover>
+      <PopoverTrigger render={<Button variant="secondary">打开设置</Button>} />
+      <PopoverContent>
+        <PopoverHeader>
+          <PopoverTitle>快速设置</PopoverTitle>
+          <PopoverDescription>调整当前视图的显示参数。</PopoverDescription>
+        </PopoverHeader>
+        <div className="flex justify-end gap-2">
+          <PopoverClose render={<Button size="sm" variant="default" />}>
+            完成
+          </PopoverClose>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+```
+
+## Props API
+
+### `PopoverContent`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `side` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'bottom'` | 桌面端气泡相对触发器的弹出方向 |
+| `sideOffset` | `number` | `8` | 桌面端气泡与触发器之间的间距（px） |
+| `align` | `'start' \| 'center' \| 'end'` | `'center'` | 桌面端气泡沿锚点轴线的对齐方式 |
+| `alignOffset` | `number` | `0` | 桌面端对齐偏移量（px） |
+| `mobileTitle` | `React.ReactNode` | — | 当内容中未包含 `<PopoverTitle>` 时，可选为移动端底部抽屉补充居中标题 |
+| `className` | `string` | — | 自定义面板宽度或间距（桌面端默认 `w-80`，移动端自动全宽贴边） |

@@ -516,7 +516,7 @@ function DropdownMenuItem({
         "group/dropdown-menu-item relative flex min-h-[28px] w-full cursor-default items-center gap-2 rounded-[8px] px-2.5 py-1.5 text-[13px] font-medium text-foreground/90 outline-hidden select-none",
         "transition-colors duration-75",
         "data-inset:pl-8",
-        "not-data-[variant=destructive]:data-highlighted:bg-[#0069f9] not-data-[variant=destructive]:data-highlighted:text-white dark:not-data-[variant=destructive]:data-highlighted:bg-(--apple-blue) dark:not-data-[variant=destructive]:data-highlighted:text-white",
+        "not-data-[variant=destructive]:data-highlighted:bg-(--apple-blue) not-data-[variant=destructive]:data-highlighted:text-white dark:not-data-[variant=destructive]:data-highlighted:bg-(--apple-blue) dark:not-data-[variant=destructive]:data-highlighted:text-white",
         "data-[variant=destructive]:text-(--apple-red) data-[variant=destructive]:[&_svg]:text-(--apple-red)",
         "data-[variant=destructive]:data-highlighted:bg-(--apple-red) data-[variant=destructive]:data-highlighted:text-white data-[variant=destructive]:data-highlighted:[&_svg]:text-white dark:data-[variant=destructive]:data-highlighted:bg-(--apple-red)",
         "data-disabled:pointer-events-none data-disabled:opacity-40",
@@ -605,7 +605,7 @@ function DropdownMenuSubTrigger({
         "transition-colors duration-75",
         "data-inset:pl-8",
         "data-popup-open:bg-black/[0.07] dark:data-popup-open:bg-white/[0.11]",
-        "data-highlighted:bg-[#0069f9] data-highlighted:text-white dark:data-highlighted:bg-(--apple-blue) dark:data-highlighted:text-white",
+        "data-highlighted:bg-(--apple-blue) data-highlighted:text-white dark:data-highlighted:bg-(--apple-blue) dark:data-highlighted:text-white",
         "data-disabled:pointer-events-none data-disabled:opacity-40",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
         className
@@ -751,7 +751,7 @@ function DropdownMenuCheckboxItem({
         "group/dropdown-menu-item relative flex min-h-[28px] w-full cursor-default items-center gap-2 rounded-[8px] py-1.5 pr-8 pl-2.5 text-[13px] font-medium text-foreground/90 outline-hidden select-none",
         "transition-colors duration-75",
         "data-inset:pl-8",
-        "data-highlighted:bg-[#0069f9] data-highlighted:text-white dark:data-highlighted:bg-(--apple-blue) dark:data-highlighted:text-white",
+        "data-highlighted:bg-(--apple-blue) data-highlighted:text-white dark:data-highlighted:bg-(--apple-blue) dark:data-highlighted:text-white",
         "data-disabled:pointer-events-none data-disabled:opacity-40",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
         className
@@ -912,7 +912,7 @@ function DropdownMenuRadioItem({
         "group/dropdown-menu-item relative flex min-h-[28px] w-full cursor-default items-center gap-2 rounded-[8px] py-1.5 pr-8 pl-2.5 text-[13px] font-medium text-foreground/90 outline-hidden select-none",
         "transition-colors duration-75",
         "data-inset:pl-8",
-        "data-highlighted:bg-[#0069f9] data-highlighted:text-white dark:data-highlighted:bg-(--apple-blue) dark:data-highlighted:text-white",
+        "data-highlighted:bg-(--apple-blue) data-highlighted:text-white dark:data-highlighted:bg-(--apple-blue) dark:data-highlighted:text-white",
         "data-disabled:pointer-events-none data-disabled:opacity-40",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
         className

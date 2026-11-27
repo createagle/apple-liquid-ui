@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 
 export function DialogLiquidHeroDemo() {
@@ -48,18 +49,18 @@ export function DialogLiquidHeroDemo() {
           <form id="profile-edit-form" onSubmit={handleSave} className="grid gap-3.5 py-1">
             <label className="grid gap-1.5">
               <span className="text-xs font-medium text-foreground/80">显示名称</span>
-              <input
+              <Input
+                surface="over-glass"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="h-10 rounded-xl bg-black/[0.05] px-3.5 text-[15px] text-foreground outline-none ring-1 ring-black/[0.06] transition focus:ring-2 focus:ring-(--apple-blue)/50 md:h-8.5 md:rounded-[10px] md:px-3 md:text-[13px] dark:bg-white/[0.08] dark:ring-white/[0.1]"
               />
             </label>
             <label className="grid gap-1.5">
               <span className="text-xs font-medium text-foreground/80">头衔与简介</span>
-              <input
+              <Input
+                surface="over-glass"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="h-10 rounded-xl bg-black/[0.05] px-3.5 text-[15px] text-foreground outline-none ring-1 ring-black/[0.06] transition focus:ring-2 focus:ring-(--apple-blue)/50 md:h-8.5 md:rounded-[10px] md:px-3 md:text-[13px] dark:bg-white/[0.08] dark:ring-white/[0.1]"
               />
             </label>
           </form>
