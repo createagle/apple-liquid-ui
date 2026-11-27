@@ -847,7 +847,9 @@
         "cn"
       ],
       "registryDependencies": [
-        "@apple-liquid/liquid-glass"
+        "@apple-liquid/badge",
+        "@apple-liquid/liquid-glass",
+        "@apple-liquid/slider"
       ]
     },
     {
