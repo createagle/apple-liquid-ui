@@ -46,6 +46,15 @@ import {
   AlertDialogLiquidHeroDemo,
   AlertDialogStackedDemo,
 } from '@/components/demos/alert-dialog-demos';
+import {
+  DropdownMenuCheckboxesDemo,
+  DropdownMenuLiquidHeroDemo,
+  DropdownMenuRadioGroupDemo,
+} from '@/components/demos/dropdown-menu-demos';
+import {
+  ContextMenuLiquidHeroDemo,
+  ContextMenuViewOptionsDemo,
+} from '@/components/demos/context-menu-demos';
 
 export interface DemoRegistryEntry {
   title: string;
@@ -297,6 +306,48 @@ export const DEMO_REGISTRY = {
     exportName: 'AlertDialogStackedDemo',
     mobileHeight: 500,
     tabletHeight: 420,
+  },
+  'dropdown-menu-liquid-hero': {
+    title: '液态玻璃下拉菜单（macOS 27 ↔ iOS 27）',
+    component: DropdownMenuLiquidHeroDemo,
+    filePath: 'components/demos/dropdown-menu-demos.tsx',
+    exportName: 'DropdownMenuLiquidHeroDemo',
+    installCommand: 'npx shadcn@latest add @apple-liquid/dropdown-menu',
+    mobileHeight: 560,
+    tabletHeight: 440,
+  },
+  'dropdown-menu-checkboxes': {
+    title: '多选切换项（Checkbox Items）',
+    component: DropdownMenuCheckboxesDemo,
+    filePath: 'components/demos/dropdown-menu-demos.tsx',
+    exportName: 'DropdownMenuCheckboxesDemo',
+    mobileHeight: 520,
+    tabletHeight: 400,
+  },
+  'dropdown-menu-radio-group': {
+    title: '单选分组（Radio Group）',
+    component: DropdownMenuRadioGroupDemo,
+    filePath: 'components/demos/dropdown-menu-demos.tsx',
+    exportName: 'DropdownMenuRadioGroupDemo',
+    mobileHeight: 520,
+    tabletHeight: 400,
+  },
+  'context-menu-liquid-hero': {
+    title: '液态玻璃上下文菜单（右键 / 长按）',
+    component: ContextMenuLiquidHeroDemo,
+    filePath: 'components/demos/context-menu-demos.tsx',
+    exportName: 'ContextMenuLiquidHeroDemo',
+    installCommand: 'npx shadcn@latest add @apple-liquid/context-menu',
+    mobileHeight: 560,
+    tabletHeight: 440,
+  },
+  'context-menu-view-options': {
+    title: '画布选项联动（复选与单选）',
+    component: ContextMenuViewOptionsDemo,
+    filePath: 'components/demos/context-menu-demos.tsx',
+    exportName: 'ContextMenuViewOptionsDemo',
+    mobileHeight: 560,
+    tabletHeight: 440,
   },
 } as const satisfies Record<string, DemoRegistryEntry>;
 

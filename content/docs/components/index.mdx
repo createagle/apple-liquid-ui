@@ -18,6 +18,11 @@ keywords:
   - 滑块
   - Dialog
   - 弹窗
+  - DropdownMenu
+  - 下拉菜单
+  - ContextMenu
+  - 上下文菜单
+  - 右键菜单
   - Card
   - 卡片
   - 液态玻璃组件
@@ -40,9 +45,19 @@ keywords:
     href="/docs/components/button"
   />
   <Card
+    title="ContextMenu 上下文菜单"
+    description="桌面端右键弹出 macOS 27 液态玻璃菜单，移动端长按自动切换为 iOS 27 底部液态玻璃 Drawer，支持二级子菜单推进与返回。"
+    href="/docs/components/context-menu"
+  />
+  <Card
     title="Dialog 对话框"
     description="桌面端呈现 macOS 27 居中液态玻璃弹窗，移动端自动切换为可下滑关闭的 iOS 27 底部液态玻璃 Sheet。"
     href="/docs/components/dialog"
+  />
+  <Card
+    title="DropdownMenu 下拉菜单"
+    description="桌面端呈现 macOS 27 悬浮液态下拉菜单，移动端自动切换为 iOS 27 底部液态玻璃 Drawer 与分组列表，支持二级子菜单返回导航。"
+    href="/docs/components/dropdown-menu"
   />
   <Card
     title="Select 选择器"
@@ -85,3 +100,5 @@ keywords:
 - `public/r/slider.json`：响应式 Liquid Glass Slider（自动关联 `@apple-liquid/liquid-lens`、`hooks/use-mobile.ts` 与 `@apple-liquid/liquid-glass`）
 - `public/r/dialog.json`：响应式 Liquid Glass Dialog（自动关联 `@apple-liquid/drawer`、`@apple-liquid/button`、`hooks/use-mobile.ts` 与 `@apple-liquid/liquid-glass`）
 - `public/r/alert-dialog.json`：响应式 Liquid Glass AlertDialog（自动关联 `@apple-liquid/button` 与 `@apple-liquid/liquid-glass`）
+- `public/r/dropdown-menu.json`：响应式 Liquid Glass DropdownMenu（自动关联 `@apple-liquid/drawer`、`@apple-liquid/liquid-surface`、`hooks/use-mobile.ts` 与 `@apple-liquid/liquid-glass`）
+- `public/r/context-menu.json`：响应式 Liquid Glass ContextMenu（自动关联 `@apple-liquid/drawer`、`@apple-liquid/liquid-surface`、`hooks/use-mobile.ts` 与 `@apple-liquid/liquid-glass`）

@@ -158,6 +158,8 @@ export interface LensMapOptions {
   curvature?: number
   /** Key light direction in degrees clockwise from straight up. */
   lightAngle?: number
+  /** Keep the bottom edge flat/open without bottom corner curves (e.g. bottom-docked Drawer). */
+  openBottom?: boolean
 }
 
 export interface LensOptics {
@@ -231,17 +233,18 @@ export function buildLensMaps(options: LensMapOptions): LensMaps {
     dpr,
     curvature = 0,
     lightAngle = LENS_LIGHT_ANGLE,
+    openBottom = false,
   } = options
 
   const safeDpr = Math.max(1, Math.min(3, dpr || 1))
   const safeW = Math.max(2, width)
   const safeH = Math.max(2, height)
-  const clampedR = Math.min(radius, safeW / 2, safeH / 2)
+  const clampedR = Math.min(radius, safeW / 2, openBottom ? safeH : safeH / 2)
   const clampedB = Math.max(1, Math.min(bezel, Math.min(safeW, safeH) / 2))
 
   const key =
     `${surface.id}|${safeW.toFixed(1)}x${safeH.toFixed(1)}r${clampedR.toFixed(1)}` +
-    `b${clampedB.toFixed(2)}c${curvature.toFixed(3)}l${Math.round(lightAngle)}@${safeDpr.toFixed(2)}`
+    `b${clampedB.toFixed(2)}c${curvature.toFixed(3)}l${Math.round(lightAngle)}@${safeDpr.toFixed(2)}${openBottom ? "|ob" : ""}`
 
   const hit = mapCache.get(key)
   if (hit) {
@@ -275,7 +278,8 @@ export function buildLensMaps(options: LensMapOptions): LensMaps {
 
   for (let y = 0; y < H; y++) {
     const py = y + 0.5
-    const ly = py < R ? py - R : py > H - R ? py - R - innerH : 0
+    const ly =
+      py < R ? py - R : !openBottom && py > H - R ? py - R - innerH : 0
 
     for (let x = 0; x < W; x++) {
       const px = x + 0.5

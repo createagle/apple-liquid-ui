@@ -1,0 +1,115 @@
+---
+title: ContextMenu 上下文菜单
+description: 响应式 Apple Liquid Glass 上下文菜单：桌面端右键呼出 macOS 27 液态玻璃菜单，移动端长按或右键呼出可下滑关闭的 iOS 27 底部液态玻璃 Drawer，支持二级子菜单推进与返回。
+keywords:
+  - ContextMenu
+  - 上下文菜单
+  - 右键菜单
+  - 长按菜单
+  - Menu
+  - 子菜单
+  - 底部抽屉
+  - Drawer
+  - macOS 27
+  - iOS 27
+  - 响应式组件
+  - Liquid Glass
+---
+
+完全兼容 shadcn/ui 标准 JSX API（`<ContextMenu>` / `<ContextMenuTrigger>` / `<ContextMenuContent>` / `<ContextMenuGroup>` / `<ContextMenuItem>` / `<ContextMenuCheckboxItem>` / `<ContextMenuRadioGroup>` / `<ContextMenuSub>`），通过 `useIsMobile()`（`768px`）自动适配双端交互：
+
+- **桌面端（`>= 768px` · macOS 27）**：基于 `@base-ui/react/context-menu`，在触发区域内点击**鼠标右键**就近弹出 `14px` 圆角悬浮液态玻璃菜单，具备 `#0069F9` 蓝色悬停高亮、快捷键提示与右侧子菜单。
+- **移动端（`< 768px` · iOS 27）**：内置 `select-none [-webkit-touch-callout:none]` 屏蔽系统原生文本呼出框，**长按触发区域（450ms，滑动自动取消）或右键**即可弹出**顶部 `32px` 大圆角 iOS 27 底部液态玻璃 Drawer**，支持分组卡片列表、下滑手势关闭及二级子菜单 `‹ 返回` 导航。
+
+## 响应式实时预览
+
+在桌面端**右键点击**下方文件卡片；切换右上角 **移动端图标** 后可长按或右键卡片呼出底部液态玻璃 Drawer 并点击「打开方式」体验二级视图与返回交互：
+
+<ComponentPreview name="context-menu-liquid-hero" />
+
+## 安装（Shadcn Registry）
+
+```bash
+# 通过配置好的 @apple-liquid 命名空间安装（自动关联 drawer、liquid-surface、use-mobile 与 liquid-glass）
+npx shadcn@latest add @apple-liquid/context-menu
+
+# 或直接通过 URL 安装
+npx shadcn@latest add https://your-domain.com/r/context-menu.json
+```
+
+## 画布选项联动（复选与单选）
+
+将 `ContextMenuCheckboxItem` 与 `ContextMenuRadioGroup` 用于画布辅助线与缩放控制，勾选标记统一对齐于菜单右侧：
+
+<ComponentPreview name="context-menu-view-options" />
+
+## 使用方式
+
+```tsx
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuGroup,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
+
+export function Example() {
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger className="flex h-36 w-64 items-center justify-center rounded-2xl border border-dashed text-sm">
+        右键点击（或长按）此处
+      </ContextMenuTrigger>
+      <ContextMenuContent title="操作菜单" className="w-56">
+        <ContextMenuGroup>
+          <ContextMenuLabel>编辑</ContextMenuLabel>
+          <ContextMenuItem>
+            拷贝
+            <ContextMenuShortcut>⌘C</ContextMenuShortcut>
+          </ContextMenuItem>
+          <ContextMenuItem>
+            重命名
+            <ContextMenuShortcut>↩</ContextMenuShortcut>
+          </ContextMenuItem>
+        </ContextMenuGroup>
+        <ContextMenuSeparator />
+        <ContextMenuItem variant="destructive">
+          删除
+          <ContextMenuShortcut>⌘⌫</ContextMenuShortcut>
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
+  );
+}
+```
+
+## Props API
+
+### `ContextMenuContent`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `title` | `React.ReactNode` | — | 移动端底部 Drawer 顶部居中的主标题（进入子菜单后自动切换为子菜单标题与返回键） |
+| `side` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'right'` | 仅桌面端：相对右键锚点的弹出方向 |
+| `align` | `'start' \| 'center' \| 'end'` | `'start'` | 仅桌面端：沿弹出轴线的对齐方式 |
+| `sideOffset` | `number` | `2` | 仅桌面端：与指针锚点之间的间距（px） |
+| `alignOffset` | `number` | `4` | 仅桌面端：沿对齐方向的偏移量（px） |
+
+### `ContextMenuItem`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `variant` | `'default' \| 'destructive'` | `'default'` | `destructive` 呈现 Apple Red 危险操作语义 |
+| `inset` | `boolean` | `false` | 左侧额外留白以对齐带有前导图标的菜单项 |
+| `closeOnClick` | `boolean` | `true` | 点击后是否自动关闭菜单 / 底部 Drawer |
+| `disabled` | `boolean` | `false` | 禁用菜单项交互 |
+
+### `ContextMenuSubContent`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `side` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'right'` | 仅桌面端：子菜单弹出方向（移动端自动切换为 Drawer 内二级视图与返回键） |
+| `sideOffset` | `number` | `4` | 仅桌面端：与父级菜单之间的间距（px） |

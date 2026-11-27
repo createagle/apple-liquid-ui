@@ -179,7 +179,7 @@ function DialogContent({
     return (
       <DrawerContent
         data-slot="dialog-content"
-        backdrop={<LiquidSurfaceBackdrop radius={32} bezel={24} />}
+        backdrop={<LiquidSurfaceBackdrop radius={32} bezel={24} openBottom />}
         className={cn(
           // Apple iOS 27 Edge-to-Edge Liquid Glass Bottom Sheet (r-top=32px, flush left/right/bottom, true optical bezel refraction)
           "[--drawer-inset:0px] [--drawer-bleed-background:transparent]",

@@ -476,12 +476,22 @@
         {
           "path": "components/ui/context-menu.tsx",
           "type": "registry:ui"
+        },
+        {
+          "path": "hooks/use-mobile.ts",
+          "type": "registry:hook"
         }
       ],
       "dependencies": [
         "@base-ui/react",
         "cn",
-        "lucide-react"
+        "lucide-react",
+        "motion"
+      ],
+      "registryDependencies": [
+        "@apple-liquid/drawer",
+        "@apple-liquid/liquid-glass",
+        "@apple-liquid/liquid-surface"
       ]
     },
     {
@@ -551,12 +561,22 @@
         {
           "path": "components/ui/dropdown-menu.tsx",
           "type": "registry:ui"
+        },
+        {
+          "path": "hooks/use-mobile.ts",
+          "type": "registry:hook"
         }
       ],
       "dependencies": [
         "@base-ui/react",
         "cn",
-        "lucide-react"
+        "lucide-react",
+        "motion"
+      ],
+      "registryDependencies": [
+        "@apple-liquid/drawer",
+        "@apple-liquid/liquid-glass",
+        "@apple-liquid/liquid-surface"
       ]
     },
     {

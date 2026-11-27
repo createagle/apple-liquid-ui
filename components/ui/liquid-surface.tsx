@@ -41,6 +41,12 @@ export interface LiquidSurfaceBackdropProps
    * @default "sheet"
    */
   tone?: "sheet" | "menu"
+  /**
+   * Keep the bottom edge square/open (no bottom-left/bottom-right corner radius or bottom rim).
+   * Useful for bottom-docked edge-to-edge mobile Drawers.
+   * @default false
+   */
+  openBottom?: boolean
 }
 
 /**
@@ -62,6 +68,7 @@ export function LiquidSurfaceBackdrop({
   refraction = 1,
   dispersion = 0.055,
   tone = "sheet",
+  openBottom = false,
   className,
   style,
   ...props
@@ -99,7 +106,11 @@ export function LiquidSurfaceBackdrop({
 
   const maps = React.useMemo(() => {
     if (!size || !canRefract) return null
-    const clampedR = Math.min(radius, size.w / 2, size.h / 2)
+    const clampedR = Math.min(
+      radius,
+      size.w / 2,
+      openBottom ? size.h : size.h / 2
+    )
     const clampedB = Math.min(bezel, Math.min(size.w, size.h) / 3)
     return buildLensMaps({
       width: size.w,
@@ -109,10 +120,11 @@ export function LiquidSurfaceBackdrop({
       surface: CONVEX,
       curvature: 0,
       lightAngle: LENS_LIGHT_ANGLE,
+      openBottom,
       // DPR 1 is visually identical for smooth large-surface displacement maps and keeps canvas build < 3ms
       dpr: 1,
     })
-  }, [bezel, canRefract, radius, size])
+  }, [bezel, canRefract, openBottom, radius, size])
 
   // Continuous Clear (0) <-> Tinted (1) optical parameters:
   // At tint=0: crystal clear (low blur 2.5px, strong bezel bend ~30px, vivid rim)
@@ -141,6 +153,7 @@ export function LiquidSurfaceBackdrop({
       data-tone={tone}
       className={cn(
         "pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-[inherit]",
+        openBottom && "rounded-b-none",
         tone === "menu"
           ? "bg-(--liquid-surface-menu)"
           : "bg-(--liquid-surface-sheet)",
