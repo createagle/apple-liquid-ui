@@ -192,7 +192,7 @@ function DialogContent({
         )}
         {...(props as React.ComponentProps<typeof DrawerContent>)}
       >
-        <div className="relative flex max-h-[calc(100dvh-7.5rem)] flex-col gap-4 overflow-y-auto px-5 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+        <div className="relative flex max-h-[calc(100dvh-7.5rem)] flex-col gap-4 overflow-x-hidden overflow-y-auto px-5 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
           {shouldShowCloseButton && (
             <DrawerClose
               data-slot="dialog-close"
@@ -252,14 +252,24 @@ function DialogContent({
   )
 }
 
-function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
+function DialogHeader({
+  className,
+  leading,
+  trailing,
+  ...props
+}: React.ComponentProps<"div"> & {
+  leading?: React.ReactNode
+  trailing?: React.ReactNode
+}) {
   const { isMobile } = useDialogContext()
 
   if (isMobile) {
     return (
       <DrawerHeader
         data-slot="dialog-header"
-        className={cn("items-center gap-1.5 p-0 text-center", className)}
+        leading={leading}
+        trailing={trailing}
+        className={cn("w-full items-center gap-1.5 p-0 text-center", className)}
         {...props}
       />
     )
@@ -332,7 +342,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
       <DrawerTitle
         data-slot="dialog-title"
         className={cn(
-          "font-heading text-[18px] leading-snug font-semibold tracking-[-0.015em] text-foreground",
+          "m-0 font-heading text-[18px] leading-[1.25] font-semibold tracking-[-0.015em] text-foreground",
           className
         )}
         {...(props as React.ComponentProps<typeof DrawerTitle>)}
@@ -344,13 +354,14 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
     <DialogPrimitive.Title
       data-slot="dialog-title"
       className={cn(
-        "font-heading text-[16px] leading-snug font-semibold tracking-[-0.01em] text-foreground",
+        "m-0 font-heading text-[16px] leading-snug font-semibold tracking-[-0.01em] text-foreground",
         className
       )}
       {...props}
     />
   )
 }
+DialogTitle.displayName = "DialogTitle"
 
 function DialogDescription({
   className,

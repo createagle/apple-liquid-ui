@@ -323,3 +323,35 @@ html > body[data-scroll-locked] {
     @apply font-sans;
   }
 }
+
+::highlight(fd-search) {
+  background-color: color-mix(in srgb, var(--apple-blue) 16%, transparent);
+  color: var(--apple-blue);
+  text-decoration: underline;
+}
+
+/* Apple macOS 27 / iOS 27 refined docs sidebar styling */
+#nd-sidebar {
+  border-inline-end-color: rgba(0, 0, 0, 0.06);
+}
+.dark #nd-sidebar {
+  border-inline-end-color: rgba(255, 255, 255, 0.08);
+}
+
+#nd-sidebar a[data-active],
+#nd-sidebar button[data-slot="sidebar-folder-trigger"],
+[data-fd-sidebar-drawer] a[data-active] {
+  border-radius: 9999px;
+}
+
+#nd-sidebar a[data-active="true"],
+[data-fd-sidebar-drawer] a[data-active="true"] {
+  background-color: color-mix(in srgb, var(--apple-blue) 13%, transparent);
+  color: var(--apple-blue);
+  font-weight: 500;
+}
+
+#nd-sidebar a[data-active="true"]::before,
+[data-fd-sidebar-drawer] a[data-active="true"]::before {
+  display: none;
+}

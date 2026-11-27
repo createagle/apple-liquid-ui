@@ -1,21 +1,24 @@
 import { source } from '@/lib/source';
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import { baseOptions } from '@/lib/layout.shared';
-import { GlobalBackdropPicker } from '@/components/preview-settings';
+import { SidebarFooterControls } from '@/components/preview-settings';
 import { MobileSearchTrigger, SidebarSearchTrigger } from '@/components/search';
 
 export default function Layout({ children }: LayoutProps<'/docs'>) {
+  const { nav } = baseOptions();
+
   return (
     <DocsLayout
       tree={source.getPageTree()}
-      sidebar={{ footer: <GlobalBackdropPicker /> }}
+      nav={nav}
+      themeSwitch={{ enabled: false }}
+      sidebar={{ footer: <SidebarFooterControls /> }}
       searchToggle={{
         components: {
           lg: <SidebarSearchTrigger />,
           sm: <MobileSearchTrigger />,
         },
       }}
-      {...baseOptions()}
     >
       {children}
     </DocsLayout>

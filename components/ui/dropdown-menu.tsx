@@ -291,20 +291,23 @@ function DropdownMenuContent({
         )}
       >
         {activeSub ? (
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 pt-2 pb-2.5">
-            <button
-              type="button"
-              onClick={popSub}
-              className="inline-flex w-fit cursor-pointer items-center gap-0.5 rounded-full py-1 pr-2.5 pl-1 text-[15px] font-medium text-(--apple-blue) transition-opacity outline-none active:opacity-60"
-            >
-              <ChevronLeftIcon className="-ml-0.5 size-5 stroke-[2.2]" />
-              <span>返回</span>
-            </button>
-            <DrawerTitle className="truncate text-center text-[17px] leading-snug font-semibold tracking-[-0.015em] text-foreground">
+          <DrawerHeader
+            className="px-4 pt-2.5 pb-2"
+            leading={
+              <button
+                type="button"
+                onClick={popSub}
+                className="inline-flex h-8 w-fit shrink-0 cursor-pointer items-center gap-0.5 rounded-full pr-2 pl-0.5 text-[15px] leading-none font-medium text-(--apple-blue) transition-opacity outline-none active:opacity-60"
+              >
+                <ChevronLeftIcon className="-ml-0.5 size-[18px] shrink-0 stroke-[2.25]" />
+                <span>返回</span>
+              </button>
+            }
+          >
+            <DrawerTitle className="truncate text-[17px] leading-[1.25] font-semibold tracking-[-0.015em] text-foreground">
               {activeSub.title}
             </DrawerTitle>
-            <span aria-hidden="true" />
-          </div>
+          </DrawerHeader>
         ) : title ? (
           <DrawerHeader className="items-center px-5 pt-3 pb-2 text-center">
             <DrawerTitle className="text-[18px] leading-snug font-semibold tracking-[-0.015em] text-foreground">

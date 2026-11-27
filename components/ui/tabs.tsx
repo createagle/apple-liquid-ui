@@ -234,6 +234,7 @@ function TabsList({
   const dropletRef = React.useRef<HTMLSpanElement | null>(null)
   const scaleRef = React.useRef<LensScale | null>(null)
   const initializedRef = React.useRef(false)
+  const lastActiveValueRef = React.useRef<string | null>(null)
   const glideTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [hasRect, setHasRect] = React.useState(false)
@@ -251,16 +252,17 @@ function TabsList({
     minX: number
     maxX: number
     moved: boolean
+    pressedActive: boolean
     triggers: { el: HTMLElement; value: string; left: number; width: number }[]
   } | null>(null)
 
   const engine = React.useRef({
-    x: spring(520, 40),
-    y: spring(520, 40),
-    w: spring(520, 40),
-    h: spring(520, 40),
-    press: spring(900, 46),
-    stretch: spring(520, 44),
+    x: spring(320, 30),
+    y: spring(320, 30),
+    w: spring(320, 30),
+    h: spring(320, 30),
+    press: spring(600, 38),
+    stretch: spring(420, 36),
   }).current
 
   const swellPad = getSwellPad(resolvedVariant, isMobile)
@@ -335,9 +337,10 @@ function TabsList({
       indicator.style.width = `${w.value}px`
       indicator.style.height = `${h.value}px`
       indicator.style.scale = `${indScaleX} ${indScaleY}`
-      indicator.style.opacity = m.isMotionEnabled
-        ? `${clamp(1 - p01 * 1.6, 0, 1)}`
-        : "1"
+      // Keep the solid resting pill clearly visible while gliding on direct click (p01 <= 0.42),
+      // and dissolve smoothly into the crystal refraction droplet when holding/dragging (p01 -> 1).
+      const indicatorFade = clamp((p01 - 0.42) / 0.48, 0, 1)
+      indicator.style.opacity = m.isMotionEnabled ? `${1 - indicatorFade}` : "1"
     }
 
     const droplet = dropletRef.current
@@ -352,7 +355,7 @@ function TabsList({
       droplet.style.width = `${expW}px`
       droplet.style.height = `${expH}px`
       droplet.style.scale = `${swellScaleX * stretchSX} ${swellScaleY * stretchSY}`
-      const dropOpacity = m.isMotionEnabled ? clamp(p01 * 1.6, 0, 1) : 0
+      const dropOpacity = m.isMotionEnabled ? clamp(p01 * 1.35, 0, 1) : 0
       droplet.style.opacity = `${dropOpacity}`
       droplet.style.visibility =
         p01 < 0.005 && press.target === 0 ? "hidden" : "visible"
@@ -430,14 +433,15 @@ function TabsList({
 
   const triggerGlide = React.useCallback(() => {
     if (!metricsRef.current.isMotionEnabled || metricsRef.current.isLine) return
-    loop.settle(engine.press, 1)
+    // Subtle mid-flight liquid glass swell while keeping the sliding pill visibly gliding across
+    loop.settle(engine.press, 0.42)
     if (glideTimerRef.current) clearTimeout(glideTimerRef.current)
     glideTimerRef.current = setTimeout(() => {
       glideTimerRef.current = null
-      if (!dragRef.current) {
+      if (!dragRef.current?.moved && !dragRef.current?.pressedActive) {
         loop.settle(engine.press, 0)
       }
-    }, 260)
+    }, 170)
   }, [engine, loop])
 
   const measureActive = React.useCallback(
@@ -457,10 +461,13 @@ function TabsList({
       }
       if (next.width === 0 || next.height === 0) return
 
+      const nextValue = activeEl.getAttribute("data-tab-value") ?? null
       const prevX = engine.x.target
       const prevY = engine.y.target
       const movedSignificantly =
         Math.abs(next.x - prevX) > 2 || Math.abs(next.y - prevY) > 2
+
+      lastActiveValueRef.current = nextValue
 
       setMapSize((prev) =>
         prev && prev.w === next.width && prev.h === next.height
@@ -512,14 +519,23 @@ function TabsList({
     if (!container) return
 
     const ro = new ResizeObserver(() => {
-      if (!dragRef.current) {
-        measureActive(true)
-      }
+      if (dragRef.current?.moved) return
+      const activeEl = container.querySelector<HTMLElement>(
+        '[data-slot="tabs-trigger"][data-active]'
+      )
+      const currentVal = activeEl?.getAttribute("data-tab-value") ?? null
+      const tabChanged = currentVal !== lastActiveValueRef.current
+      const isInFlight =
+        Math.abs(engine.x.value - engine.x.target) > 0.5 ||
+        Math.abs(engine.y.value - engine.y.target) > 0.5 ||
+        Math.abs(engine.w.value - engine.w.target) > 0.5 ||
+        Math.abs(engine.h.value - engine.h.target) > 0.5
+      measureActive(!tabChanged && !isInFlight)
     })
     ro.observe(container)
 
     const mo = new MutationObserver(() => {
-      if (!dragRef.current) {
+      if (!dragRef.current?.moved) {
         measureActive(false)
       }
     })
@@ -535,7 +551,7 @@ function TabsList({
       loop.stop()
       if (glideTimerRef.current) clearTimeout(glideTimerRef.current)
     }
-  }, [loop, measureActive])
+  }, [engine, loop, measureActive])
 
   const handlePointerDown: NonNullable<
     TabsPrimitive.List.Props["onPointerDown"]
@@ -580,12 +596,15 @@ function TabsList({
     const first = triggers[0]
     const last = triggers[triggers.length - 1]
     const thumbW = anchorEl.offsetWidth
+    const pressedActive = Boolean(activeEl && targetEl === activeEl)
 
-    if (glideTimerRef.current) {
-      clearTimeout(glideTimerRef.current)
-      glideTimerRef.current = null
+    if (pressedActive) {
+      if (glideTimerRef.current) {
+        clearTimeout(glideTimerRef.current)
+        glideTimerRef.current = null
+      }
+      loop.settle(engine.press, 1)
     }
-    loop.settle(engine.press, 1)
 
     dragRef.current = {
       pointerId: e.pointerId,
@@ -595,6 +614,7 @@ function TabsList({
       minX: first.left,
       maxX: last.left + last.width - thumbW,
       moved: false,
+      pressedActive,
       triggers,
     }
   }
@@ -610,6 +630,11 @@ function TabsList({
     if (!drag.moved && Math.abs(dx) > 4) {
       drag.moved = true
       setIsDragging(true)
+      if (glideTimerRef.current) {
+        clearTimeout(glideTimerRef.current)
+        glideTimerRef.current = null
+      }
+      loop.settle(engine.press, 1)
       listRef.current?.setPointerCapture?.(e.pointerId)
     }
 
@@ -652,6 +677,7 @@ function TabsList({
     if (!drag || drag.pointerId !== pointerId) return
 
     const wasDragged = drag.moved
+    const pressedActive = drag.pressedActive
     dragRef.current = null
     setIsDragging(false)
 
@@ -663,7 +689,7 @@ function TabsList({
       }
       requestAnimationFrame(() => measureActive(false))
       loop.settle(engine.press, 0)
-    } else if (!glideTimerRef.current) {
+    } else if (pressedActive && !glideTimerRef.current) {
       loop.settle(engine.press, 0)
     }
   }

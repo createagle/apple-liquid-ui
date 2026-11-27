@@ -160,7 +160,7 @@ function PopoverContent({
             </DrawerTitle>
           </DrawerHeader>
         ) : null}
-        <div className="relative flex max-h-[calc(100dvh-7.5rem)] flex-col gap-3.5 overflow-y-auto px-5 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+        <div className="relative flex max-h-[calc(100dvh-7.5rem)] flex-col gap-3.5 overflow-x-hidden overflow-y-auto px-5 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
           {children}
         </div>
       </DrawerContent>
@@ -198,16 +198,70 @@ function PopoverContent({
   )
 }
 
-function PopoverHeader({ className, ...props }: React.ComponentProps<"div">) {
+function isPopoverTitleNode(node: React.ReactNode): boolean {
+  if (!React.isValidElement(node)) return false
+  const type = node.type as { displayName?: string; name?: string } | string
+  if (type === PopoverTitle) return true
+  if (typeof type === "function" || typeof type === "object") {
+    const name = type?.displayName ?? type?.name
+    if (name && /Title$/.test(name)) return true
+  }
+  return false
+}
+
+function PopoverHeader({
+  className,
+  leading,
+  trailing,
+  children,
+  ...props
+}: React.ComponentProps<"div"> & {
+  leading?: React.ReactNode
+  trailing?: React.ReactNode
+}) {
   const { isMobile } = usePopoverContext()
 
   if (isMobile) {
     return (
       <DrawerHeader
         data-slot="popover-header"
-        className={cn("items-center gap-1 p-0 text-center", className)}
+        leading={leading}
+        trailing={trailing}
+        className={cn("w-full items-center gap-1 p-0 text-center", className)}
         {...props}
-      />
+      >
+        {children}
+      </DrawerHeader>
+    )
+  }
+
+  if (leading !== undefined || trailing !== undefined) {
+    const childArray = React.Children.toArray(children)
+    const explicitTitles = childArray.filter(isPopoverTitleNode)
+    const titleNodes =
+      explicitTitles.length > 0 ? explicitTitles : childArray.slice(0, 1)
+    const restNodes =
+      explicitTitles.length > 0
+        ? childArray.filter((child) => !isPopoverTitleNode(child))
+        : childArray.slice(1)
+
+    return (
+      <div
+        data-slot="popover-header"
+        className={cn("flex w-full flex-col gap-1 text-left", className)}
+        {...props}
+      >
+        <div className="flex min-h-6 w-full items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-1.5">
+            {leading}
+            {titleNodes}
+          </div>
+          {trailing != null ? (
+            <div className="flex shrink-0 items-center">{trailing}</div>
+          ) : null}
+        </div>
+        {restNodes}
+      </div>
     )
   }
 
@@ -216,7 +270,9 @@ function PopoverHeader({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="popover-header"
       className={cn("flex flex-col gap-0.5 text-left", className)}
       {...props}
-    />
+    >
+      {children}
+    </div>
   )
 }
 
@@ -228,7 +284,7 @@ function PopoverTitle({ className, ...props }: PopoverPrimitive.Title.Props) {
       <DrawerTitle
         data-slot="popover-title"
         className={cn(
-          "font-heading text-[18px] leading-snug font-semibold tracking-[-0.015em] text-foreground",
+          "m-0 font-heading text-[18px] leading-[1.25] font-semibold tracking-[-0.015em] text-foreground",
           className
         )}
         {...(props as React.ComponentProps<typeof DrawerTitle>)}
@@ -240,13 +296,14 @@ function PopoverTitle({ className, ...props }: PopoverPrimitive.Title.Props) {
     <PopoverPrimitive.Title
       data-slot="popover-title"
       className={cn(
-        "font-heading text-[14px] leading-snug font-semibold tracking-[-0.01em] text-foreground",
+        "m-0 font-heading text-[14px] leading-snug font-semibold tracking-[-0.01em] text-foreground",
         className
       )}
       {...props}
     />
   )
 }
+PopoverTitle.displayName = "PopoverTitle"
 
 function PopoverDescription({
   className,

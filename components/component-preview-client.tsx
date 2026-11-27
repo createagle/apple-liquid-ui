@@ -247,14 +247,20 @@ export function ComponentPreviewClient({
           >
             <TabsList
               aria-label="预览与代码切换"
-              className="h-8 md:h-8"
+              className="h-8 rounded-full! md:h-8 md:rounded-full! [&_[data-slot=tabs-indicator]]:rounded-full! [&_[data-slot=tabs-liquid-droplet]]:rounded-full!"
             >
-              <TabsTrigger value="preview" className="px-2.5 text-xs md:px-2.5 md:text-xs">
+              <TabsTrigger
+                value="preview"
+                className="rounded-full! px-3 text-xs md:rounded-full! md:px-3 md:text-xs"
+              >
                 <EyeIcon className="size-3.5" />
                 <span>Preview</span>
               </TabsTrigger>
               {hasCode ? (
-                <TabsTrigger value="code" className="px-2.5 text-xs md:px-2.5 md:text-xs">
+                <TabsTrigger
+                  value="code"
+                  className="rounded-full! px-3 text-xs md:rounded-full! md:px-3 md:text-xs"
+                >
                   <Code2Icon className="size-3.5" />
                   <span>Code</span>
                 </TabsTrigger>
@@ -286,7 +292,7 @@ export function ComponentPreviewClient({
                 >
                   <TabsList
                     aria-label="设备视口切换"
-                    className="h-8 md:h-8"
+                    className="h-8 rounded-full! md:h-8 md:rounded-full! [&_[data-slot=tabs-indicator]]:rounded-full! [&_[data-slot=tabs-liquid-droplet]]:rounded-full!"
                   >
                     {DEVICE_OPTIONS.map((opt) => {
                       const Icon = opt.icon;
@@ -296,7 +302,7 @@ export function ComponentPreviewClient({
                           value={opt.value}
                           aria-label={opt.label}
                           title={opt.label}
-                          className="px-2 md:px-2"
+                          className="rounded-full! px-2.5 md:rounded-full! md:px-2.5"
                         >
                           <Icon className="size-3.5" />
                         </TabsTrigger>
@@ -306,7 +312,7 @@ export function ComponentPreviewClient({
                 </Tabs>
               ) : null}
 
-              <div className="inline-flex h-8 items-center gap-0.5 rounded-lg border border-border bg-background p-0.5">
+              <div className="inline-flex h-8 items-center gap-0.5 rounded-full border border-border/80 bg-background/80 p-0.5">
                 {previewUrl ? (
                   <Button
                     variant="ghost"
@@ -314,7 +320,7 @@ export function ComponentPreviewClient({
                     nativeButton={false}
                     aria-label="在新标签页打开预览"
                     title="在新标签页打开预览"
-                    className="size-7 rounded-md text-muted-foreground hover:text-foreground md:size-7"
+                    className="size-7 rounded-full text-muted-foreground hover:text-foreground md:size-7"
                     render={
                       <a
                         href={previewUrl}
@@ -332,7 +338,7 @@ export function ComponentPreviewClient({
                   aria-label="刷新预览"
                   title="刷新预览"
                   onClick={() => setRefreshKey((k) => k + 1)}
-                  className="size-7 rounded-md text-muted-foreground hover:text-foreground md:size-7"
+                  className="size-7 rounded-full text-muted-foreground hover:text-foreground md:size-7"
                 >
                   <RotateCwIcon className="size-3.5" />
                 </Button>

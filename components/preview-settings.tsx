@@ -2,7 +2,9 @@
 
 import * as React from 'react';
 import { RotateCcwIcon, SlidersHorizontalIcon } from 'lucide-react';
+import { ThemeSwitch } from 'fumadocs-ui/layouts/shared/slots/theme-switch';
 import { cn } from '@/lib/utils';
+import { gitConfig } from '@/lib/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -227,15 +229,15 @@ export function GlobalBackdropPicker() {
   };
 
   return (
-    <div data-slot="global-backdrop-picker" className="mt-1.5">
+    <div data-slot="global-backdrop-picker">
       <Popover>
         <PopoverTrigger
           render={
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               aria-label="自定义主题与预览外观"
-              className="h-9 w-full justify-between rounded-lg border-fd-border bg-fd-secondary/45 px-2.5 text-xs font-medium text-fd-foreground shadow-none backdrop-blur-none hover:bg-fd-secondary md:h-9 md:px-2.5 md:text-xs"
+              className="h-9 w-full justify-between rounded-full border border-black/[0.06] bg-black/[0.035] px-3 text-xs font-medium text-foreground shadow-none transition-colors hover:bg-black/[0.065] dark:border-white/[0.08] dark:bg-white/[0.06] dark:hover:bg-white/[0.1] md:h-9 md:px-3 md:text-xs"
             />
           }
         >
@@ -243,21 +245,21 @@ export function GlobalBackdropPicker() {
             <span className="flex shrink-0 items-center -space-x-1" aria-hidden="true">
               <span
                 className={cn(
-                  'size-3.5 rounded-full ring-2 ring-fd-background',
+                  'size-3.5 rounded-full ring-2 ring-fd-card',
                   activeBackdrop.swatchClass
                 )}
               />
               <span
-                className="size-3.5 rounded-full ring-2 ring-fd-background"
+                className="size-3.5 rounded-full ring-2 ring-fd-card"
                 style={{ backgroundColor: accentSwatchColor }}
               />
             </span>
             <span className="truncate">主题与外观</span>
           </span>
 
-          <span className="flex shrink-0 items-center gap-1.5 text-[11px] text-fd-muted-foreground">
+          <span className="flex shrink-0 items-center gap-1.5 text-[11px] text-muted-foreground">
             <span className="font-mono tabular-nums">{tintBadge}</span>
-            <SlidersHorizontalIcon className="size-3.5" />
+            <SlidersHorizontalIcon className="size-3.5 opacity-80" />
           </span>
         </PopoverTrigger>
 
@@ -267,27 +269,29 @@ export function GlobalBackdropPicker() {
           sideOffset={10}
           className="w-[310px] gap-4"
         >
-          <div className="flex items-start justify-between gap-2">
-            <PopoverHeader className="items-start text-left">
-              <PopoverTitle>主题与外观</PopoverTitle>
-              <PopoverDescription>
-                实时调整全站强调色、玻璃通透度与预览壁纸。
-              </PopoverDescription>
-            </PopoverHeader>
-            {!isDefault ? (
-              <Button
-                variant="secondary"
-                surface="over-glass"
-                size="xs"
-                onClick={handleReset}
-                aria-label="重置默认外观"
-                title="重置默认"
-              >
-                <RotateCcwIcon className="size-3" />
-                <span>重置</span>
-              </Button>
-            ) : null}
-          </div>
+          <PopoverHeader
+            trailing={
+              !isDefault ? (
+                <Button
+                  variant="secondary"
+                  surface="over-glass"
+                  size="xs"
+                  onClick={handleReset}
+                  aria-label="重置默认外观"
+                  title="重置默认"
+                  className="shrink-0"
+                >
+                  <RotateCcwIcon className="size-3" />
+                  <span>重置</span>
+                </Button>
+              ) : null
+            }
+          >
+            <PopoverTitle>主题与外观</PopoverTitle>
+            <PopoverDescription>
+              实时调整全站强调色、玻璃通透度与预览壁纸。
+            </PopoverDescription>
+          </PopoverHeader>
 
           <LiquidGlassAccentPicker label="主题强调色" />
 
@@ -345,6 +349,41 @@ export function GlobalBackdropPicker() {
           </div>
         </PopoverContent>
       </Popover>
+    </div>
+  );
+}
+
+export function SidebarFooterControls() {
+  const githubUrl = `https://github.com/${gitConfig.user}/${gitConfig.repo}`;
+
+  return (
+    <div
+      data-slot="sidebar-footer-controls"
+      className="flex flex-col gap-2.5 md:border-t md:border-black/[0.06] md:pt-3 md:dark:border-white/[0.08]"
+    >
+      <GlobalBackdropPicker />
+
+      <div className="flex items-center justify-between gap-2 px-0.5">
+        <a
+          href={githubUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="GitHub 仓库"
+          className="inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-black/[0.05] hover:text-foreground dark:hover:bg-white/[0.08]"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+            className="size-4 shrink-0"
+          >
+            <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+          </svg>
+          <span>GitHub</span>
+        </a>
+
+        <ThemeSwitch className="border-black/[0.07] bg-black/[0.04] p-0.5 dark:border-white/[0.09] dark:bg-white/[0.06] [&_svg]:size-6.5 [&_svg]:p-1.5" />
+      </div>
     </div>
   );
 }

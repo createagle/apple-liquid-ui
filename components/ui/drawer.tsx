@@ -219,16 +219,91 @@ function DrawerContent({
   )
 }
 
-function DrawerHeader({ className, ...props }: React.ComponentProps<"div">) {
+function isDrawerTitleNode(node: React.ReactNode): boolean {
+  if (!React.isValidElement(node)) return false
+  const type = node.type as { displayName?: string; name?: string } | string
+  if (type === DrawerTitle) return true
+  if (typeof type === "function" || typeof type === "object") {
+    const name = type?.displayName ?? type?.name
+    if (name && /Title$/.test(name)) return true
+  }
+  return false
+}
+
+export interface DrawerHeaderProps extends React.ComponentProps<"div"> {
+  /**
+   * Optional action rendered to the left of the title, vertically aligned on the same midline.
+   * When `leading` or `trailing` is provided, the title bar uses a symmetric 3-column grid so the title stays horizontally centered.
+   */
+  leading?: React.ReactNode
+  /**
+   * Optional action rendered to the right of the title, vertically aligned on the same midline.
+   */
+  trailing?: React.ReactNode
+}
+
+function DrawerHeader({
+  className,
+  leading,
+  trailing,
+  children,
+  ...props
+}: DrawerHeaderProps) {
+  const hasActionSlots = leading !== undefined || trailing !== undefined
+
+  if (hasActionSlots) {
+    const childArray = React.Children.toArray(children)
+    const explicitTitles = childArray.filter(isDrawerTitleNode)
+    const titleNodes =
+      explicitTitles.length > 0 ? explicitTitles : childArray.slice(0, 1)
+    const restNodes =
+      explicitTitles.length > 0
+        ? childArray.filter((child) => !isDrawerTitleNode(child))
+        : childArray.slice(1)
+
+    return (
+      <div
+        data-slot="drawer-header"
+        className={cn(
+          "flex w-full shrink-0 flex-col gap-1 px-5 pt-3 pb-2 group-data-[swipe-axis=y]/drawer-popup:items-center group-data-[swipe-axis=y]/drawer-popup:text-center",
+          className
+        )}
+        {...props}
+      >
+        <div
+          data-slot="drawer-header-bar"
+          className="grid min-h-8 w-full grid-cols-[minmax(4.5rem,1fr)_minmax(0,auto)_minmax(4.5rem,1fr)] items-center gap-2"
+        >
+          <div className="flex min-w-0 items-center justify-start">
+            {leading}
+          </div>
+          <div className="flex min-w-0 items-center justify-center text-center">
+            {titleNodes}
+          </div>
+          <div className="flex min-w-0 items-center justify-end">
+            {trailing}
+          </div>
+        </div>
+        {restNodes.length > 0 ? (
+          <div className="flex w-full flex-col gap-1 group-data-[swipe-axis=y]/drawer-popup:items-center group-data-[swipe-axis=y]/drawer-popup:text-center">
+            {restNodes}
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
   return (
     <div
       data-slot="drawer-header"
       className={cn(
-        "flex shrink-0 flex-col gap-1 px-5 pt-4 pb-2 group-data-[swipe-axis=y]/drawer-popup:items-center group-data-[swipe-axis=y]/drawer-popup:text-center",
+        "flex w-full shrink-0 flex-col gap-1 px-5 pt-4 pb-2 group-data-[swipe-axis=y]/drawer-popup:items-center group-data-[swipe-axis=y]/drawer-popup:text-center",
         className
       )}
       {...props}
-    />
+    >
+      {children}
+    </div>
   )
 }
 
@@ -250,13 +325,14 @@ function DrawerTitle({ className, ...props }: DrawerPrimitive.Title.Props) {
     <DrawerPrimitive.Title
       data-slot="drawer-title"
       className={cn(
-        "font-heading text-[17px] leading-snug font-semibold tracking-[-0.015em] text-foreground md:text-[16px]",
+        "m-0 font-heading text-[17px] leading-[1.25] font-semibold tracking-[-0.015em] text-foreground md:text-[16px]",
         className
       )}
       {...props}
     />
   )
 }
+DrawerTitle.displayName = "DrawerTitle"
 
 function DrawerDescription({
   className,

@@ -330,8 +330,11 @@ function CommandDialog({
 
 function CommandInput({
   className,
+  endAdornment,
   ...props
-}: React.ComponentProps<typeof CommandPrimitive.Input>) {
+}: React.ComponentProps<typeof CommandPrimitive.Input> & {
+  endAdornment?: React.ReactNode
+}) {
   const { isMobileSheet } = useCommandContext()
 
   if (isMobileSheet) {
@@ -347,6 +350,7 @@ function CommandInput({
             )}
             {...props}
           />
+          {endAdornment}
         </div>
       </div>
     )
@@ -366,6 +370,7 @@ function CommandInput({
         )}
         {...props}
       />
+      {endAdornment}
     </div>
   )
 }
@@ -456,8 +461,17 @@ function CommandItem({
   className,
   children,
   onSelect,
+  selectionTone = "accent",
   ...props
-}: React.ComponentProps<typeof CommandPrimitive.Item>) {
+}: React.ComponentProps<typeof CommandPrimitive.Item> & {
+  /**
+   * Visual tone for keyboard/hover selection on desktop:
+   * - `"accent"` (default): macOS Spotlight solid Apple Accent highlight.
+   * - `"subtle"`: Soft translucent wash that preserves contrast for multi-line rich content,
+   *   inline code, breadcrumbs, and CSS `::highlight()` search matches.
+   */
+  selectionTone?: "accent" | "subtle"
+}) {
   const { isMobileSheet, closeMobileSheet } = useCommandContext()
 
   const handleSelect = React.useCallback(
@@ -473,6 +487,7 @@ function CommandItem({
   return (
     <CommandPrimitive.Item
       data-slot="command-item"
+      data-selection-tone={selectionTone}
       onSelect={handleSelect}
       className={cn(
         isMobileSheet
@@ -485,15 +500,23 @@ function CommandItem({
           : [
               "group/command-item relative flex min-h-8.5 cursor-default items-center gap-2.5 rounded-[10px] px-2.5 py-1.5 text-[13.5px] outline-hidden select-none transition-colors duration-120",
               "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-45",
-              "data-selected:bg-(--apple-blue) data-selected:text-white",
-              "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:text-muted-foreground data-selected:[&_svg]:text-white",
+              selectionTone === "subtle"
+                ? [
+                    "data-selected:bg-black/[0.065] data-selected:text-foreground",
+                    "dark:data-selected:bg-white/[0.11] dark:data-selected:text-white",
+                    "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:text-muted-foreground",
+                  ]
+                : [
+                    "data-selected:bg-(--apple-blue) data-selected:text-white",
+                    "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:text-muted-foreground data-selected:[&_svg]:text-white",
+                  ],
             ],
         className
       )}
       {...props}
     >
       {children}
-      <CheckIcon className="ml-auto size-4 opacity-0 group-has-data-[slot=command-shortcut]/command-item:hidden group-data-[checked=true]/command-item:opacity-100" />
+      <CheckIcon className="ml-auto hidden size-4 group-has-data-[slot=command-shortcut]/command-item:hidden group-data-[checked=true]/command-item:block" />
     </CommandPrimitive.Item>
   )
 }
