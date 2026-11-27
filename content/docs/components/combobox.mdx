@@ -1,0 +1,66 @@
+---
+title: Combobox 可搜索选择器
+description: 响应式 Apple Liquid Glass 可搜索选择器：桌面端呈现 macOS 27 全圆角玻璃搜索框与悬浮下拉菜单，移动端自动切换为内置搜索栏与分组列表的 iOS 27 底部液态玻璃 Drawer。
+keywords:
+  - Combobox
+  - 可搜索选择器
+  - 自动补全
+  - 多选标签
+  - Chips
+  - Drawer
+  - 底部抽屉
+  - macOS 27
+  - iOS 27
+  - Liquid Glass
+---
+
+基于 `@base-ui/react` Combobox 与 `Drawer` 原语构建，遵循本库纯视口响应式规范（`useIsMobile()` `768px` 断点），与 `Select` 保持一致的跨端交互体验：
+
+- **桌面端（`>= 768px` · macOS 27）**：全圆角液态玻璃输入槽（与 `Input` 共享 `useLiquidFieldRefraction` 内核）搭配悬浮 `<LiquidSurfaceBackdrop tone="menu" />` 下拉菜单，支持 Apple Blue 键盘高亮与右侧勾选图标（`✓`）。
+- **移动端（`< 768px` · iOS 27）**：点击输入框或多选标签容器自动弹出贴边 `32px` 顶圆角液态玻璃底部 `Drawer`，内置 iOS 27 胶囊搜索栏与 Inset Grouped 分组列表（分组标题置于卡片外部上方、右侧 Apple Blue 勾选），单选点选即收起，多选底部提供「完成」按钮。
+
+## 单选可搜索下拉框
+
+输入关键词即可实时过滤选项；点击预览栏右上角切换 **桌面 / 移动端** 即可对比悬浮菜单 ↔ 底部液态玻璃抽屉：
+
+<ComponentPreview name="combobox-liquid-hero" />
+
+## 安装（Shadcn Registry）
+
+```bash
+# 通过配置好的 @apple-liquid 命名空间安装（自动关联 drawer、button、input-group、liquid-surface、use-mobile 与 liquid-glass）
+npx shadcn@latest add @apple-liquid/combobox
+```
+
+## 多选胶囊标签（Multiple Chips）
+
+开启 `multiple` 并搭配 `<ComboboxChips>` 与 `useComboboxAnchor()`，桌面端支持内联输入与退格删除，移动端点击容器弹出底部多选抽屉：
+
+<ComponentPreview name="combobox-multiple" />
+
+## 分组搜索（Grouped）
+
+通过 `<ComboboxGroup>`、`<ComboboxLabel>` 与 `<ComboboxCollection>` 组织多分组数据集，移动端自动渲染为 iOS 27 Inset Grouped 卡片分组：
+
+<ComponentPreview name="combobox-grouped" />
+
+## Props API
+
+### `ComboboxInput`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `glass` | `boolean` | `true` | 是否启用液态玻璃输入框折射表面；传 `false` 切为实体样式 |
+| `surface` | `'default' \| 'over-glass'` | `'default'` | 嵌套于液态玻璃卡片内部时传 `'over-glass'` |
+| `showTrigger` | `boolean` | `true` | 是否在右侧显示下拉展开箭头按钮 |
+| `showClear` | `boolean` | `false` | 有值时是否在右侧显示一键清除按钮 |
+
+### `ComboboxContent`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `glass` | `boolean` | `true` | 是否启用液态玻璃折射表面 |
+| `mobileTitle` | `React.ReactNode` | `'搜索并选择'` / `'选择多项'` | 移动端底部抽屉的居中标题 |
+| `side` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'bottom'` | 桌面端菜单弹出方向 |
+| `sideOffset` | `number` | `8` | 桌面端菜单与输入框间距（px） |
+| `anchor` | `React.RefObject<HTMLElement \| null>` | — | 桌面端多选模式绑定 `<ComboboxChips>` 外框作为宽度与定位锚点 |

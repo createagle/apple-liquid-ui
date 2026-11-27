@@ -1,0 +1,61 @@
+---
+title: Command 命令面板
+description: 响应式 macOS 27 Spotlight 风格液态玻璃命令面板：桌面端支持触发器与自定义快捷键唤起居中液态浮窗，移动端自动切换为可下滑关闭的 iOS 27 底部液态玻璃 Drawer 与分组列表。
+keywords:
+  - Command
+  - 命令面板
+  - Spotlight
+  - 快捷搜索
+  - 快捷键
+  - Drawer
+  - 底部抽屉
+  - cmdk
+  - macOS 27
+  - iOS 27
+  - Liquid Glass
+---
+
+基于 `cmdk`、`<Dialog>` 与 `<Drawer>` 构建，完全兼容 shadcn/ui 标准 JSX API（`<Command>` / `<CommandDialog>` / `<CommandInput>` / `<CommandList>` / `<CommandGroup>` / `<CommandItem>` / `<CommandShortcut>` / `<CommandSeparator>`）：
+
+- **桌面端（`>= 768px` · macOS 27）**：点击触发器或按下自定义 `shortcut`（如 `⌘J` / `Ctrl+J`、`⇧⌘K`）唤起 Spotlight 居中液态玻璃浮窗；选中项使用 Apple Blue（`--apple-blue`）高亮与反白快捷键提示。
+- **移动端（`< 768px` · iOS 27）**：无论是 `<CommandDialog>` 还是独立 `<Command>`（默认 `mobileDrawer={true}`），均自动弹出贴边 `32px` 顶圆角液态玻璃底部 `Drawer`，内置胶囊搜索栏与 Inset Grouped 卡片分组列表，点选命令后自动收起。
+
+## 响应式液态玻璃命令面板（⌘J）
+
+PC 端与移动端均通过搜索触发器唤起，并传入 `shortcut="j"` 支持 `⌘J` / `Ctrl+J` 快捷切换（避开左侧导航栏的 `⌘K` 以及浏览器原生保留的地址栏快捷键 `⌘L`）；切换预览栏右上角 **桌面 / 移动端** 可对比居中弹窗 ↔ 底部抽屉：
+
+<ComponentPreview name="command-liquid-hero" />
+
+## 安装（Shadcn Registry）
+
+```bash
+# 通过配置好的 @apple-liquid 命名空间安装（自动关联 dialog、drawer、liquid-surface、use-mobile 与 liquid-glass）
+npx shadcn@latest add @apple-liquid/command
+```
+
+## 组合键快捷键（shortcut="shift+k"）
+
+`shortcut` 支持单键（如 `'j'`）及带修饰键的组合（如 `'shift+k'` 表示 `⇧⌘K / Ctrl+Shift+K`，`'alt+k'` 表示 `⌥⌘K`），同一页面多个命令面板可各自绑定不同快捷键互不冲突：
+
+<ComponentPreview name="command-dialog" />
+
+## Props API
+
+### `CommandDialog`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `shortcut` | `string \| false` | — | 可选全局 `⌘ / Ctrl + <key>` 快捷键（支持 `'j'`、`'shift+k'`、`'alt+k'` 等；不传或传 `false` 则不绑定；注意避免浏览器原生强制拦截的 `⌘L` / `⌘T` / `⌘W`） |
+| `open` | `boolean` | — | 受控打开状态 |
+| `onOpenChange` | `(open: boolean) => void` | — | 打开/关闭状态变更回调 |
+| `title` | `string` | `'命令面板'` | 移动端底部抽屉居中标题（桌面端作为无障碍标题） |
+| `showCloseButton` | `boolean` | `false` | 桌面端是否显示右上角关闭按钮 |
+
+### `Command`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `glass` | `boolean` | `true` | 是否启用 Apple 27 液态玻璃折射背景（在 `<CommandDialog>` 内自动复用外层折射） |
+| `mobileDrawer` | `boolean` | `true` | 独立使用时，移动端（`< 768px`）是否自动收折为搜索条并在底部 Drawer 中展开 |
+| `mobileTriggerPlaceholder` | `string` | `'搜索命令或应用…'` | 移动端收折搜索条的占位文案 |
+| `mobileTitle` | `React.ReactNode` | `'命令面板'` | 移动端底部抽屉的居中标题 |

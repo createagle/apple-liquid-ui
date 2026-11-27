@@ -195,16 +195,85 @@ function domeShift(u: number): number {
 const MAX_CACHE = 96
 const mapCache = new Map<string, LensMaps>()
 const pinnedImages = new Map<string, HTMLImageElement>()
+const decodedUrls = new Set<string>()
 
 function prewarmDataUrl(href: string) {
   if (typeof window === "undefined" || !href || pinnedImages.has(href)) return
   const img = new Image()
+  const markDecoded = () => {
+    decodedUrls.add(href)
+  }
+  img.onload = markDecoded
   img.src = href
+  if (typeof img.decode === "function") {
+    img.decode().then(markDecoded, () => {})
+  } else if (img.complete && img.naturalWidth > 0) {
+    decodedUrls.add(href)
+  }
   if (pinnedImages.size >= MAX_CACHE * 2) {
     const oldest = pinnedImages.keys().next().value
-    if (oldest) pinnedImages.delete(oldest)
+    if (oldest) {
+      pinnedImages.delete(oldest)
+      decodedUrls.delete(oldest)
+    }
   }
   pinnedImages.set(href, img)
+}
+
+function isDataUrlReady(href: string): boolean {
+  if (!href) return true
+  if (decodedUrls.has(href)) return true
+  const img = pinnedImages.get(href)
+  if (img && img.complete && img.naturalWidth > 0) {
+    decodedUrls.add(href)
+    return true
+  }
+  return false
+}
+
+export function isLensMapsReady(maps: LensMaps): boolean {
+  return isDataUrlReady(maps.displacement) && isDataUrlReady(maps.specular)
+}
+
+function decodeDataUrl(href: string): Promise<void> {
+  if (typeof window === "undefined" || isDataUrlReady(href)) {
+    return Promise.resolve()
+  }
+  let img = pinnedImages.get(href)
+  if (!img) {
+    prewarmDataUrl(href)
+    img = pinnedImages.get(href)
+  }
+  if (!img) return Promise.resolve()
+  if (typeof img.decode === "function") {
+    return img.decode().then(
+      () => {
+        decodedUrls.add(href)
+      },
+      () => {
+        decodedUrls.add(href)
+      }
+    )
+  }
+  if (img.complete && img.naturalWidth > 0) {
+    decodedUrls.add(href)
+    return Promise.resolve()
+  }
+  return new Promise((resolve) => {
+    const done = () => {
+      decodedUrls.add(href)
+      resolve()
+    }
+    img.addEventListener("load", done, { once: true })
+    img.addEventListener("error", done, { once: true })
+  })
+}
+
+export function decodeLensMaps(maps: LensMaps): Promise<void> {
+  return Promise.all([
+    decodeDataUrl(maps.displacement),
+    decodeDataUrl(maps.specular),
+  ]).then(() => undefined)
 }
 
 function toPng(image: ImageData): string {
@@ -505,6 +574,7 @@ export function LensFilter({
             y={0}
             width={width}
             height={height}
+            preserveAspectRatio="none"
             result="map"
           />
 
@@ -582,6 +652,7 @@ export function LensFilter({
             y={0}
             width={width}
             height={height}
+            preserveAspectRatio="none"
             result="rim"
           />
           <feComposite

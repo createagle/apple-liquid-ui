@@ -1,0 +1,61 @@
+---
+title: Drawer 抽屉
+description: 遵循 iOS 27 贴边大圆角液态玻璃规范的手势抽屉组件，支持四向滑出、多段吸附点（Snap Points）与独立层 SDF 光学折射。
+keywords:
+  - Drawer
+  - 抽屉
+  - 底部抽屉
+  - 手势拖拽
+  - Snap Points
+  - iOS 27
+  - macOS 27
+  - Liquid Glass
+---
+
+完全兼容 shadcn/ui 标准 JSX API（`<Drawer>` / `<DrawerTrigger>` / `<DrawerContent>` / `<DrawerHeader>` / `<DrawerFooter>` / `<DrawerTitle>` / `<DrawerDescription>` / `<DrawerClose>`），同时也是本库 `Select`、`Dialog`、`Popover`、`DropdownMenu` 与 `ContextMenu` 在移动端（`< 768px`）的底层手势容器：
+
+- **默认开启液态玻璃折射**：`DrawerContent` 默认挂载独立层 `<LiquidSurfaceBackdrop />`（`glass={true}`），底部滑出时自动应用 `32px` 顶部大圆角与 `openBottom` 无底角折射，且不截断内部 `Switch`、`Slider` 等 `LiquidLens` 子控件的采样。
+- **原生手势交互**：内置 Apple 27 风格顶部拖拽手柄（`showSwipeHandle` 默认开启），支持 `swipeDirection="down" | "up" | "left" | "right"` 与 `snapPoints` 多段高度吸附。
+
+## 液态玻璃抽屉预览
+
+拖动顶部手柄可跟手下拉关闭，内置 `Slider` 与 `Switch` 在液态玻璃表面上仍保持完整光学折射；拖动左侧「玻璃通透度」可实时预览透明 ↔ 色调过渡：
+
+<ComponentPreview name="drawer-liquid-hero" />
+
+## 安装（Shadcn Registry）
+
+```bash
+# 通过配置好的 @apple-liquid 命名空间安装（自动关联 liquid-surface 与 liquid-glass）
+npx shadcn@latest add @apple-liquid/drawer
+```
+
+## 四向滑出（Directions）
+
+通过 `swipeDirection` 支持底部、顶部、左侧、右侧四个方向滑出，并自动切换对应边缘的圆角与手柄方向：
+
+<ComponentPreview name="drawer-directions" />
+
+## 多段吸附点（Snap Points）
+
+传入 `snapPoints={[0.45, 0.85]}` 可实现类似 Apple 地图与共享表单的半屏 ↔ 展开多段手势吸附：
+
+<ComponentPreview name="drawer-snap-points" />
+
+## Props API
+
+### `Drawer`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `swipeDirection` | `'down' \| 'up' \| 'left' \| 'right'` | `'down'` | 抽屉滑出与手势关闭方向 |
+| `showSwipeHandle` | `boolean` | `true` | 是否显示顶部/侧边拖拽指示手柄 |
+| `snapPoints` | `(number \| string)[]` | — | 多段吸附高度点（如 `[0.45, 0.85]`） |
+| `modal` | `boolean` | `true` | 是否以模态遮罩模式打开 |
+
+### `DrawerContent`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `glass` | `boolean` | `true` | 是否启用 Apple 27 液态玻璃光学折射背景；设为 `false` 切换为实体表面 |
+| `backdrop` | `React.ReactNode` | — | 自定义底层折射节点（供复合组件覆盖默认参数） |

@@ -1,0 +1,49 @@
+---
+title: HoverCard 悬浮卡片
+description: macOS 27 22px 圆角液态玻璃悬浮预览卡片，适用于用户信息、链接摘要与设计规范快速预览。
+keywords:
+  - HoverCard
+  - PreviewCard
+  - 悬浮卡片
+  - 悬停预览
+  - macOS 27
+  - Liquid Glass
+---
+
+基于 `@base-ui/react/preview-card` 实现，完整保留 `<HoverCard>` / `<HoverCardTrigger>` / `<HoverCardContent>` 组合式 API，采用 `22px` 圆角与 `<LiquidSurfaceBackdrop tone="menu" />` 边缘折射基座，提供轻盈且高可读性的内容预览浮层。
+
+## 液态玻璃项目预览
+
+将指针悬停或键盘聚焦在触发按钮上查看悬浮预览卡片，并可拖动左侧「玻璃通透度」观察背景文字折射效果：
+
+<ComponentPreview name="hover-card-liquid-hero" />
+
+## 安装（Shadcn Registry）
+
+```bash
+# 通过配置好的 @apple-liquid 命名空间安装（自动关联 liquid-surface 与 liquid-glass）
+npx shadcn@latest add @apple-liquid/hover-card
+```
+
+## 行内协作者卡片
+
+适合在正文、评论或文档引用中为提及的团队成员或实体提供不打断阅读的悬浮资料卡：
+
+<ComponentPreview name="hover-card-profile" />
+
+## 侧向预览（Placement）
+
+支持通过 `side` 与 `align` 指定悬浮卡片的展开方向与偏移量：
+
+<ComponentPreview name="hover-card-link-preview" />
+
+## Props API
+
+### `HoverCardContent`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `side` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'bottom'` | 悬浮卡片弹出方向 |
+| `sideOffset` | `number` | `8` | 卡片与触发器之间的间距（px） |
+| `align` | `'start' \| 'center' \| 'end'` | `'center'` | 沿锚点轴线的对齐方式 |
+| `glass` | `boolean` | `true` | 是否启用 Apple 27 液态玻璃折射背景 |

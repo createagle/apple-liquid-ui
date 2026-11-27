@@ -527,6 +527,10 @@
         {
           "path": "components/ui/combobox.tsx",
           "type": "registry:ui"
+        },
+        {
+          "path": "hooks/use-mobile.ts",
+          "type": "registry:hook"
         }
       ],
       "dependencies": [
@@ -536,7 +540,10 @@
       ],
       "registryDependencies": [
         "@apple-liquid/button",
-        "@apple-liquid/input-group"
+        "@apple-liquid/drawer",
+        "@apple-liquid/input-group",
+        "@apple-liquid/liquid-glass",
+        "@apple-liquid/liquid-surface"
       ]
     },
     {
@@ -548,6 +555,10 @@
         {
           "path": "components/ui/command.tsx",
           "type": "registry:ui"
+        },
+        {
+          "path": "hooks/use-mobile.ts",
+          "type": "registry:hook"
         }
       ],
       "dependencies": [
@@ -557,7 +568,9 @@
       ],
       "registryDependencies": [
         "@apple-liquid/dialog",
-        "@apple-liquid/input-group"
+        "@apple-liquid/drawer",
+        "@apple-liquid/liquid-glass",
+        "@apple-liquid/liquid-surface"
       ]
     },
     {
@@ -643,6 +656,9 @@
       "dependencies": [
         "@base-ui/react",
         "cn"
+      ],
+      "registryDependencies": [
+        "@apple-liquid/liquid-surface"
       ]
     },
     {
@@ -722,6 +738,9 @@
       "dependencies": [
         "@base-ui/react",
         "cn"
+      ],
+      "registryDependencies": [
+        "@apple-liquid/liquid-surface"
       ]
     },
     {
@@ -1190,7 +1209,8 @@
         "lucide-react"
       ],
       "registryDependencies": [
-        "@apple-liquid/button"
+        "@apple-liquid/liquid-glass",
+        "@apple-liquid/liquid-surface"
       ]
     },
     {
@@ -1384,7 +1404,9 @@
         "lucide-react"
       ],
       "registryDependencies": [
-        "@apple-liquid/button"
+        "@apple-liquid/button",
+        "@apple-liquid/liquid-glass",
+        "@apple-liquid/liquid-surface"
       ]
     },
     {
@@ -1438,6 +1460,10 @@
       "dependencies": [
         "@base-ui/react",
         "cn"
+      ],
+      "registryDependencies": [
+        "@apple-liquid/liquid-glass",
+        "@apple-liquid/liquid-surface"
       ]
     },
     {

@@ -130,18 +130,14 @@ pnpm start           # 启动静态产物预览服务 (serve out)
   - `liquid-glass`（基础样式 & Token 包） + `lib/liquid-motion.ts`
   - `components/ui/liquid-glass-provider.tsx`（`LiquidGlassProvider` + `useLiquidGlass` + `LiquidGlassTintSlider`）
   - `components/ui/liquid-lens.tsx`（清洁无脏边 SDF 光学水滴透镜）
-- **已完成改造并文档化的组件**：
-  1. `button`（6 种 shadcn 标准变体 + 正交 `glass` 属性 + 全圆角胶囊响应式 + `over-glass` 适配）
-  2. `tabs`（`default` 分段控制器 / `glass` 悬浮胶囊 / `tab-bar` iOS ↔ iPad 导航栏 / `line` / 纵向，带恒定激活指示器与速度拉伸 `LiquidLens` 拖拽折射）
-  3. `select`（桌面端 `>= 768px` macOS 27 悬浮液态下拉菜单 + 右侧勾选；移动端 `< 768px` iOS 27 可下滑关闭浮动玻璃 Drawer + 分组列表）
+- **已完成改造并文档化的组件（23 个）**：
+  - **基础与表单**：`button`、`input`、`textarea`、`checkbox`、`radio-group`、`switch`、`slider`、`select`、`combobox`
+  - **浮层与弹窗**：`dialog`、`alert-dialog`、`drawer`、`sheet`、`popover`、`dropdown-menu`、`context-menu`、`command`
+  - **反馈与展示**：`tabs`、`card`、`badge`、`toast`、`tooltip`、`hover-card`
 
 ### 待完成目标（推荐推进优先级）
-- **P0（高频浮层与表单控件，重点体现 Liquid Glass 材质与双端形态切换）**：
-  - `dialog` & `alert-dialog`（桌面端居中液态弹窗 ↔ 移动端 iOS 27 居中 Alert / 底部弹性 Sheet）
-  - `dropdown-menu` & `context-menu` & `popover`（macOS 27 悬浮玻璃菜单 ↔ iOS 27 Context Menu / Action Sheet，右侧勾选）
-  - `switch`、`slider`、`checkbox`、`radio-group`、`input`、`textarea`（Apple 27 标志性的液态玻璃滑块手柄、Spring 开关挤压形变等）
-- **P1（核心导航与容器组件）**：
-  - `card`、`badge`、`sheet`、`drawer`、`tooltip`、`hover-card`、`command`、`combobox`、`navigation-menu`、`menubar`、`sidebar`、`toast`、`calendar`
+- **P1 剩余（核心导航与系统布局组件）**：
+  - `sidebar`、`menubar`、`navigation-menu`、`calendar`
 - **P2（其余全量 shadcn 组件与收尾）**：
   - `accordion`、`alert`、`avatar`、`breadcrumb`、`carousel`、`collapsible`、`input-otp`、`pagination`、`progress`、`scroll-area`、`skeleton`、`table`、`toggle`、`toggle-group` 等全量组件风格统一与文档补齐，最终实现整套 `apple-liquid-ui` Registry 100% 覆盖并发布可用。
 

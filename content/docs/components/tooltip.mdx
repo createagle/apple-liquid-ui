@@ -1,0 +1,50 @@
+---
+title: Tooltip 文字提示
+description: macOS 27 悬浮液态玻璃提示胶囊，支持快捷键徽标、四向锚定以及实体高对比模式切换。
+keywords:
+  - Tooltip
+  - 文字提示
+  - 悬停提示
+  - 气泡提示
+  - 快捷键
+  - macOS 27
+  - Liquid Glass
+---
+
+基于 `@base-ui/react/tooltip` 构建，采用 macOS 27 极简悬浮液态玻璃胶囊（默认不显示尖锐三角箭头，保留 `showArrow` 可选开启），并通过 `<LiquidSurfaceBackdrop tone="menu" />` 响应全站 `--liquid-glass-tint` 通透度设置。
+
+## 工具栏快捷键提示
+
+将鼠标悬停（或键盘聚焦）在按钮上即可唤起液态玻璃提示，内置对 `<Kbd>` 快捷键徽标的间距适配：
+
+<ComponentPreview name="tooltip-liquid-hero" />
+
+## 安装（Shadcn Registry）
+
+```bash
+# 通过配置好的 @apple-liquid 命名空间安装（自动关联 liquid-surface 与 liquid-glass）
+npx shadcn@latest add @apple-liquid/tooltip
+```
+
+## 多方向锚定（Placements）
+
+支持 `side="top" | "bottom" | "left" | "right"` 与 `align` 对齐，靠近视口边缘时自动翻转避让：
+
+<ComponentPreview name="tooltip-placements" />
+
+## 液态玻璃、箭头与实体对比
+
+默认采用 macOS 27 无箭头液态玻璃胶囊；需要指向特定锚点时可开启 `showArrow`，或在复杂背景上通过 `glass={false}` 切换为实体高对比样式：
+
+<ComponentPreview name="tooltip-shortcut" />
+
+## Props API
+
+### `TooltipContent`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `side` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'top'` | 提示相对触发元素的弹出方向 |
+| `sideOffset` | `number` | `7` | 提示与触发元素之间的间距（px） |
+| `glass` | `boolean` | `true` | 是否启用液态玻璃折射表面；`false` 时为实体高对比提示 |
+| `showArrow` | `boolean` | `false` | 是否显示方向指示箭头 |

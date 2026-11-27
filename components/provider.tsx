@@ -8,12 +8,12 @@ import { type ReactNode } from 'react';
 
 export function Provider({ children }: { children: ReactNode }) {
   return (
-    <RootProvider search={{ SearchDialog }}>
-      <LiquidGlassProvider>
+    <LiquidGlassProvider>
+      <RootProvider search={{ SearchDialog }}>
         <PreviewSettingsProvider>
           <TooltipProvider>{children}</TooltipProvider>
         </PreviewSettingsProvider>
-      </LiquidGlassProvider>
-    </RootProvider>
+      </RootProvider>
+    </LiquidGlassProvider>
   );
 }

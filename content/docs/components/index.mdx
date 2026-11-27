@@ -37,6 +37,20 @@ keywords:
   - 徽章
   - Card
   - 卡片
+  - Drawer
+  - 抽屉
+  - Sheet
+  - 侧边抽屉
+  - Toast
+  - 通知
+  - Tooltip
+  - 文字提示
+  - HoverCard
+  - 悬浮卡片
+  - Command
+  - 命令面板
+  - Combobox
+  - 可搜索选择器
   - 液态玻璃组件
   - 响应式
 ---
@@ -72,6 +86,16 @@ keywords:
     href="/docs/components/checkbox"
   />
   <Card
+    title="Combobox 可搜索选择器"
+    description="桌面端呈现全圆角液态玻璃搜索框与 Apple Blue 悬浮下拉菜单，移动端自动切换为内置搜索栏与分组列表的 iOS 27 底部液态玻璃 Drawer。"
+    href="/docs/components/combobox"
+  />
+  <Card
+    title="Command 命令面板"
+    description="桌面端呈现 macOS 27 Spotlight 液态玻璃面板，移动端自动切换为可下滑关闭的 iOS 27 底部液态玻璃 Drawer 与 Inset Grouped 分组列表。"
+    href="/docs/components/command"
+  />
+  <Card
     title="ContextMenu 上下文菜单"
     description="桌面端右键弹出 macOS 27 液态玻璃菜单，移动端长按自动切换为 iOS 27 底部液态玻璃 Drawer，支持二级子菜单推进与返回。"
     href="/docs/components/context-menu"
@@ -82,9 +106,19 @@ keywords:
     href="/docs/components/dialog"
   />
   <Card
+    title="Drawer 抽屉"
+    description="遵循 iOS 27 贴边大圆角液态玻璃规范的手势抽屉，支持四向滑出、多段吸附点与独立层光学折射。"
+    href="/docs/components/drawer"
+  />
+  <Card
     title="DropdownMenu 下拉菜单"
     description="桌面端呈现 macOS 27 悬浮液态下拉菜单，移动端自动切换为 iOS 27 底部液态玻璃 Drawer 与分组列表，支持二级子菜单返回导航。"
     href="/docs/components/dropdown-menu"
+  />
+  <Card
+    title="HoverCard 悬浮卡片"
+    description="macOS 27 22px 圆角液态玻璃悬浮预览卡片，适用于用户信息、链接摘要与设计规范快速预览。"
+    href="/docs/components/hover-card"
   />
   <Card
     title="Input 输入框"
@@ -107,6 +141,11 @@ keywords:
     href="/docs/components/select"
   />
   <Card
+    title="Sheet 侧边抽屉"
+    description="桌面端呈现 macOS 27 悬浮 26px 圆角液态玻璃检查器面板，移动端自动切换为 iOS 27 贴边大圆角抽屉。"
+    href="/docs/components/sheet"
+  />
+  <Card
     title="Slider 滑块"
     description="macOS 27 / iOS 27 横胶囊液态玻璃滑块，拖动时膨胀为透明折射水滴，支持等距刻度、双滑块区间与控制中心玻璃轨道。"
     href="/docs/components/slider"
@@ -125,6 +164,16 @@ keywords:
     title="Textarea 多行文本框"
     description="支持 CSS field-sizing-content 自动增高、Apple Blue 聚焦光环，以及 default / over-glass / glass 三态材质适配。"
     href="/docs/components/textarea"
+  />
+  <Card
+    title="Toast 轻提示通知"
+    description="macOS 27 右上角与 iOS 27 顶部居中液态玻璃通知横幅，支持多条堆叠展开、手势滑动关闭与语义状态图标。"
+    href="/docs/components/toast"
+  />
+  <Card
+    title="Tooltip 文字提示"
+    description="macOS 27 悬浮液态玻璃提示胶囊，支持快捷键徽标、四向锚定以及实体高对比模式切换。"
+    href="/docs/components/tooltip"
   />
 </Cards>
 
@@ -156,3 +205,10 @@ keywords:
 - `public/r/textarea.json`：响应式 Liquid Glass Textarea（自动关联 `@apple-liquid/liquid-glass`）
 - `public/r/card.json`：响应式 Liquid Glass Card（自动关联 `@apple-liquid/liquid-surface` 与 `@apple-liquid/liquid-glass`）
 - `public/r/badge.json`：响应式 Liquid Glass Badge（自动关联 `@apple-liquid/liquid-glass`）
+- `public/r/drawer.json`：响应式 Liquid Glass Drawer（自动关联 `@apple-liquid/liquid-surface` 与 `@apple-liquid/liquid-glass`）
+- `public/r/sheet.json`：响应式 Liquid Glass Sheet（自动关联 `@apple-liquid/liquid-surface` 与 `@apple-liquid/liquid-glass`）
+- `public/r/toast.json`：响应式 Liquid Glass Toast（自动关联 `@apple-liquid/button`、`@apple-liquid/liquid-surface` 与 `@apple-liquid/liquid-glass`）
+- `public/r/tooltip.json`：Liquid Glass Tooltip（自动关联 `@apple-liquid/liquid-surface` 与 `@apple-liquid/liquid-glass`）
+- `public/r/hover-card.json`：Liquid Glass HoverCard（自动关联 `@apple-liquid/liquid-surface` 与 `@apple-liquid/liquid-glass`）
+- `public/r/command.json`：Spotlight 风格 Liquid Glass Command（自动关联 `@apple-liquid/dialog`、`@apple-liquid/liquid-surface` 与 `@apple-liquid/liquid-glass`）
+- `public/r/combobox.json`：响应式 Liquid Glass Combobox（自动关联 `@apple-liquid/button`、`@apple-liquid/input-group`、`@apple-liquid/liquid-surface` 与 `@apple-liquid/liquid-glass`）

@@ -8,10 +8,13 @@ import { useLiquidGlass } from "@/components/ui/liquid-glass-provider"
 import {
   buildLensMaps,
   CONVEX,
+  decodeLensMaps,
+  isLensMapsReady,
   LENS_LIGHT_ANGLE,
   LensFilter,
   supportsRefraction,
   type LensFilterProps,
+  type LensMaps,
 } from "@/components/ui/liquid-lens"
 
 export interface LiquidSurfaceBackdropProps
@@ -234,6 +237,30 @@ export function useLiquidRefraction(
     })
   }, [bezel, box, canRefract, dpr, enabled, openBottom])
 
+  const [committedMaps, setCommittedMaps] = React.useState<LensMaps | null>(null)
+
+  React.useEffect(() => {
+    if (!maps) {
+      setCommittedMaps(null)
+      return
+    }
+    if (isLensMapsReady(maps)) {
+      setCommittedMaps(maps)
+      return
+    }
+    let cancelled = false
+    void decodeLensMaps(maps).then(() => {
+      if (!cancelled) {
+        setCommittedMaps(maps)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [maps])
+
+  const activeMaps = !maps ? null : isLensMapsReady(maps) ? maps : committedMaps
+
   // Continuous Clear (0) <-> Tinted (1) optical parameters:
   // At tint=0: crystal clear (low blur 2.5px, strong bezel bend)
   // At tint=1: frosted tinted glass (higher blur 18px, subtle bezel bend)
@@ -252,10 +279,10 @@ export function useLiquidRefraction(
       : 0
 
   const filter =
-    maps && box ? (
+    activeMaps && box ? (
       <LensFilter
         id={filterId}
-        maps={maps}
+        maps={activeMaps}
         width={box.w}
         height={box.h}
         scale={scalePx}

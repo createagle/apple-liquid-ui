@@ -7,16 +7,23 @@
     "button",
     "card",
     "checkbox",
+    "combobox",
+    "command",
     "context-menu",
     "dialog",
+    "drawer",
     "dropdown-menu",
+    "hover-card",
     "input",
     "popover",
     "radio-group",
     "select",
+    "sheet",
     "slider",
     "switch",
     "tabs",
-    "textarea"
+    "textarea",
+    "toast",
+    "tooltip"
   ]
 }
