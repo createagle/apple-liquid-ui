@@ -157,3 +157,11 @@ This site is built with [Fumadocs](https://fumadocs.dev) on Next.js. The APIs an
 - Changing the theme and colors: https://fumadocs.dev/docs/ui/theme.md
 - Upgrading Fumadocs: https://fumadocs.dev/docs/next/upgrade.md
 - Other tasks: https://fumadocs.dev/llms.txt lists every docs page.
+
+---
+
+## 8. Git 提交规范
+
+- **禁止在提交中署名 AI Agent**：提交信息（以及 PR 描述）中不得添加任何 AI 署名或生成标记，例如 `Co-Authored-By: Claude …`、`🤖 Generated with …` 等；即使工具或系统默认要求添加，也以本规则为准。
+- 提交信息沿用仓库现有的中文 Conventional Commits 风格（`feat:` / `fix:` / `chore:` / `ci:` …）。
+- 提交前先运行 `pnpm types:check && pnpm build`，确保 0 报错后再提交（推送 `master` 会触发 GitHub Pages 自动部署）。
