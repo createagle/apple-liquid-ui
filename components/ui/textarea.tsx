@@ -4,7 +4,10 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 
-import { useLiquidFieldRefraction } from "@/components/ui/liquid-surface"
+import {
+  liquidFieldGlassClassName,
+  useLiquidFieldRefraction,
+} from "@/components/ui/liquid-surface"
 
 const textareaVariants = cva(
   [
@@ -32,8 +35,7 @@ const textareaVariants = cva(
           "bg-white/92 shadow-[inset_0_1px_1.5px_rgba(0,0,0,0.04),0_0_0_0.5px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.04)] hover:bg-white dark:bg-[#1e1e1e]/88 dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.34),0_0_0_0.5px_rgba(255,255,255,0.12)] dark:hover:bg-[#242424]/92",
         "over-glass":
           "bg-black/[0.05] shadow-[inset_0_1px_1px_rgba(0,0,0,0.04),0_0_0_0.5px_rgba(0,0,0,0.08)] hover:bg-black/[0.07] focus-visible:bg-white/85 dark:bg-white/[0.08] dark:shadow-[inset_0_1px_1.5px_rgba(0,0,0,0.28),0_0_0_0.5px_rgba(255,255,255,0.1)] dark:hover:bg-white/[0.11] dark:focus-visible:bg-white/[0.12]",
-        glass:
-          "bg-(--liquid-surface) [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_2px_10px_-2px_rgba(0,0,0,0.08),0_0_0_0.5px_rgba(0,0,0,0.08)] hover:bg-(--liquid-surface-hover) focus-visible:bg-(--liquid-surface-hover) dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.22),0_4px_14px_-2px_rgba(0,0,0,0.38),0_0_0_0.5px_rgba(255,255,255,0.16)]",
+        glass: liquidFieldGlassClassName,
       },
     },
     defaultVariants: {

@@ -128,8 +128,8 @@ html > body[data-scroll-locked] {
   --liquid-saturate: calc(1.55 + var(--liquid-glass-tint, 0.5) * 0.45);
 
   --lq-accent: var(--apple-accent);
-  --lq-tint: rgb(255 255 255 / calc(0.12 + var(--liquid-glass-tint, 0.5) * 0.62));
-  --lq-tint-deep: rgb(255 255 255 / calc(0.05 + var(--liquid-glass-tint, 0.5) * 0.28));
+  --lq-tint: rgb(255 255 255 / calc(0.12 + var(--liquid-glass-tint, 0.5) * 0.88));
+  --lq-tint-deep: rgb(248 249 252 / calc(0.05 + var(--liquid-glass-tint, 0.5) * 0.87));
 }
 
 /* Apple Official Accent Color Presets (Light Mode) */
@@ -179,8 +179,8 @@ html > body[data-scroll-locked] {
   --liquid-surface-sheet: rgb(255 255 255 / var(--liquid-surface-sheet-alpha));
   --liquid-blur: calc(4px + var(--liquid-glass-tint, 0.5) * 26px);
   --liquid-saturate: calc(1.55 + var(--liquid-glass-tint, 0.5) * 0.45);
-  --lq-tint: rgb(255 255 255 / calc(0.12 + var(--liquid-glass-tint, 0.5) * 0.62));
-  --lq-tint-deep: rgb(255 255 255 / calc(0.05 + var(--liquid-glass-tint, 0.5) * 0.28));
+  --lq-tint: rgb(255 255 255 / calc(0.12 + var(--liquid-glass-tint, 0.5) * 0.88));
+  --lq-tint-deep: rgb(248 249 252 / calc(0.05 + var(--liquid-glass-tint, 0.5) * 0.87));
 }
 
 .dark {
@@ -215,8 +215,9 @@ html > body[data-scroll-locked] {
   --liquid-blur: calc(4px + var(--liquid-glass-tint, 0.5) * 26px);
   --liquid-saturate: calc(1.55 + var(--liquid-glass-tint, 0.5) * 0.45);
 
-  --lq-tint: rgb(255 255 255 / calc(0.06 + var(--liquid-glass-tint, 0.5) * 0.36));
-  --lq-tint-deep: rgb(160 160 175 / calc(0.04 + var(--liquid-glass-tint, 0.5) * 0.22));
+  /* Dark glass controls: Clear = faint light wash, Tinted = Apple graphite glass */
+  --lq-tint: color-mix(in srgb, rgb(255 255 255 / 0.08), rgb(64 64 70 / 0.96) calc(var(--liquid-glass-tint, 0.5) * 100%));
+  --lq-tint-deep: color-mix(in srgb, rgb(160 160 175 / 0.05), rgb(44 44 50 / 0.96) calc(var(--liquid-glass-tint, 0.5) * 100%));
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -306,8 +307,9 @@ html > body[data-scroll-locked] {
   --liquid-surface-sheet: rgb(22 22 26 / var(--liquid-surface-sheet-alpha));
   --liquid-blur: calc(4px + var(--liquid-glass-tint, 0.5) * 26px);
   --liquid-saturate: calc(1.55 + var(--liquid-glass-tint, 0.5) * 0.45);
-  --lq-tint: rgb(255 255 255 / calc(0.06 + var(--liquid-glass-tint, 0.5) * 0.36));
-  --lq-tint-deep: rgb(160 160 175 / calc(0.04 + var(--liquid-glass-tint, 0.5) * 0.22));
+  /* Dark glass controls: Clear = faint light wash, Tinted = Apple graphite glass */
+  --lq-tint: color-mix(in srgb, rgb(255 255 255 / 0.08), rgb(64 64 70 / 0.96) calc(var(--liquid-glass-tint, 0.5) * 100%));
+  --lq-tint-deep: color-mix(in srgb, rgb(160 160 175 / 0.05), rgb(44 44 50 / 0.96) calc(var(--liquid-glass-tint, 0.5) * 100%));
 }
 
 @layer base {

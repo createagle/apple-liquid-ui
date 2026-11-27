@@ -56,7 +56,7 @@ export function LiquidGlassSettingsDemo() {
               <CopyIcon />
             </Button>
             <div className="relative min-w-0 flex-1">
-              <SearchIcon className="pointer-events-none absolute top-1/2 left-3.5 z-10 size-4 -translate-y-1/2 text-muted-foreground md:left-3 md:size-3.5" />
+              <SearchIcon className="pointer-events-none absolute top-1/2 left-3.5 z-10 size-4 -translate-y-1/2 text-(--lq-text-dim) md:left-3 md:size-3.5" />
               <Input
                 placeholder="搜索"
                 aria-label="搜索"

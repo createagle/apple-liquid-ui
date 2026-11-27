@@ -372,7 +372,29 @@ export interface LensFilterProps {
   specularSaturation: number
   colouredRimOpacity?: number
   dispersion?: number
+  /**
+   * Optional material applied in-filter before displacement (after `blur`),
+   * matching the `LiquiGlass` backdrop chain `blur -> saturate -> brightness`.
+   */
+  saturation?: number
+  brightness?: number
+  /**
+   * `LiquiGlass` tone curve on the displaced backdrop (shadows lifted,
+   * highlights rolled off) that gives clear control glass its luminous look.
+   */
+  toneLift?: number
+  toneRoll?: number
   scaleRef?: React.Ref<LensScale>
+}
+
+/** Samples the `LiquiGlass` tone curve into an `feFunc*` lookup table. */
+function toneTable(lift: number, roll: number) {
+  const steps = 17
+  return Array.from({ length: steps }, (_, i) => {
+    const v = i / (steps - 1)
+    const lifted = v + lift * (1 - v) ** 3
+    return String(Math.round((lifted - roll * lifted ** 3) * 1e3) / 1e3)
+  }).join(" ")
 }
 
 const ISOLATE = {
@@ -397,11 +419,17 @@ export function LensFilter({
   specularSaturation,
   colouredRimOpacity = 1,
   dispersion = 0,
+  saturation = 1,
+  brightness = 1,
+  toneLift = 0,
+  toneRoll = 0,
   scaleRef,
 }: LensFilterProps) {
   const passes = React.useRef<(SVGFEDisplacementMapElement | null)[]>([])
   const spread =
     dispersion > 0 ? [1 - dispersion, 1, 1 + dispersion] : [1]
+  const toned = toneLift > 0 || toneRoll > 0
+  const base = toned ? "toned" : "bent"
 
   React.useImperativeHandle(
     scaleRef,
@@ -417,7 +445,12 @@ export function LensFilter({
     [dispersion]
   )
 
-  const inputSource = blur > 0 ? "softened" : "SourceGraphic"
+  const graded = saturation !== 1 || brightness !== 1
+  const inputSource = graded
+    ? "graded"
+    : blur > 0
+      ? "softened"
+      : "SourceGraphic"
 
   const renderPass = (k: number, i: number, result: string) => (
     <feDisplacementMap
@@ -448,6 +481,22 @@ export function LensFilter({
               stdDeviation={blur}
               result="softened"
             />
+          ) : null}
+
+          {graded ? (
+            <>
+              <feColorMatrix
+                in={blur > 0 ? "softened" : "SourceGraphic"}
+                type="saturate"
+                values={String(saturation)}
+                result="saturated"
+              />
+              <feComponentTransfer in="saturated" result="graded">
+                <feFuncR type="linear" slope={brightness} />
+                <feFuncG type="linear" slope={brightness} />
+                <feFuncB type="linear" slope={brightness} />
+              </feComponentTransfer>
+            </>
           ) : null}
 
           <feImage
@@ -513,8 +562,16 @@ export function LensFilter({
             renderPass(1, 0, "bent")
           )}
 
+          {toned ? (
+            <feComponentTransfer in="bent" result="toned">
+              <feFuncR type="table" tableValues={toneTable(toneLift, toneRoll)} />
+              <feFuncG type="table" tableValues={toneTable(toneLift, toneRoll)} />
+              <feFuncB type="table" tableValues={toneTable(toneLift, toneRoll)} />
+            </feComponentTransfer>
+          ) : null}
+
           <feColorMatrix
-            in="bent"
+            in={base}
             type="saturate"
             values={String(specularSaturation)}
             result="vivid"
@@ -541,10 +598,10 @@ export function LensFilter({
               <feComponentTransfer in="colouredRim" result="softColouredRim">
                 <feFuncA type="linear" slope={colouredRimOpacity} />
               </feComponentTransfer>
-              <feBlend in="softColouredRim" in2="bent" result="withColour" />
+              <feBlend in="softColouredRim" in2={base} result="withColour" />
             </>
           ) : (
-            <feBlend in="colouredRim" in2="bent" result="withColour" />
+            <feBlend in="colouredRim" in2={base} result="withColour" />
           )}
           <feBlend in="whiteRim" in2="withColour" />
         </filter>

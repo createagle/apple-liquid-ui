@@ -11,6 +11,7 @@ import {
   LENS_LIGHT_ANGLE,
   LensFilter,
   supportsRefraction,
+  type LensFilterProps,
 } from "@/components/ui/liquid-lens"
 
 export interface LiquidSurfaceBackdropProps
@@ -76,8 +77,70 @@ export interface LiquidRefractionOptions {
   quantize?: number
   /** Map resolution multiplier. @default 1 */
   dpr?: number
+  /**
+   * Backdrop blur in px baked into the filter. Defaults to the tint-driven
+   * panel blur (`2.5px` at Clear -> `18px` at Tinted).
+   */
+  blur?: number
+  /**
+   * In-filter material (`saturate`, `brightness`, tone curve) for control glass;
+   * see `LensFilterProps`. Panels leave these off and grade via CSS instead.
+   */
+  material?: Pick<
+    LensFilterProps,
+    | "saturation"
+    | "brightness"
+    | "toneLift"
+    | "toneRoll"
+    | "specularOpacity"
+    | "colouredRimOpacity"
+  >
   /** @default true */
   enabled?: boolean
+}
+
+/**
+ * Apple Liquid Glass "clear" control material, shared by glass `Button`s
+ * (via `LiquiGlass`) and glass text fields (`Input`, `Textarea`) so a toolbar of
+ * buttons next to a search field reads as one material, exactly like the
+ * macOS 27 / iOS 27 system toolbars. Continuous in `tint` (0 Clear <-> 1 Tinted).
+ *
+ * The fields are tuned in `LiquiGlass` prop units (`tintFloor`, `frost`, ...).
+ */
+export function getLiquidControlMaterial(tint: number) {
+  const t = Math.max(0, Math.min(1, tint))
+  return {
+    brightness: Number((1.08 - t * 0.04).toFixed(2)),
+    tintFloor: Number((0.04 + t * 0.38).toFixed(2)),
+    blur: Number((1.5 + t * 6.5).toFixed(1)),
+    frost: Number((0.06 + t * 0.56).toFixed(2)),
+    specular: Number((0.58 - t * 0.16).toFixed(2)),
+    saturation: Number((1.7 + t * 0.3).toFixed(2)),
+  }
+}
+
+/**
+ * Resolves the control material the way `LiquiGlass` composites it, for
+ * surfaces that cannot host its layer stack (a bare `<input>` / `<textarea>`).
+ */
+function resolveControlMaterial(tint: number) {
+  const m = getLiquidControlMaterial(tint)
+  return {
+    // LiquiGlass: `blur + frost * 14`, and the tint layer's opacity
+    blurPx: Math.round((m.blur + m.frost * 14) * 100) / 100,
+    tintOpacity: Number((m.tintFloor + (1 - m.tintFloor) * m.frost).toFixed(3)),
+    tone: `saturate(${m.saturation}) brightness(${m.brightness})`,
+    filter: {
+      saturation: m.saturation,
+      brightness: m.brightness,
+      // LiquiGlass refract-layer tone curve, eased off as the frost thickens
+      toneLift: Math.round(180 * (1 - 0.45 * m.frost)) / 1e3,
+      toneRoll: Math.round(140 * (1 - 0.45 * m.frost)) / 1e3,
+      // LiquiGlass controls carry a white specular rim only, no coloured rim
+      specularOpacity: m.specular,
+      colouredRimOpacity: 0,
+    },
+  }
 }
 
 export interface LiquidRefraction {
@@ -108,6 +171,8 @@ export function useLiquidRefraction(
     heightRatio,
     quantize = 4,
     dpr = 1,
+    blur,
+    material,
     enabled = true,
   }: LiquidRefractionOptions = {}
 ): LiquidRefraction {
@@ -173,7 +238,7 @@ export function useLiquidRefraction(
   // At tint=0: crystal clear (low blur 2.5px, strong bezel bend)
   // At tint=1: frosted tinted glass (higher blur 18px, subtle bezel bend)
   const clampedTint = Math.max(0, Math.min(1, tint))
-  const blurPx = Number((2.5 + clampedTint * 15.5).toFixed(1))
+  const blurPx = blur ?? Number((2.5 + clampedTint * 15.5).toFixed(1))
   const peak =
     heightRatio && box ? Math.min(scale, box.h * heightRatio) : scale
   const scalePx = Number(
@@ -199,6 +264,7 @@ export function useLiquidRefraction(
         specularSaturation={5}
         colouredRimOpacity={colouredRimOpacity}
         dispersion={activeDispersion}
+        {...material}
       />
     ) : null
 
@@ -208,7 +274,11 @@ export function useLiquidRefraction(
 export interface LiquidFieldRefraction<T extends HTMLElement> {
   /** Callback ref for the field (also forwards to the caller's own `ref`). */
   ref: React.RefCallback<T>
-  /** Inline `backdrop-filter` while refracting; `undefined` keeps the CSS blur fallback. */
+  /**
+   * Inline control material: `backdrop-filter` (SDF refraction on Chromium,
+   * frosted blur elsewhere) plus `--lq-field-tint`, the tint layer opacity
+   * consumed by `liquidFieldGlassClassName`. `undefined` when disabled.
+   */
   style: React.CSSProperties | undefined
   /** Portaled SVG `<filter>`; render it next to the field. */
   portal: React.ReactNode
@@ -221,11 +291,17 @@ export interface LiquidFieldRefraction<T extends HTMLElement> {
  * straight onto the field via `backdrop-filter: url(#id)` and the SVG `<filter>`
  * is portaled to `document.body`: the DOM stays a single form element. The
  * displacement is capped to the field height so a 34px capsule bends cleanly.
+ *
+ * The material (blur, saturation, brightness, tint density) is the same
+ * `getLiquidControlMaterial()` a glass `Button` renders with, so fields and
+ * buttons side by side are indistinguishable glass at every `tint`.
  */
 export function useLiquidFieldRefraction<T extends HTMLElement>(
   enabled: boolean,
   forwardedRef?: React.Ref<T>
 ): LiquidFieldRefraction<T> {
+  const { tint } = useLiquidGlass()
+  const material = resolveControlMaterial(tint)
   const [node, setNode] = React.useState<T | null>(null)
   const { filterId, refracting, filter } = useLiquidRefraction(node, {
     radius: "auto",
@@ -234,6 +310,8 @@ export function useLiquidFieldRefraction<T extends HTMLElement>(
     // 1px steps keep the thin rim aligned with the field edge
     quantize: 1,
     dpr: 2,
+    blur: material.blurPx,
+    material: material.filter,
     enabled,
   })
 
@@ -250,16 +328,38 @@ export function useLiquidFieldRefraction<T extends HTMLElement>(
     [forwardedRef]
   )
 
-  const value = `url(#${filterId}) saturate(var(--liquid-saturate, 1.75))`
+  // Same tiers as LiquiGlass: refraction on Chromium (material graded inside
+  // the filter, tone curve included), 2x frosted blur elsewhere
+  const backdrop = refracting
+    ? `url(#${filterId})`
+    : `blur(${Math.max(material.blurPx * 2, 10)}px) ${material.tone}`
 
   return {
     ref,
-    style: refracting
-      ? { backdropFilter: value, WebkitBackdropFilter: value }
+    style: enabled
+      ? {
+          backdropFilter: backdrop,
+          WebkitBackdropFilter: backdrop,
+          ["--lq-field-tint" as string]: material.tintOpacity,
+        }
       : undefined,
     portal: filter ? createPortal(filter, document.body) : null,
   }
 }
+
+/**
+ * Surface classes for glass text fields, mirroring a clear glass `Button`:
+ * the `--lq-tint` -> `--lq-tint-deep` wash at the button's tint-layer opacity,
+ * a top-left catch-light rim and the same floating `--lq-shadow` elevation.
+ * Pair with the inline style from `useLiquidFieldRefraction()`.
+ */
+export const liquidFieldGlassClassName = cn(
+  "bg-[linear-gradient(135deg,color-mix(in_srgb,var(--lq-tint)_calc(var(--lq-field-tint,0.45)*100%),transparent),color-mix(in_srgb,var(--lq-tint-deep)_calc(var(--lq-field-tint,0.45)*100%),transparent))]",
+  "shadow-[inset_0_1px_1px_var(--lq-rim-hi,rgba(255,255,255,0.85)),inset_-1px_-1px_1px_var(--lq-rim-lo,rgba(255,255,255,0.28)),0_8px_20px_-4px_rgba(10,15,40,0.14),0_2px_6px_rgba(10,15,40,0.08)]",
+  "hover:bg-white/14 focus-visible:bg-white/10 dark:hover:bg-white/10 dark:focus-visible:bg-white/8",
+  // Same secondary label as glass Button content, legible at every tint
+  "placeholder:text-(--lq-text-dim)"
+)
 
 /**
  * Shared Apple Liquid Glass optical refraction backdrop for large floating

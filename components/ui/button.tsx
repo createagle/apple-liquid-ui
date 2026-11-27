@@ -10,6 +10,7 @@ import { motion, useReducedMotion } from "motion/react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { LIQUID_PRESS_SCALE, LIQUID_SPRINGS } from "@/lib/liquid-motion"
 import { useLiquidGlass } from "@/components/ui/liquid-glass-provider"
+import { getLiquidControlMaterial } from "@/components/ui/liquid-surface"
 
 const MotionButtonPrimitive = motion.create(ButtonPrimitive)
 const MotionLiquiGlass = motion.create(LiquiGlass)
@@ -191,20 +192,16 @@ function getGlassOptics(
   if (tone === "clear") {
     // Clean luminous glass with zero dark edge-shade smudges on corners;
     // responds continuously to global LiquidGlassProvider tint (0 = Clear, 1 = Tinted).
+    // The material is shared with glass Input / Textarea so they match side by side.
     return {
       profile: "squircle",
       finish: "classic",
       lightAngle: -45,
       edgeShade: 0,
       hairline: 0.08,
-      brightness: Number((1.08 - tint * 0.04).toFixed(2)),
-      tintFloor: Number((0.04 + tint * 0.38).toFixed(2)),
-      blur: Number((1.5 + tint * 6.5).toFixed(1)),
-      frost: Number((0.06 + tint * 0.44).toFixed(2)),
+      ...getLiquidControlMaterial(tint),
       refraction: Math.round(refraction * 0.65),
       bezel,
-      specular: Number((0.58 - tint * 0.16).toFixed(2)),
-      saturation: Number((1.7 + tint * 0.3).toFixed(2)),
       elevated: true,
     }
   }
