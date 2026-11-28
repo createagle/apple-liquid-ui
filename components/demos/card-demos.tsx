@@ -32,7 +32,7 @@ export function CardLiquidHeroDemo() {
       </CardHeader>
 
       <CardContent className="flex flex-col gap-2.5">
-        <Card surface="over-glass" size="sm" className="gap-0 py-0">
+        <Card size="sm" className="gap-0 py-0">
           <div className="divide-y divide-black/[0.06] dark:divide-white/[0.08]">
             <div className="flex items-center justify-between px-3.5 py-2.5">
               <div className="flex items-center gap-2.5">
@@ -57,7 +57,7 @@ export function CardLiquidHeroDemo() {
       </CardContent>
 
       <CardFooter className="justify-end">
-        <Button size="sm" variant="secondary" surface="over-glass">
+        <Button size="sm" variant="secondary">
           管理空间
         </Button>
         <Button size="sm" variant="default">

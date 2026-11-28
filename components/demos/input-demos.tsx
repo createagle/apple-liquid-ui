@@ -28,7 +28,6 @@ export function InputLiquidHeroDemo() {
               Apple 账户邮箱
             </span>
             <Input
-              surface="over-glass"
               type="email"
               defaultValue="designer@apple-liquid-ui"
               placeholder="name@icloud.com"
@@ -39,7 +38,6 @@ export function InputLiquidHeroDemo() {
               设备名称
             </span>
             <Input
-              surface="over-glass"
               defaultValue="MacBook Pro（Liquid Glass）"
             />
           </label>

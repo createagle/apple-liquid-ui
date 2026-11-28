@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { LiquiGlass } from '@liqui-design/glass';
 import {
   ArrowRightIcon,
   HeartIcon,
@@ -12,6 +11,10 @@ import {
   Trash2Icon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  LiquidSurfaceBackdrop,
+  OverGlass,
+} from '@/components/ui/liquid-surface';
 
 export function ButtonLiquidHeroDemo() {
   return (
@@ -127,27 +130,22 @@ export function ButtonSizesDemo() {
 }
 
 export function ButtonOverGlassDemo() {
+  // A glass toolbar: buttons on it switch to the kit's flat Over-Glass fills
+  // automatically (`glass` is ignored there: Apple never stacks glass on glass).
   return (
-    <LiquiGlass
-      radius={999}
-      lightAngle={-45}
-      edgeShade={0.12}
-      hairline={0.34}
-      refraction={65}
-      bezel={16}
-      frost={0.22}
-      elevated
-      contentClassName="flex flex-wrap items-center gap-2.5 px-4 py-2.5"
-    >
-      <Button variant="default" surface="over-glass" size="sm">
-        应用更改
-      </Button>
-      <Button variant="secondary" surface="over-glass" size="sm">
-        Over-glass 按钮
-      </Button>
-      <Button variant="ghost" surface="over-glass" size="sm">
-        取消
-      </Button>
-    </LiquiGlass>
+    <div className="relative isolate flex flex-wrap items-center gap-2.5 rounded-full px-4 py-2.5 shadow-[0_18px_46px_-10px_rgba(0,0,0,0.18),0_0_0_0.5px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-[0_22px_54px_-10px_rgba(0,0,0,0.6),0_0_0_0.5px_rgba(255,255,255,0.16),inset_0_1px_0_rgba(255,255,255,0.2)]">
+      <LiquidSurfaceBackdrop size="medium" radius="auto" bezel={16} />
+      <OverGlass>
+        <Button variant="default" glass size="sm">
+          应用更改
+        </Button>
+        <Button variant="secondary" glass size="sm">
+          Over-glass 按钮
+        </Button>
+        <Button variant="ghost" size="sm">
+          取消
+        </Button>
+      </OverGlass>
+    </div>
   );
 }

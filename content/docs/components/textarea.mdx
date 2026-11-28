@@ -17,11 +17,11 @@ keywords:
 
 - **桌面端（`>= 768px` · macOS 27）**：`13px` 字号、`12px` 柔和圆角与 `84px` 默认最小高度。
 - **移动端（`< 768px` · iOS 27）**：`16px` 防缩放字号、`16px` 圆角与 `96px` 触控最小高度。
-- **默认液态玻璃材质**：默认呈现响应 `--liquid-glass-tint` 的液态玻璃表面，Chromium 内核浏览器中圆角边缘带与 Dialog / 下拉菜单同源的 SDF 光学折射（Safari / Firefox 自动回退为毛玻璃），传入 `glass={false}` 可切换为实体框，置于玻璃容器内时使用 `surface="over-glass"`。
+- **默认液态玻璃材质**：默认呈现响应 `--liquid-glass-tint` 的液态玻璃表面，与玻璃 `Button` / `Input` 共用 `Regular - Small` 控件材质（Chromium 内核浏览器中圆角边缘带 SDF 光学折射，Safari / Firefox 自动回退为毛玻璃），传入 `glass={false}` 可切换为实体框；置于玻璃表面内时自动切换为 Over-Glass 凹槽。
 
 ## 响应式实时预览
 
-在液态玻璃备忘录卡片内使用 `surface="over-glass"` 多行输入框，输入文字时自动撑高并实时统计字数：
+在液态玻璃备忘录卡片内的多行输入框（自动切换为 Over-Glass），输入文字时自动撑高并实时统计字数：
 
 <ComponentPreview name="textarea-liquid-hero" />
 
@@ -59,4 +59,4 @@ export function Example() {
 | :--- | :--- | :--- | :--- |
 | `size` | `'sm' \| 'default' \| 'lg'` | `'default'` | 尺寸与圆角阶梯（含自适应最小高度） |
 | `glass` | `boolean` | `true` | 默认开启液态玻璃表面（含边缘光学折射）并响应全局 `--liquid-glass-tint`；传入 `false` 切换为实体文本框 |
-| `surface` | `'default' \| 'over-glass'` | `'default'` | 置于液态玻璃容器内部时设为 `'over-glass'`（自动关闭嵌套模糊并切换半透明凹槽） |
+| `surface` | `'default' \| 'over-glass'` | 自动检测 | 所处表面语境；在玻璃表面内自动为 `'over-glass'`（关闭玻璃、切换半透明凹槽），传入可强制覆盖 |

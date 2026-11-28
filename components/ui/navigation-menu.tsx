@@ -280,7 +280,7 @@ function NavigationMenuList({
             radius={999}
             bezel={12}
             refraction={0.8}
-            tone="menu"
+            size="menu"
           />
         ) : null}
         {children}
@@ -299,7 +299,7 @@ function NavigationMenuList({
           radius={999}
           bezel={12}
           refraction={0.8}
-          tone="menu"
+          size="menu"
         />
       ) : null}
       {children}
@@ -553,7 +553,7 @@ function NavigationMenuPositioner({
           )}
         >
           {glass ? (
-            <LiquidSurfaceBackdrop radius={22} bezel={18} tone="menu" />
+            <LiquidSurfaceBackdrop radius={22} bezel={18} size="menu" />
           ) : null}
           <NavigationMenuPrimitive.Viewport className="relative size-full overflow-hidden" />
         </NavigationMenuPrimitive.Popup>

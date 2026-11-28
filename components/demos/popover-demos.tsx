@@ -31,7 +31,7 @@ export function PopoverLiquidHeroDemo() {
       <Popover>
         <PopoverTrigger
           render={
-            <Button variant="secondary">
+            <Button glass variant="secondary">
               <SunIcon />
               显示与亮度
             </Button>
@@ -113,7 +113,7 @@ export function PopoverAlignmentDemo() {
         <Popover key={item.side}>
           <PopoverTrigger
             render={
-              <Button variant="secondary" size="sm">
+              <Button glass variant="secondary" size="sm">
                 <CompassIcon />
                 {item.label}
               </Button>
@@ -145,7 +145,7 @@ export function PopoverQuickFormDemo() {
       <Popover>
         <PopoverTrigger
           render={
-            <Button variant="outline">
+            <Button glass variant="outline">
               <SlidersHorizontalIcon />
               调整图层尺寸
             </Button>
@@ -164,7 +164,6 @@ export function PopoverQuickFormDemo() {
               <span className="text-xs font-medium text-foreground/80">宽度</span>
               <Input
                 size="sm"
-                surface="over-glass"
                 inputMode="numeric"
                 value={width}
                 onChange={(e) => setWidth(e.target.value)}
@@ -175,7 +174,6 @@ export function PopoverQuickFormDemo() {
               <span className="text-xs font-medium text-foreground/80">圆角半径</span>
               <Input
                 size="sm"
-                surface="over-glass"
                 inputMode="numeric"
                 value={radius}
                 onChange={(e) => setRadius(e.target.value)}
@@ -186,7 +184,6 @@ export function PopoverQuickFormDemo() {
               <span className="text-xs font-medium text-foreground/80">内边距</span>
               <Input
                 size="sm"
-                surface="over-glass"
                 inputMode="numeric"
                 value={padding}
                 onChange={(e) => setPadding(e.target.value)}
@@ -197,7 +194,7 @@ export function PopoverQuickFormDemo() {
 
           <div className="flex justify-end gap-2 pt-1">
             <PopoverClose
-              render={<Button size="sm" variant="secondary" surface="over-glass" />}
+              render={<Button size="sm" variant="secondary" />}
             >
               取消
             </PopoverClose>

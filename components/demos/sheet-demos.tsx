@@ -34,7 +34,7 @@ export function SheetLiquidHeroDemo() {
       <Sheet>
         <SheetTrigger
           render={
-            <Button variant="secondary">
+            <Button glass variant="secondary">
               <PanelRightIcon className="size-4" />
               打开液态检查器面板
             </Button>
@@ -53,7 +53,6 @@ export function SheetLiquidHeroDemo() {
                 画布名称
               </label>
               <Input
-                surface="over-glass"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -86,7 +85,7 @@ export function SheetLiquidHeroDemo() {
           </div>
           <SheetFooter>
             <SheetClose
-              render={<Button variant="secondary" surface="over-glass">取消</Button>}
+              render={<Button variant="secondary">取消</Button>}
             />
             <SheetClose render={<Button variant="default">保存更改</Button>} />
           </SheetFooter>
@@ -110,7 +109,7 @@ export function SheetSidesDemo() {
         <Sheet key={side}>
           <SheetTrigger
             render={
-              <Button variant="secondary" size="sm">
+              <Button glass variant="secondary" size="sm">
                 <LayersIcon className="size-3.5" />
                 {label}
               </Button>
@@ -144,7 +143,7 @@ export function SheetInspectorDemo() {
       <Sheet>
         <SheetTrigger
           render={
-            <Button variant="secondary">
+            <Button glass variant="secondary">
               <InfoIcon className="size-4" />
               查看文件详情
             </Button>
@@ -174,7 +173,7 @@ export function SheetInspectorDemo() {
           <SheetFooter>
             <SheetClose
               render={
-                <Button variant="secondary" surface="over-glass">
+                <Button variant="secondary">
                   <SlidersHorizontalIcon className="size-3.5" />
                   关闭面板
                 </Button>

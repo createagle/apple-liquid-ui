@@ -5,7 +5,7 @@ import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 import { cn } from "cn"
 
 import { useIsMobile } from "@/hooks/use-mobile"
-import { LiquidSurfaceBackdrop } from "@/components/ui/liquid-surface"
+import { LiquidSurfaceBackdrop, OverGlass } from "@/components/ui/liquid-surface"
 import {
   Drawer,
   DrawerClose,
@@ -190,8 +190,8 @@ function PopoverContent({
           )}
           {...props}
         >
-          <LiquidSurfaceBackdrop radius={20} bezel={18} tone="menu" />
-          {children}
+          <LiquidSurfaceBackdrop radius={20} bezel={18} size="menu" />
+          <OverGlass>{children}</OverGlass>
         </PopoverPrimitive.Popup>
       </PopoverPrimitive.Positioner>
     </PopoverPrimitive.Portal>

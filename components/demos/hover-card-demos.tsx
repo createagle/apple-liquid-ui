@@ -23,7 +23,7 @@ export function HoverCardLiquidHeroDemo() {
       <HoverCard>
         <HoverCardTrigger
           render={
-            <Button variant="secondary">
+            <Button glass variant="secondary">
               <SparklesIcon className="size-4 text-(--apple-blue)" />
               @apple-liquid/ui
             </Button>
@@ -69,7 +69,7 @@ export function HoverCardProfileDemo() {
       <HoverCard>
         <HoverCardTrigger
           render={
-            <Button
+            <Button glass
               variant="link"
               className="h-auto p-0 font-medium text-foreground underline-offset-4"
             >
@@ -113,7 +113,7 @@ export function HoverCardLinkPreviewDemo() {
       <HoverCard>
         <HoverCardTrigger
           render={
-            <Button variant="secondary" size="sm">
+            <Button glass variant="secondary" size="sm">
               <ExternalLinkIcon className="size-3.5" />
               悬停预览光学规范
             </Button>

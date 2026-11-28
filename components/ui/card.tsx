@@ -3,7 +3,11 @@
 import * as React from "react"
 import { cn } from "cn"
 
-import { LiquidSurfaceBackdrop } from "@/components/ui/liquid-surface"
+import {
+  LiquidSurfaceBackdrop,
+  OverGlass,
+  useOverGlass,
+} from "@/components/ui/liquid-surface"
 
 export interface CardProps extends React.ComponentProps<"div"> {
   /**
@@ -18,9 +22,9 @@ export interface CardProps extends React.ComponentProps<"div"> {
    */
   glass?: boolean
   /**
-   * Use `surface="over-glass"` when nesting a card inside another Liquid Glass container
-   * (matches macOS 27 Group Box subtle translucent fill without nested backdrop-filter).
-   * @default "default"
+   * Placement context. Inside another Liquid Glass surface (Dialog, Popover,
+   * glass Card, ...) it is detected as `over-glass` automatically and renders the
+   * macOS 27 Group Box translucent fill instead of nested glass.
    */
   surface?: "default" | "over-glass"
   /**
@@ -34,12 +38,14 @@ function Card({
   className,
   size = "default",
   glass,
-  surface = "default",
+  surface: surfaceProp,
   refract = false,
   children,
   ...props
 }: CardProps) {
-  const isGlass = glass ?? surface !== "over-glass"
+  const onGlass = useOverGlass()
+  const surface = surfaceProp ?? (onGlass ? "over-glass" : "default")
+  const isGlass = surface !== "over-glass" && (glass ?? true)
   const radiusPx = size === "sm" ? 18 : 24
 
   return (
@@ -64,7 +70,7 @@ function Card({
     >
       {isGlass ? (
         refract ? (
-          <LiquidSurfaceBackdrop radius={radiusPx} bezel={20} tone="sheet" />
+          <LiquidSurfaceBackdrop radius={radiusPx} bezel={20} size="medium" />
         ) : (
           <span
             aria-hidden="true"
@@ -73,7 +79,7 @@ function Card({
           />
         )
       ) : null}
-      {children}
+      <OverGlass enabled={isGlass}>{children}</OverGlass>
     </div>
   )
 }

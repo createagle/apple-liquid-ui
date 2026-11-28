@@ -38,7 +38,7 @@ npx shadcn@latest add https://your-domain.com/r/select.json
 
 ## 触发器样式与尺寸
 
-提供 `variant="glass"`（悬浮液态玻璃胶囊触发器）与 `variant="default"`（macOS 27 Pop-up / iOS 27 填充圆角触发器），支持 `default` 与 `sm` 两种尺寸及禁用态：
+提供 `variant="glass"`（默认，与玻璃 `Button` 共用 `Regular - Small` 液态玻璃材质的胶囊触发器）与 `variant="default"`（macOS 27 Pop-up / iOS 27 填充圆角触发器）；放在 Dialog / Popover / 玻璃 Card 等玻璃表面内时，触发器自动切换为设计稿 Over-Glass 平涂样式，支持 `default` 与 `sm` 两种尺寸及禁用态：
 
 <ComponentPreview name="select-variants" />
 
@@ -91,7 +91,8 @@ export function Example() {
 
 | 属性 | 类型 | 默认值 | 说明 |
 | :--- | :--- | :--- | :--- |
-| `variant` | `'default' \| 'glass'` | `'default'` | `default` 为 macOS Pop-up / iOS 填充风，`glass` 为通透液态玻璃胶囊 |
+| `variant` | `'default' \| 'glass'` | `'glass'` | `glass` 为共享液态玻璃控件材质胶囊，`default` 为 macOS Pop-up / iOS 填充风；位于玻璃表面内时自动改为 Over-Glass 平涂 |
+| `surface` | `'default' \| 'over-glass'` | 自动检测 | 所处表面语境，传入可强制覆盖 |
 | `size` | `'default' \| 'sm'` | `'default'` | 桌面端 `32px / 28px`，移动端自动切为 `46px / 38px` 触控高度 |
 | `disableMotion` | `boolean` | `false` | 禁用触发器按压弹簧动画 |
 

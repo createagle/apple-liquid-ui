@@ -7,6 +7,7 @@ import { cn } from "cn"
 import {
   liquidFieldGlassClassName,
   useLiquidFieldRefraction,
+  useOverGlass,
 } from "@/components/ui/liquid-surface"
 
 const textareaVariants = cva(
@@ -49,14 +50,16 @@ export interface TextareaProps
   extends React.ComponentProps<"textarea">,
     Pick<VariantProps<typeof textareaVariants>, "size"> {
   /**
-   * Adapts the textarea fill when placed inside a glass container (`over-glass`).
+   * Placement context: `default` (on content) or `over-glass` (on a Liquid Glass
+   * surface, rendered as the kit's flat Over-Glass well). Detected automatically
+   * inside glass surfaces (Dialog, Popover, Sheet, Drawer, glass Card, ...).
    */
   surface?: "default" | "over-glass"
   /**
-   * Applies translucent Apple Liquid Glass backdrop surface (responds to `--liquid-glass-tint`)
-   * with SDF bezel refraction on Chromium (CSS blur fallback elsewhere).
-   * Enabled by default; pass `glass={false}` for a solid surface.
-   * @default true
+   * Applies the shared Apple Liquid Glass `Regular - Small` control material
+   * (same as glass `Button`), with SDF bezel refraction on Chromium (frosted
+   * fallback elsewhere). On by default when standalone; never stacked on an
+   * Over-Glass surface. Pass `glass={false}` for a solid surface.
    */
   glass?: boolean
 }
@@ -64,13 +67,15 @@ export interface TextareaProps
 function Textarea({
   className,
   size = "default",
-  surface = "default",
+  surface: surfaceProp,
   glass,
   ref,
   style,
   ...props
 }: TextareaProps) {
-  const isGlass = glass ?? surface !== "over-glass"
+  const onGlass = useOverGlass()
+  const surface = surfaceProp ?? (onGlass ? "over-glass" : "default")
+  const isGlass = surface !== "over-glass" && (glass ?? true)
   const appearance = isGlass ? "glass" : (surface ?? "default")
   const refraction = useLiquidFieldRefraction<HTMLTextAreaElement>(isGlass, ref)
 

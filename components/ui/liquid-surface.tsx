@@ -13,48 +13,152 @@ import {
   LENS_LIGHT_ANGLE,
   LensFilter,
   supportsRefraction,
-  type LensFilterProps,
   type LensMaps,
 } from "@/components/ui/liquid-lens"
 
-export interface LiquidSurfaceBackdropProps
-  extends React.HTMLAttributes<HTMLDivElement> {
-  /**
-   * Corner radius of the host surface in CSS px (matched to container's `rounded-[...]`).
-   * @default 26
-   */
-  radius?: number
-  /**
-   * Width of the sculpted optical refraction bezel band in CSS px.
-   * @default 22
-   */
-  bezel?: number
-  /**
-   * Refraction intensity multiplier (scaled down smoothly as `tint` approaches 1).
-   * @default 1
-   */
-  refraction?: number
-  /**
-   * Subtle chromatic dispersion along the curved bezel rim.
-   * @default 0.055
-   */
-  dispersion?: number
-  /**
-   * Surface tone variant:
-   * - `sheet`: large floating surfaces (Dialog, AlertDialog, Mobile Drawer Sheet)
-   * - `menu`: compact floating menus & popovers (Select, DropdownMenu, Popover)
-   * @default "sheet"
-   */
-  tone?: "sheet" | "menu"
-  /**
-   * Keep the bottom edge square/open (no bottom-left/bottom-right corner radius or bottom rim).
-   * Useful for bottom-docked edge-to-edge mobile Drawers.
-   * @default false
-   */
-  openBottom?: boolean
+/* -------------------------------------------------------------------------- */
+/* Material                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Apple 27 UI Kit Liquid Glass size classes. Apple ships a single Liquid Glass
+ * material whose optics scale with the surface: the larger it gets, the thicker
+ * (more blur, softer scattering) it reads.
+ *
+ * - `small`: controls (glass `Button`, `Input`, `Textarea`) — `Regular - Small`
+ * - `menu`: menus, popovers, tooltips, select lists — `Menus`
+ * - `medium`: cards, toasts, calendars, command palette — `Regular - Medium`
+ * - `large`: dialogs, sheets, drawers, sidebars — `Regular - Large`
+ */
+export type LiquidGlassSize = "small" | "menu" | "medium" | "large"
+
+/**
+ * Sketch glass-blur specs from `Apple macOS 27 UI Kit` / `Apple iOS 27 UI Kit`
+ * (`Liquid Glass/{Light,Dark}/Regular - Small|Medium|Large`, `Menus`, `Clear`).
+ * `blur` is the Sketch radius at Regular; `distortion` is the kit's lens
+ * distortion. The kits set `chromaticAberrationMultiplier: 0` on every style.
+ */
+const GLASS_SPECS: Record<LiquidGlassSize, { blur: number; distortion: number }> = {
+  small: { blur: 6, distortion: 0.4 },
+  menu: { blur: 20, distortion: 0.3 },
+  medium: { blur: 24, distortion: 0.3 },
+  large: { blur: 30, distortion: 0.3 },
+}
+/**
+ * Backdrop blur (CSS `stdDeviation`, px) at Clear and at Tinted.
+ *
+ * Like Apple's own Clear <-> Tinted setting, the tint mainly dials *opacity*
+ * (the fill wash), not blur: the glass stays lightly frosted across the whole
+ * range so the backdrop keeps reading through it — just lighter and lower
+ * contrast — until the fill covers it near Tinted. Controls stay nearly
+ * crystal clear like the Tabs / Slider lenses.
+ */
+const GLASS_BLUR: Record<LiquidGlassSize, { clear: number; tinted: number }> = {
+  small: { clear: 0.5, tinted: 2 },
+  menu: { clear: 1, tinted: 4.5 },
+  medium: { clear: 1, tinted: 5 },
+  large: { clear: 1, tinted: 6 },
 }
 
+export interface LiquidGlassMaterial {
+  /** Gaussian blur (CSS `stdDeviation`, px) baked into the refraction filter. */
+  blurPx: number
+  /**
+   * Refraction gain: `1.6` at Clear -> `1` at Regular -> `0.4` at Tinted.
+   * Like Apple's native glass, the lens reads strongest when the glass is
+   * clearest and fades out as the tint frosts it over.
+   */
+  refractionGain: number
+  /** Peak bezel displacement per px of bezel width (panels). */
+  displacementPerBezel: number
+  /** White specular rim opacity. */
+  specularOpacity: number
+  /** Coloured (backdrop-saturated) rim opacity. */
+  colouredRimOpacity: number
+  /**
+   * Opacity of the control fill layer (`small` only): the `--lq-tint` wash that
+   * gives clear glass controls their body. Panels use `--liquid-surface-*`.
+   */
+  fillOpacity: number
+}
+
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v))
+const round = (v: number, digits = 2) => Number(v.toFixed(digits))
+
+/**
+ * The single Liquid Glass material, continuous in `tint`
+ * (`0` Clear -> `0.5` Regular (kit values) -> `1` Tinted) and scaled by size.
+ * Every glass surface and control in the library resolves its optics here, so
+ * a glass button, a glass field and the popover they sit next to are the same
+ * material at every tint.
+ */
+export function getLiquidGlassMaterial(
+  size: LiquidGlassSize,
+  tint: number
+): LiquidGlassMaterial {
+  const t = clamp01(tint)
+  const spec = GLASS_SPECS[size]
+  // Sketch blur radius -> CSS stdDeviation (radius / 2)
+  // Perceptual ease-in, shared with the CSS `--liquid-glass-ease` token: the
+  // fill (opacity) grows slowly at first and covers the backdrop near Tinted,
+  // so the transition spreads across the whole slider
+  const ease = 0.3 * t + 0.7 * t * t
+  const { clear, tinted } = GLASS_BLUR[size]
+  const blurPx = clear + (tinted - clear) * t
+
+  // Clear shows the most bend, Tinted frosts it away
+  const refractionGain = 1.6 - 1.2 * t
+  const displacementPerBezel = spec.distortion * 3 * refractionGain
+
+  return {
+    blurPx: round(blurPx, 1),
+    refractionGain: round(refractionGain, 3),
+    displacementPerBezel: round(displacementPerBezel, 3),
+    specularOpacity: round(0.5 - t * 0.25),
+    colouredRimOpacity: round(0.6 - t * 0.45),
+    // Control body wash: thin at Clear, dense at Tinted
+    fillOpacity: round(0.06 + 0.9 * ease, 3),
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Over-Glass context                                                         */
+/* -------------------------------------------------------------------------- */
+
+const OverGlassContext = React.createContext(false)
+
+/**
+ * Marks its subtree as sitting on a Liquid Glass surface ("Over-Glass" in the
+ * Apple 27 UI Kits). Glass surfaces (Dialog, Popover, Sheet, Drawer, glass Card,
+ * Toast, ...) wrap their content in it, so controls inside automatically switch
+ * from their own glass to the kit's flat Over-Glass fills — Apple never stacks
+ * glass on glass.
+ */
+function OverGlass({
+  enabled = true,
+  children,
+}: {
+  enabled?: boolean
+  children?: React.ReactNode
+}) {
+  if (!enabled) return <>{children}</>
+  return (
+    <OverGlassContext.Provider value={true}>{children}</OverGlassContext.Provider>
+  )
+}
+
+/** `true` when rendered inside a Liquid Glass surface (`<OverGlass>`). */
+function useOverGlass() {
+  return React.useContext(OverGlassContext)
+}
+
+/* -------------------------------------------------------------------------- */
+/* Refraction                                                                 */
+/* -------------------------------------------------------------------------- */
+
 export interface LiquidRefractionOptions {
+  /** Material size class. @default "large" */
+  size?: LiquidGlassSize
   /**
    * Corner radius in CSS px, or `"auto"` to read the element's computed
    * `border-top-left-radius` (clamped to a capsule).
@@ -63,87 +167,101 @@ export interface LiquidRefractionOptions {
   radius?: number | "auto"
   /** Width of the sculpted bezel band in CSS px. @default 22 */
   bezel?: number
+  /**
+   * Bezel width as a fraction of the corner radius (overrides `bezel`), the
+   * geometry of the Tabs / Slider / Switch lenses (`0.42..0.48 * r`).
+   */
+  bezelRatio?: number
+  /**
+   * Spherical dome across the whole lens (`-1..1`, `> 0` magnifies), so the
+   * backdrop bends through the entire control, not only along the rim.
+   * @default 0
+   */
+  curvature?: number
+  /**
+   * Peak displacement as a fraction of the shorter side at Regular (scaled by
+   * the material's `refractionGain`). Defaults to the bezel-based panel optics.
+   */
+  peakRatio?: number
   /** Refraction intensity multiplier. @default 1 */
   refraction?: number
-  /** Chromatic dispersion along the bezel rim. @default 0.055 */
+  /** Chromatic dispersion along the bezel rim (the kits use none). @default 0 */
   dispersion?: number
   /** Keep the bottom edge square/open. @default false */
   openBottom?: boolean
-  /** Peak displacement in CSS px at `tint = 0`. @default 32 */
-  scale?: number
   /**
    * Caps the peak displacement to `height * heightRatio` so short controls
-   * (e.g. a 34px text field) bend proportionally instead of warping.
+   * bend proportionally instead of warping.
    */
   heightRatio?: number
   /** Snap the measured size to this step (px) before rebuilding maps. @default 4 */
   quantize?: number
   /** Map resolution multiplier. @default 1 */
   dpr?: number
-  /**
-   * Backdrop blur in px baked into the filter. Defaults to the tint-driven
-   * panel blur (`2.5px` at Clear -> `18px` at Tinted).
-   */
-  blur?: number
-  /**
-   * In-filter material (`saturate`, `brightness`, tone curve) for control glass;
-   * see `LensFilterProps`. Panels leave these off and grade via CSS instead.
-   */
-  material?: Pick<
-    LensFilterProps,
-    | "saturation"
-    | "brightness"
-    | "toneLift"
-    | "toneRoll"
-    | "specularOpacity"
-    | "colouredRimOpacity"
-  >
   /** @default true */
   enabled?: boolean
 }
 
-/**
- * Apple Liquid Glass "clear" control material, shared by glass `Button`s
- * (via `LiquiGlass`) and glass text fields (`Input`, `Textarea`) so a toolbar of
- * buttons next to a search field reads as one material, exactly like the
- * macOS 27 / iOS 27 system toolbars. Continuous in `tint` (0 Clear <-> 1 Tinted).
- *
- * The fields are tuned in `LiquiGlass` prop units (`tintFloor`, `frost`, ...).
- */
-export function getLiquidControlMaterial(tint: number) {
-  const t = Math.max(0, Math.min(1, tint))
-  return {
-    brightness: Number((1.08 - t * 0.04).toFixed(2)),
-    tintFloor: Number((0.04 + t * 0.38).toFixed(2)),
-    blur: Number((1.5 + t * 6.5).toFixed(1)),
-    frost: Number((0.06 + t * 0.56).toFixed(2)),
-    specular: Number((0.58 - t * 0.16).toFixed(2)),
-    saturation: Number((1.7 + t * 0.3).toFixed(2)),
-  }
+/** Tint quantization for the refraction filter (0.02 steps). */
+const TINT_STEPS = 50
+
+/** Tint-driven `<LensFilter>` attributes held by one double-buffer slot. */
+interface FilterParams {
+  key: string
+  scale: number
+  blur: number
+  specularOpacity: number
+  colouredRimOpacity: number
+  dispersion: number
 }
 
 /**
- * Resolves the control material the way `LiquiGlass` composites it, for
- * surfaces that cannot host its layer stack (a bare `<input>` / `<textarea>`).
+ * Double-buffered SVG filter switching.
+ *
+ * Chromium does not repaint a `backdrop-filter: url(#id)` when the referenced
+ * filter's attributes change, and re-pointing it at a *new* filter id repaints
+ * with a frame or two of missing refraction (the fresh resource and its
+ * `feImage` maps are not ready yet), which flickers while dragging the tint.
+ * Two filters therefore stay mounted: new params are written into the idle one
+ * (unreferenced, so it can change freely) and, once that has been painted, the
+ * surface switches its reference to it. Every switch targets a filter that is
+ * already resolved, so the glass updates smoothly without flashing.
  */
-function resolveControlMaterial(tint: number) {
-  const m = getLiquidControlMaterial(tint)
-  return {
-    // LiquiGlass: `blur + frost * 14`, and the tint layer's opacity
-    blurPx: Math.round((m.blur + m.frost * 14) * 100) / 100,
-    tintOpacity: Number((m.tintFloor + (1 - m.tintFloor) * m.frost).toFixed(3)),
-    tone: `saturate(${m.saturation}) brightness(${m.brightness})`,
-    filter: {
-      saturation: m.saturation,
-      brightness: m.brightness,
-      // LiquiGlass refract-layer tone curve, eased off as the frost thickens
-      toneLift: Math.round(180 * (1 - 0.45 * m.frost)) / 1e3,
-      toneRoll: Math.round(140 * (1 - 0.45 * m.frost)) / 1e3,
-      // LiquiGlass controls carry a white specular rim only, no coloured rim
-      specularOpacity: m.specular,
-      colouredRimOpacity: 0,
-    },
-  }
+function useFilterDoubleBuffer(params: FilterParams) {
+  const [slots, setSlots] = React.useState<{
+    params: [FilterParams, FilterParams]
+    active: 0 | 1
+  }>(() => ({ params: [params, params], active: 0 }))
+  const frameRef = React.useRef(0)
+  const latest = React.useRef(params)
+  latest.current = params
+
+  React.useEffect(() => () => cancelAnimationFrame(frameRef.current), [])
+
+  React.useEffect(() => {
+    const { params: buffered, active } = slots
+    if (buffered[active].key === params.key) return
+    const idle = (1 - active) as 0 | 1
+    if (buffered[idle].key !== params.key) {
+      // Write the idle (unreferenced) filter first
+      setSlots((s) => {
+        const next: [FilterParams, FilterParams] = [s.params[0], s.params[1]]
+        next[(1 - s.active) as 0 | 1] = latest.current
+        return { ...s, params: next }
+      })
+      return
+    }
+    if (frameRef.current) return
+    // Let the idle filter's new attributes paint once, then point at it
+    frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = requestAnimationFrame(() => {
+        frameRef.current = 0
+        setSlots((s) => ({ ...s, active: (1 - s.active) as 0 | 1 }))
+      })
+    })
+  }, [params.key, slots])
+
+  return slots
 }
 
 export interface LiquidRefraction {
@@ -153,34 +271,40 @@ export interface LiquidRefraction {
   refracting: boolean
   /** The `<LensFilter>` SVG node to mount (in place or via a portal). */
   filter: React.ReactNode
-  /** Tint-driven blur radius in px (also used for the CSS fallback). */
-  blurPx: number
+  /** Resolved material for the current `tint`. */
+  material: LiquidGlassMaterial
+  /** `backdrop-filter` value: SDF refraction, or frosted blur where unsupported. */
+  backdropFilter: string
 }
 
 /**
- * Measures an element and builds its rounded-rect SDF bezel refraction filter,
- * continuously driven by `LiquidGlassProvider` (`tint`: 0 Clear <-> 1 Tinted).
- * Shared by `LiquidSurfaceBackdrop` (panels) and glass text fields.
+ * Measures an element and builds its rounded-rect SDF bezel refraction filter
+ * from the shared Liquid Glass material, continuously driven by
+ * `LiquidGlassProvider` (`tint`: 0 Clear <-> 1 Tinted).
  */
 export function useLiquidRefraction(
   element: HTMLElement | null,
   {
+    size = "large",
     radius = 26,
     bezel = 22,
+    bezelRatio,
+    curvature = 0,
+    peakRatio,
     refraction = 1,
-    dispersion = 0.055,
+    dispersion = 0,
     openBottom = false,
-    scale = 32,
     heightRatio,
     quantize = 4,
     dpr = 1,
-    blur,
-    material,
     enabled = true,
   }: LiquidRefractionOptions = {}
 ): LiquidRefraction {
-  const { tint } = useLiquidGlass()
-  const filterId = `apple-surface-${React.useId().replace(/[^a-zA-Z0-9]/g, "")}`
+  const { tint: rawTint } = useLiquidGlass()
+  // Quantized so a tint drag switches filters at most every 0.02
+  const tint = Math.round(clamp01(rawTint) * TINT_STEPS) / TINT_STEPS
+  const material = getLiquidGlassMaterial(size, tint)
+  const baseId = `apple-surface-${React.useId().replace(/[^a-zA-Z0-9]/g, "")}`
   const [box, setBox] = React.useState<{
     w: number
     h: number
@@ -216,26 +340,29 @@ export function useLiquidRefraction(
     return () => ro.disconnect()
   }, [element, enabled, quantize, radius])
 
+  const clampedR = box
+    ? Math.min(box.r, box.w / 2, openBottom ? box.h : box.h / 2)
+    : 0
+  const clampedBezel = box
+    ? bezelRatio
+      ? Math.max(2, bezelRatio * clampedR)
+      : Math.max(6, Math.min(bezel, Math.min(box.w, box.h) / 3))
+    : bezel
+
   const maps = React.useMemo(() => {
     if (!enabled || !box || !canRefract) return null
-    const clampedR = Math.min(
-      box.r,
-      box.w / 2,
-      openBottom ? box.h : box.h / 2
-    )
-    const clampedB = Math.min(bezel, Math.min(box.w, box.h) / 3)
     return buildLensMaps({
       width: box.w,
       height: box.h,
       radius: clampedR,
-      bezel: Math.max(8, clampedB),
+      bezel: clampedBezel,
       surface: CONVEX,
-      curvature: 0,
+      curvature,
       lightAngle: LENS_LIGHT_ANGLE,
       openBottom,
       dpr,
     })
-  }, [bezel, box, canRefract, dpr, enabled, openBottom])
+  }, [box, canRefract, clampedBezel, clampedR, curvature, dpr, enabled, openBottom])
 
   const [committedMaps, setCommittedMaps] = React.useState<LensMaps | null>(null)
 
@@ -261,50 +388,106 @@ export function useLiquidRefraction(
 
   const activeMaps = !maps ? null : isLensMapsReady(maps) ? maps : committedMaps
 
-  // Continuous Clear (0) <-> Tinted (1) optical parameters:
-  // At tint=0: crystal clear (low blur 2.5px, strong bezel bend)
-  // At tint=1: frosted tinted glass (higher blur 18px, subtle bezel bend)
-  const clampedTint = Math.max(0, Math.min(1, tint))
-  const blurPx = blur ?? Number((2.5 + clampedTint * 15.5).toFixed(1))
   const peak =
-    heightRatio && box ? Math.min(scale, box.h * heightRatio) : scale
-  const scalePx = Number(
-    (peak * refraction * (1 - clampedTint * 0.65)).toFixed(1)
+    (peakRatio && box
+      ? peakRatio * Math.min(box.w, box.h) * material.refractionGain
+      : material.displacementPerBezel * clampedBezel) * refraction
+  const scalePx = round(
+    heightRatio && box ? Math.min(peak, box.h * heightRatio) : peak,
+    1
   )
-  const specularOpacity = Number((0.42 - clampedTint * 0.24).toFixed(2))
-  const colouredRimOpacity = Number((0.75 - clampedTint * 0.5).toFixed(2))
   const activeDispersion =
-    clampedTint < 0.85
-      ? Number((dispersion * (1 - clampedTint * 0.65)).toFixed(3))
-      : 0
+    tint < 0.85 ? round(dispersion * (1 - tint * 0.65), 3) : 0
+
+  const { params: buffered, active } = useFilterDoubleBuffer({
+    key: `${scalePx}|${material.blurPx}|${material.specularOpacity}|${material.colouredRimOpacity}|${activeDispersion}`,
+    scale: scalePx,
+    blur: material.blurPx,
+    specularOpacity: material.specularOpacity,
+    colouredRimOpacity: material.colouredRimOpacity,
+    dispersion: activeDispersion,
+  })
+  const filterId = `${baseId}-${active}`
 
   const filter =
     activeMaps && box ? (
-      <LensFilter
-        id={filterId}
-        maps={activeMaps}
-        width={box.w}
-        height={box.h}
-        scale={scalePx}
-        blur={blurPx}
-        specularOpacity={specularOpacity}
-        specularSaturation={5}
-        colouredRimOpacity={colouredRimOpacity}
-        dispersion={activeDispersion}
-        {...material}
-      />
+      <>
+        {buffered.map((p, i) => (
+          <LensFilter
+            key={i}
+            id={`${baseId}-${i}`}
+            maps={activeMaps}
+            width={box.w}
+            height={box.h}
+            scale={p.scale}
+            blur={p.blur}
+            specularOpacity={p.specularOpacity}
+            specularSaturation={5}
+            colouredRimOpacity={p.colouredRimOpacity}
+            dispersion={p.dispersion}
+          />
+        ))}
+      </>
     ) : null
 
-  return { filterId, refracting: filter !== null, filter, blurPx }
+  const refracting = filter !== null
+  // Same saturation boost on every tier; frosted fallback doubles the blur to
+  // stand in for the missing lens on Safari / Firefox
+  const backdropFilter = refracting
+    ? `url(#${filterId}) saturate(var(--liquid-saturate, 1.75))`
+    : `blur(${Math.max(material.blurPx * 2, 6)}px) saturate(var(--liquid-saturate, 1.75))`
+
+  return { filterId, refracting, filter, material, backdropFilter }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Control glass (Button / Input / Textarea)                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Shared optics for `small` control glass, matching the Tabs / Slider lenses:
+ * a radius-proportional rim, a gentle magnifying dome across the whole control
+ * and a peak displacement relative to its height (`0.67h` at Clear ->
+ * `0.42h` Regular -> `0.17h` Tinted), with crisp 2x maps.
+ */
+const CONTROL_REFRACTION: LiquidRefractionOptions = {
+  size: "small",
+  radius: "auto",
+  bezelRatio: 0.48,
+  curvature: 0.18,
+  peakRatio: 0.42,
+  // 1px steps keep the thin rim aligned with the control edge
+  quantize: 1,
+  dpr: 2,
+}
+
+/**
+ * Fill + rim classes for `small` control glass, shared by glass `Button`s and
+ * glass text fields so they read as one material side by side: the
+ * `--lq-tint` -> `--lq-tint-deep` wash at `--lq-glass-fill` opacity, a
+ * top-left catch-light rim and the kit's soft `Regular - Small` drop shadow.
+ */
+export const liquidControlGlassClassName = cn(
+  "bg-[linear-gradient(135deg,color-mix(in_srgb,var(--lq-tint)_calc(var(--lq-glass-fill,0.45)*100%),transparent),color-mix(in_srgb,var(--lq-tint-deep)_calc(var(--lq-glass-fill,0.45)*100%),transparent))]",
+  "shadow-[inset_0_1px_1px_var(--lq-rim-hi,rgba(255,255,255,0.85)),inset_-1px_-1px_1px_var(--lq-rim-lo,rgba(255,255,255,0.28)),0_8px_20px_-4px_rgba(10,15,40,0.14),0_2px_6px_rgba(10,15,40,0.08)]"
+)
+
+/**
+ * Surface classes for glass text fields: control glass plus hover / focus washes
+ * and the glass secondary label. Pair with `useLiquidFieldRefraction()`.
+ */
+export const liquidFieldGlassClassName = cn(
+  liquidControlGlassClassName,
+  "hover:bg-white/14 focus-visible:bg-white/10 dark:hover:bg-white/10 dark:focus-visible:bg-white/8",
+  "placeholder:text-(--lq-text-dim)"
+)
 
 export interface LiquidFieldRefraction<T extends HTMLElement> {
   /** Callback ref for the field (also forwards to the caller's own `ref`). */
   ref: React.RefCallback<T>
   /**
-   * Inline control material: `backdrop-filter` (SDF refraction on Chromium,
-   * frosted blur elsewhere) plus `--lq-field-tint`, the tint layer opacity
-   * consumed by `liquidFieldGlassClassName`. `undefined` when disabled.
+   * Inline control material: `backdrop-filter` plus `--lq-glass-fill`, the
+   * fill opacity consumed by `liquidFieldGlassClassName`. `undefined` when off.
    */
   style: React.CSSProperties | undefined
   /** Portaled SVG `<filter>`; render it next to the field. */
@@ -312,33 +495,21 @@ export interface LiquidFieldRefraction<T extends HTMLElement> {
 }
 
 /**
- * SDF bezel refraction for glass text fields (`Input`, `Textarea`).
+ * Small-glass refraction applied straight onto a form element.
  *
  * `<input>` / `<textarea>` cannot host a backdrop layer, so the filter is applied
- * straight onto the field via `backdrop-filter: url(#id)` and the SVG `<filter>`
- * is portaled to `document.body`: the DOM stays a single form element. The
- * displacement is capped to the field height so a 34px capsule bends cleanly.
- *
- * The material (blur, saturation, brightness, tint density) is the same
- * `getLiquidControlMaterial()` a glass `Button` renders with, so fields and
- * buttons side by side are indistinguishable glass at every `tint`.
+ * on the field itself via `backdrop-filter: url(#id)` and the SVG `<filter>` is
+ * portaled to `document.body`: the DOM stays a single form element. The optics
+ * are exactly those of `<LiquidSurfaceBackdrop size="small">` used by glass
+ * buttons.
  */
 export function useLiquidFieldRefraction<T extends HTMLElement>(
   enabled: boolean,
   forwardedRef?: React.Ref<T>
 ): LiquidFieldRefraction<T> {
-  const { tint } = useLiquidGlass()
-  const material = resolveControlMaterial(tint)
   const [node, setNode] = React.useState<T | null>(null)
-  const { filterId, refracting, filter } = useLiquidRefraction(node, {
-    radius: "auto",
-    bezel: 12,
-    heightRatio: 0.6,
-    // 1px steps keep the thin rim aligned with the field edge
-    quantize: 1,
-    dpr: 2,
-    blur: material.blurPx,
-    material: material.filter,
+  const { filter, material, backdropFilter } = useLiquidRefraction(node, {
+    ...CONTROL_REFRACTION,
     enabled,
   })
 
@@ -355,95 +526,116 @@ export function useLiquidFieldRefraction<T extends HTMLElement>(
     [forwardedRef]
   )
 
-  // Same tiers as LiquiGlass: refraction on Chromium (material graded inside
-  // the filter, tone curve included), 2x frosted blur elsewhere
-  const backdrop = refracting
-    ? `url(#${filterId})`
-    : `blur(${Math.max(material.blurPx * 2, 10)}px) ${material.tone}`
-
   return {
     ref,
     style: enabled
       ? {
-          backdropFilter: backdrop,
-          WebkitBackdropFilter: backdrop,
-          ["--lq-field-tint" as string]: material.tintOpacity,
+          backdropFilter,
+          WebkitBackdropFilter: backdropFilter,
+          ["--lq-glass-fill" as string]: material.fillOpacity,
         }
       : undefined,
     portal: filter ? createPortal(filter, document.body) : null,
   }
 }
 
-/**
- * Surface classes for glass text fields, mirroring a clear glass `Button`:
- * the `--lq-tint` -> `--lq-tint-deep` wash at the button's tint-layer opacity,
- * a top-left catch-light rim and the same floating `--lq-shadow` elevation.
- * Pair with the inline style from `useLiquidFieldRefraction()`.
- */
-export const liquidFieldGlassClassName = cn(
-  "bg-[linear-gradient(135deg,color-mix(in_srgb,var(--lq-tint)_calc(var(--lq-field-tint,0.45)*100%),transparent),color-mix(in_srgb,var(--lq-tint-deep)_calc(var(--lq-field-tint,0.45)*100%),transparent))]",
-  "shadow-[inset_0_1px_1px_var(--lq-rim-hi,rgba(255,255,255,0.85)),inset_-1px_-1px_1px_var(--lq-rim-lo,rgba(255,255,255,0.28)),0_8px_20px_-4px_rgba(10,15,40,0.14),0_2px_6px_rgba(10,15,40,0.08)]",
-  "hover:bg-white/14 focus-visible:bg-white/10 dark:hover:bg-white/10 dark:focus-visible:bg-white/8",
-  // Same secondary label as glass Button content, legible at every tint
-  "placeholder:text-(--lq-text-dim)"
-)
+/* -------------------------------------------------------------------------- */
+/* Glass layer                                                                */
+/* -------------------------------------------------------------------------- */
+
+export interface LiquidSurfaceBackdropProps
+  extends React.HTMLAttributes<HTMLDivElement> {
+  /**
+   * Material size class (Apple 27 UI Kit). Defaults from `tone`, else `"large"`.
+   */
+  size?: LiquidGlassSize
+  /**
+   * @deprecated Use `size`. `"menu"` -> `size="menu"`, `"sheet"` -> `size="large"`.
+   */
+  tone?: "sheet" | "menu"
+  /**
+   * Corner radius of the host in CSS px (matched to its `rounded-[...]`), or
+   * `"auto"` to read it from the computed style.
+   * @default 26 (`"auto"` for `small`)
+   */
+  radius?: number | "auto"
+  /**
+   * Width of the sculpted optical refraction bezel band in CSS px.
+   * @default 22 (12 for `small`)
+   */
+  bezel?: number
+  /** Refraction intensity multiplier. @default 1 */
+  refraction?: number
+  /** Chromatic dispersion along the rim (the Apple kits use none). @default 0 */
+  dispersion?: number
+  /**
+   * Keep the bottom edge square/open (no bottom corner radius or bottom rim).
+   * Useful for bottom-docked edge-to-edge mobile Drawers.
+   * @default false
+   */
+  openBottom?: boolean
+}
 
 /**
- * Shared Apple Liquid Glass optical refraction backdrop for large floating
- * containers (Dialog, AlertDialog, Select, Drawer, Popover, DropdownMenu).
+ * The Liquid Glass layer: an independent `-z-10` child that turns its host into
+ * glass. Used by every glass surface (Dialog, Popover, Select, Drawer, Card, ...)
+ * and by glass `Button`s (`size="small"`).
  *
- * Renders as an independent `-z-10` sibling layer so:
- * 1. The container's curved bezel refracts the live background with a true
- *    SVG `<feDisplacementMap>` SDF lens (while keeping the center flat & crisp
- *    for text legibility).
- * 2. The parent element never needs `backdrop-filter`, preventing nested
- *    Backdrop Root conflicts for child `LiquidLens` controls (Switch, Slider, Tabs).
- * 3. Continuously responds to `LiquidGlassProvider` (`tint`: 0 Clear <-> 1 Tinted)
- *    and degrades gracefully to translucent CSS glass on Safari / Firefox.
+ * 1. The curved bezel refracts the live backdrop with a true SVG
+ *    `<feDisplacementMap>` SDF lens while the center stays flat for legibility.
+ * 2. The host never needs `backdrop-filter`, avoiding nested Backdrop Roots that
+ *    would cut off child `LiquidLens` controls (Switch, Slider, Tabs).
+ * 3. Optics come from `getLiquidGlassMaterial()`, continuous in `tint`, and fall
+ *    back to frosted CSS glass on Safari / Firefox.
  */
 export function LiquidSurfaceBackdrop({
-  radius = 26,
-  bezel = 22,
+  size: sizeProp,
+  tone,
+  radius,
+  bezel,
   refraction = 1,
-  dispersion = 0.055,
-  tone = "sheet",
+  dispersion = 0,
   openBottom = false,
   className,
   style,
   ...props
 }: LiquidSurfaceBackdropProps) {
+  const size: LiquidGlassSize =
+    sizeProp ?? (tone === "menu" ? "menu" : "large")
+  const isControl = size === "small"
   const [node, setNode] = React.useState<HTMLDivElement | null>(null)
-  const { filterId, refracting, filter, blurPx } = useLiquidRefraction(node, {
-    radius,
-    bezel,
+  const { filter, material, backdropFilter } = useLiquidRefraction(node, {
+    ...(isControl ? CONTROL_REFRACTION : { size, dpr: 1 }),
+    ...(radius !== undefined ? { radius } : isControl ? {} : { radius: 26 }),
+    // An explicit bezel width replaces the radius-proportional control rim
+    ...(bezel !== undefined ? { bezel, bezelRatio: undefined } : {}),
     refraction,
     dispersion,
     openBottom,
-    // DPR 1 is visually identical for smooth large-surface displacement maps and keeps canvas build < 3ms
-    dpr: 1,
   })
-
-  const backdropFilterValue = refracting
-    ? `url(#${filterId}) saturate(var(--liquid-saturate, 1.75))`
-    : `blur(var(--liquid-blur, ${blurPx}px)) saturate(var(--liquid-saturate, 1.75))`
 
   return (
     <div
       ref={setNode}
       aria-hidden="true"
       data-slot="liquid-surface-backdrop"
-      data-tone={tone}
+      data-size={size}
       className={cn(
         "pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-[inherit]",
         openBottom && "rounded-b-none",
-        tone === "menu"
-          ? "bg-(--liquid-surface-menu)"
-          : "bg-(--liquid-surface-sheet)",
+        isControl
+          ? liquidControlGlassClassName
+          : size === "menu"
+            ? "bg-(--liquid-surface-menu)"
+            : "bg-(--liquid-surface-sheet)",
         className
       )}
       style={{
-        backdropFilter: backdropFilterValue,
-        WebkitBackdropFilter: backdropFilterValue,
+        backdropFilter,
+        WebkitBackdropFilter: backdropFilter,
+        ...(isControl
+          ? { ["--lq-glass-fill" as string]: material.fillOpacity }
+          : null),
         ...style,
       }}
       {...props}
@@ -452,3 +644,5 @@ export function LiquidSurfaceBackdrop({
     </div>
   )
 }
+
+export { OverGlass, useOverGlass }

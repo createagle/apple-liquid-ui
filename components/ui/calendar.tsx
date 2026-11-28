@@ -12,7 +12,10 @@ import {
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 
 import { Button, buttonVariants } from "@/components/ui/button"
-import { LiquidSurfaceBackdrop } from "@/components/ui/liquid-surface"
+import {
+  LiquidSurfaceBackdrop,
+  useOverGlass,
+} from "@/components/ui/liquid-surface"
 import {
   Select,
   SelectContent,
@@ -30,7 +33,8 @@ export type CalendarProps = React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
   /**
    * Renders the Apple 27 Liquid Glass container surface when standalone.
-   * Automatically yields to parent Popover/Drawer/Card surfaces to avoid nested glass.
+   * Inside a Liquid Glass surface (Popover, Drawer, glass Card, ...) it yields
+   * automatically: Apple never stacks glass on glass.
    * @default true
    */
   glass?: boolean
@@ -47,7 +51,7 @@ function Calendar({
   showOutsideDays = true,
   captionLayout = "label",
   buttonVariant = "ghost",
-  glass = true,
+  glass: glassProp = true,
   refract = true,
   locale,
   formatters,
@@ -55,6 +59,8 @@ function Calendar({
   ...props
 }: CalendarProps) {
   const defaultClassNames = getDefaultClassNames()
+  const onGlass = useOverGlass()
+  const glass = glassProp && !onGlass
 
   return (
     <DayPicker
@@ -180,7 +186,9 @@ function Calendar({
                       "shadow-[0_18px_46px_-10px_rgba(0,0,0,0.18),0_4px_14px_-2px_rgba(0,0,0,0.06),0_0_0_0.5px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.92)]",
                       "dark:shadow-[0_22px_54px_-10px_rgba(0,0,0,0.62),0_0_0_0.5px_rgba(255,255,255,0.16),inset_0_1px_0_rgba(255,255,255,0.22)]",
                     ]
-                  : "border border-border/70 bg-background text-foreground shadow-sm",
+                  : onGlass
+                    ? "bg-transparent text-foreground"
+                    : "border border-border/70 bg-background text-foreground shadow-sm",
                 "in-data-[slot=popover-content]:rounded-none! in-data-[slot=popover-content]:border-0! in-data-[slot=popover-content]:bg-transparent! in-data-[slot=popover-content]:shadow-none!",
                 "in-data-[slot=drawer-content]:rounded-none! in-data-[slot=drawer-content]:border-0! in-data-[slot=drawer-content]:bg-transparent! in-data-[slot=drawer-content]:shadow-none!",
                 "in-data-[slot=card-content]:rounded-none! in-data-[slot=card-content]:border-0! in-data-[slot=card-content]:bg-transparent! in-data-[slot=card-content]:shadow-none!",
@@ -193,14 +201,13 @@ function Calendar({
                   <LiquidSurfaceBackdrop
                     radius={24}
                     bezel={20}
-                    tone="sheet"
-                    className="in-data-[slot=popover-content]:hidden in-data-[slot=drawer-content]:hidden in-data-[slot=card-content]:hidden"
+                    size="medium"
                   />
                 ) : (
                   <span
                     aria-hidden="true"
                     data-slot="calendar-glass-backdrop"
-                    className="pointer-events-none absolute inset-0 -z-10 rounded-[inherit] bg-(--liquid-surface-sheet) [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))] in-data-[slot=popover-content]:hidden in-data-[slot=drawer-content]:hidden in-data-[slot=card-content]:hidden"
+                    className="pointer-events-none absolute inset-0 -z-10 rounded-[inherit] bg-(--liquid-surface-sheet) [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))]"
                   />
                 )
               ) : null}

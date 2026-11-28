@@ -13,7 +13,7 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { LiquidSurfaceBackdrop } from "@/components/ui/liquid-surface"
+import { LiquidSurfaceBackdrop, OverGlass } from "@/components/ui/liquid-surface"
 
 const toast = ToastPrimitive.createToastManager()
 
@@ -124,8 +124,8 @@ function Toast({
       )}
       {...props}
     >
-      {glass && <LiquidSurfaceBackdrop radius={22} bezel={18} tone="sheet" />}
-      {children}
+      {glass && <LiquidSurfaceBackdrop radius={22} bezel={18} size="medium" />}
+      <OverGlass enabled={glass}>{children}</OverGlass>
     </ToastPrimitive.Root>
   )
 }

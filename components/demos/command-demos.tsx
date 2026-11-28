@@ -42,6 +42,7 @@ export function CommandLiquidHeroDemo() {
   return (
     <div className="flex w-full max-w-sm flex-col items-center gap-3">
       <Button
+        glass
         variant="secondary"
         className="w-full justify-between px-3.5 text-muted-foreground"
         onClick={() => setOpen(true)}
@@ -107,7 +108,7 @@ export function CommandDialogDemo() {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <Button variant="secondary" onClick={() => setOpen(true)}>
+      <Button glass variant="secondary" onClick={() => setOpen(true)}>
         <SearchIcon className="size-4" />
         <span>打开文件快捷跳转</span>
         <Kbd className="ml-1 hidden md:inline-flex">⇧⌘K</Kbd>

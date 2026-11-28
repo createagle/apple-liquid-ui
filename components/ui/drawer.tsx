@@ -4,7 +4,7 @@ import * as React from "react"
 import { Drawer as DrawerPrimitive } from "@base-ui/react/drawer"
 import { cn } from "cn"
 
-import { LiquidSurfaceBackdrop } from "@/components/ui/liquid-surface"
+import { LiquidSurfaceBackdrop, OverGlass } from "@/components/ui/liquid-surface"
 
 type DrawerContextProps = {
   hasSnapPoints: boolean
@@ -211,7 +211,7 @@ function DrawerContent({
               "flex min-h-0 flex-1 flex-col overflow-hidden overscroll-contain rounded-[inherit] transition-opacity duration-300 ease-[cubic-bezier(0.45,1.005,0,1.005)] select-text group-data-nested-drawer-open/drawer-popup:opacity-0 group-data-nested-drawer-swiping/drawer-popup:opacity-100 group-data-swiping/drawer-popup:select-none"
             )}
           >
-            {children}
+            <OverGlass enabled={Boolean(resolvedBackdrop)}>{children}</OverGlass>
           </DrawerPrimitive.Content>
         </DrawerPrimitive.Popup>
       </DrawerPrimitive.Viewport>

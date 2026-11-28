@@ -34,7 +34,7 @@ export function DrawerLiquidHeroDemo() {
       <Drawer>
         <DrawerTrigger
           render={
-            <Button variant="secondary">
+            <Button glass variant="secondary">
               <AirplayIcon className="size-4" />
               打开音频输出抽屉
             </Button>
@@ -103,7 +103,7 @@ export function DrawerDirectionsDemo() {
         <Drawer key={dir} swipeDirection={dir}>
           <DrawerTrigger
             render={
-              <Button variant="secondary" size="sm">
+              <Button glass variant="secondary" size="sm">
                 <PanelBottomOpenIcon className="size-3.5" />
                 {label}
               </Button>
@@ -128,7 +128,7 @@ export function DrawerDirectionsDemo() {
             </div>
             <DrawerFooter>
               <DrawerClose
-                render={<Button variant="secondary" surface="over-glass">关闭</Button>}
+                render={<Button variant="secondary">关闭</Button>}
               />
             </DrawerFooter>
           </DrawerContent>
@@ -144,7 +144,7 @@ export function DrawerSnapPointsDemo() {
       <Drawer snapPoints={[0.45, 0.85]}>
         <DrawerTrigger
           render={
-            <Button variant="secondary">
+            <Button glass variant="secondary">
               <SlidersHorizontalIcon className="size-4" />
               打开多段吸附抽屉
             </Button>

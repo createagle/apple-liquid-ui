@@ -14,7 +14,10 @@ import { motion, useReducedMotion } from "motion/react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { LIQUID_PRESS_SCALE, LIQUID_SPRINGS } from "@/lib/liquid-motion"
-import { LiquidSurfaceBackdrop } from "@/components/ui/liquid-surface"
+import {
+  LiquidSurfaceBackdrop,
+  useOverGlass,
+} from "@/components/ui/liquid-surface"
 import {
   Drawer,
   DrawerContent,
@@ -353,12 +356,20 @@ const selectTriggerVariants = cva(
           "dark:shadow-[inset_0_0.5px_0_rgba(255,255,255,0.12)]",
         ].join(" "),
 
-        // Spotless Luminous Apple Liquid Glass Capsule Trigger (responds to --liquid-glass-tint)
+        // Apple Liquid Glass `Regular - Small` control (shared material, same as glass Button);
+        // the glass itself is a `<LiquidSurfaceBackdrop size="small">` child layer
         glass: [
-          "rounded-full bg-(--liquid-surface) text-neutral-900 [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))]",
-          "shadow-[0_8px_24px_-6px_rgba(0,0,0,0.12),0_2px_6px_-2px_rgba(0,0,0,0.06),0_0_0_0.5px_rgba(0,0,0,0.07),inset_0_1px_0_rgba(255,255,255,0.92),inset_0_-0.5px_0_rgba(255,255,255,0.45)]",
-          "hover:bg-(--liquid-surface-hover) active:brightness-[0.97]",
-          "dark:text-white dark:shadow-[0_10px_28px_-6px_rgba(0,0,0,0.48),0_0_0_0.5px_rgba(255,255,255,0.15),inset_0_1px_0_rgba(255,255,255,0.22),inset_0_-0.5px_0_rgba(255,255,255,0.08)]",
+          "isolate bg-transparent text-(--lq-text) dark:text-white",
+          // Hover / press wash between the glass layer and the label
+          "after:pointer-events-none after:absolute after:inset-0 after:-z-5 after:rounded-[inherit] after:transition-colors after:duration-200",
+          "hover:after:bg-white/14 active:after:bg-black/6 dark:hover:after:bg-white/10 dark:active:after:bg-white/16",
+          // Opacity on the host would blank the glass (Backdrop Root): dim children instead
+          "disabled:opacity-100 disabled:*:opacity-45",
+        ].join(" "),
+
+        // Apple 27 UI Kit `Over-Glass / Bordered`: flat fill on a Liquid Glass surface
+        "over-glass": [
+          "bg-(--apple-fill-over-glass) text-foreground active:bg-(--apple-fill-over-glass-pressed)",
         ].join(" "),
       },
       size: {
@@ -376,11 +387,13 @@ const selectTriggerVariants = cva(
       },
     ],
     defaultVariants: {
-      variant: "default",
+      variant: "glass",
       size: "default",
     },
   }
 )
+
+type SelectTriggerVariant = "default" | "glass"
 
 type SelectTriggerBaseProps = Omit<
   SelectPrimitive.Trigger.Props,
@@ -391,20 +404,42 @@ type SelectTriggerBaseProps = Omit<
 
 export interface SelectTriggerProps
   extends SelectTriggerBaseProps,
-    VariantProps<typeof selectTriggerVariants> {
+    Pick<VariantProps<typeof selectTriggerVariants>, "size"> {
+  /**
+   * `glass`: the shared Liquid Glass control material (default when standalone);
+   * `default`: the solid macOS Pop-up Button / iOS pill fill.
+   * On a Liquid Glass surface the trigger always renders the kit's flat
+   * Over-Glass fill instead (Apple never stacks glass on glass).
+   * @default "glass"
+   */
+  variant?: SelectTriggerVariant | null
+  /**
+   * Placement context; detected automatically inside Liquid Glass surfaces
+   * (Dialog, Popover, Sheet, Drawer, glass Card, ...). Pass to override.
+   */
+  surface?: "default" | "over-glass"
   disableMotion?: boolean
 }
 
 function SelectTrigger({
   className,
-  variant = "default",
+  variant: variantProp,
   size = "default",
+  surface: surfaceProp,
   disableMotion = false,
   disabled: triggerDisabled,
   children,
   ...props
 }: SelectTriggerProps) {
   const { isMobile, disabled: rootDisabled, value } = useSelectContext()
+  const onGlass = useOverGlass()
+  const surface = surfaceProp ?? (onGlass ? "over-glass" : "default")
+  const variant =
+    surface === "over-glass" ? "over-glass" : (variantProp ?? "glass")
+  const glassLayer =
+    variant === "glass" ? (
+      <LiquidSurfaceBackdrop size="small" />
+    ) : null
   const prefersReducedMotion = useReducedMotion()
   const disabled = Boolean(triggerDisabled || rootDisabled)
   const shouldAnimate = !disableMotion && !prefersReducedMotion && !disabled
@@ -426,6 +461,7 @@ function SelectTrigger({
         data-slot="select-trigger"
         data-variant={variant ?? "default"}
         data-size={size ?? "default"}
+        data-surface={surface}
         data-placeholder={value === null || value === "" ? "" : undefined}
         disabled={disabled}
         whileTap={shouldAnimate ? { scale: tapScale } : undefined}
@@ -433,6 +469,7 @@ function SelectTrigger({
         className={cn(selectTriggerVariants({ variant, size }), className)}
         {...(props as Record<string, unknown>)}
       >
+        {glassLayer}
         {children}
         {chevron}
       </MotionDrawerTrigger>
@@ -444,12 +481,14 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-variant={variant ?? "default"}
       data-size={size ?? "default"}
+      data-surface={surface}
       disabled={disabled}
       whileTap={shouldAnimate ? { scale: tapScale } : undefined}
       transition={pressTransition}
       className={cn(selectTriggerVariants({ variant, size }), className)}
       {...props}
     >
+      {glassLayer}
       {children}
       <SelectPrimitive.Icon render={chevron} />
     </MotionSelectTriggerPrimitive>
@@ -537,7 +576,7 @@ function SelectContent({
           )}
           {...props}
         >
-          <LiquidSurfaceBackdrop radius={14} bezel={14} tone="menu" />
+          <LiquidSurfaceBackdrop radius={14} bezel={14} size="menu" />
           <SelectScrollUpButton />
           <SelectPrimitive.List className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-x-hidden overflow-y-auto p-1.5">
             {children}

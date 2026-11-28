@@ -66,7 +66,7 @@ function Menubar({
             radius={999}
             bezel={12}
             refraction={0.8}
-            tone="menu"
+            size="menu"
           />
         ) : null}
         {children}

@@ -59,9 +59,9 @@ npx shadcn@latest add https://your-domain.com/r/button.json
 
 <ComponentPreview name="button-sizes" />
 
-## Over-glass 表面适配（macOS 27）
+## Over-Glass 表面适配（Apple 27 UI Kit）
 
-当按钮放置在 `LiquiGlass` 玻璃工具栏或悬浮面板之上时，传入 `surface="over-glass"` 可自动增强背景对比度：
+Apple 不会在玻璃上再叠一层玻璃：按钮放在 Liquid Glass 表面（Dialog、Popover、Sheet、Drawer、玻璃 Card、Toast 或自定义的 `<OverGlass>` 区域）内时，会自动切换为 Sketch 设计稿中的 **Over-Glass** 平涂样式（`Prominent` 为实色强调色、`Bordered` 为浅/深色半透明填充），此时 `glass` 不生效。单独放在内容区时仍按 `glass` 渲染液态玻璃。如需强制指定，可传入 `surface="content" | "over-glass"`：
 
 <ComponentPreview name="button-over-glass" />
 
@@ -76,8 +76,8 @@ export function Example() {
       <Button glass>立即体验</Button>
       <Button variant="secondary" glass>了解更多</Button>
       <Button variant="destructive" glass>删除项目</Button>
-      <Button variant="secondary" glass glassProps={{ frost: 0.12, dispersion: 0.08 }}>
-        自定义色散折射
+      <Button variant="secondary" glass glassProps={{ refraction: 1.4, bezel: 14 }}>
+        加强边缘折射
       </Button>
     </div>
   );
@@ -89,9 +89,9 @@ export function Example() {
 | 属性 | 类型 | 默认值 | 说明 |
 | :--- | :--- | :--- | :--- |
 | `variant` | `'default' \| 'secondary' \| 'outline' \| 'ghost' \| 'destructive' \| 'link'` | `'default'` | 标准 shadcn 语义变体 |
-| `glass` | `boolean` | `false` | 开启 Apple Liquid Glass 光学折射材质（自动按语义适配：`default` 为蓝色玻璃，其余为透明玻璃，`destructive` 叠加红色文字；并联动全局通透度） |
+| `glass` | `boolean` | `false` | 开启 Apple Liquid Glass `Regular - Small` 控件材质（与玻璃 `Input` / `Textarea`、浮层面板共用同一材质内核；`default` 为蓝色玻璃，其余为透明玻璃，`destructive` 叠加红色文字；联动全局通透度）。位于 Over-Glass 表面时自动改为平涂样式 |
 | `size` | `'xs' \| 'sm' \| 'default' \| 'lg' \| 'icon-xs' \| 'icon-sm' \| 'icon' \| 'icon-lg'` | `'default'` | 响应式尺寸阶梯（移动端自动匹配 iOS 27，桌面端自动匹配 macOS 27） |
-| `surface` | `'content' \| 'over-glass'` | `'content'` | 按钮所处表面语境（对照 macOS 27 Content Area 与 Over-glass 规范） |
-| `glassProps` | `Pick<LiquiGlassProps, 'material' \| 'profile' \| 'finish' \| 'frost' \| 'refraction' \| 'bezel' \| 'blur' \| 'dispersion' \| 'specular' \| 'saturation' \| 'elevated'>` | — | 透传给 `@liqui-design/glass` 的光学微调参数（仅 `glass={true}` 时生效） |
+| `surface` | `'content' \| 'over-glass'` | 自动检测 | 按钮所处表面语境；在玻璃表面内自动为 `'over-glass'`，传入可强制覆盖 |
+| `glassProps` | `{ refraction?: number; bezel?: number; dispersion?: number }` | — | 玻璃层光学微调：折射强度倍数、边缘折射带宽度（px）、色散（Apple 设计稿默认 `0`）。仅 `glass` 生效时使用 |
 | `disableMotion` | `boolean` | `false` | 禁用 Motion 弹簧按压动画（自动遵循系统 `prefers-reduced-motion`） |
 | `render` | `React.ReactElement` | — | 继承自 `@base-ui/react/button`，支持自定义渲染元素（如 Next.js `<Link />`） |

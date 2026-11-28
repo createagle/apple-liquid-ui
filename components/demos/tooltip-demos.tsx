@@ -27,7 +27,7 @@ export function TooltipLiquidHeroDemo() {
         <Tooltip>
           <TooltipTrigger
             render={
-              <Button variant="secondary" size="icon">
+              <Button glass variant="secondary" size="icon">
                 <BoldIcon className="size-4" />
               </Button>
             }
@@ -40,7 +40,7 @@ export function TooltipLiquidHeroDemo() {
         <Tooltip>
           <TooltipTrigger
             render={
-              <Button variant="secondary" size="icon">
+              <Button glass variant="secondary" size="icon">
                 <ItalicIcon className="size-4" />
               </Button>
             }
@@ -53,7 +53,7 @@ export function TooltipLiquidHeroDemo() {
         <Tooltip>
           <TooltipTrigger
             render={
-              <Button variant="secondary" size="icon">
+              <Button glass variant="secondary" size="icon">
                 <UnderlineIcon className="size-4" />
               </Button>
             }
@@ -66,7 +66,7 @@ export function TooltipLiquidHeroDemo() {
         <Tooltip>
           <TooltipTrigger
             render={
-              <Button variant="secondary" size="icon">
+              <Button glass variant="secondary" size="icon">
                 <ShareIcon className="size-4" />
               </Button>
             }
@@ -93,7 +93,7 @@ export function TooltipPlacementsDemo() {
           <Tooltip key={side}>
             <TooltipTrigger
               render={
-                <Button variant="secondary" size="sm">
+                <Button glass variant="secondary" size="sm">
                   {label}
                 </Button>
               }
@@ -115,7 +115,7 @@ export function TooltipShortcutDemo() {
         <Tooltip>
           <TooltipTrigger
             render={
-              <Button variant="secondary">
+              <Button glass variant="secondary">
                 <SearchIcon className="size-4" />
                 聚焦搜索
               </Button>
@@ -129,7 +129,7 @@ export function TooltipShortcutDemo() {
         <Tooltip>
           <TooltipTrigger
             render={
-              <Button variant="secondary">
+              <Button glass variant="secondary">
                 <CopyIcon className="size-4" />
                 实体对比
               </Button>
@@ -142,7 +142,7 @@ export function TooltipShortcutDemo() {
         <Tooltip>
           <TooltipTrigger
             render={
-              <Button variant="secondary">
+              <Button glass variant="secondary">
                 <SparklesIcon className="size-4" />
                 带箭头玻璃
               </Button>

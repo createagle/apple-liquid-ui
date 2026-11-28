@@ -274,7 +274,6 @@ export function GlobalBackdropPicker() {
               !isDefault ? (
                 <Button
                   variant="secondary"
-                  surface="over-glass"
                   size="xs"
                   onClick={handleReset}
                   aria-label="重置默认外观"
@@ -322,7 +321,6 @@ export function GlobalBackdropPicker() {
                   <Button
                     key={option.value}
                     variant="secondary"
-                    surface="over-glass"
                     size="sm"
                     role="radio"
                     aria-checked={active}

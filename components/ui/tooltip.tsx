@@ -91,7 +91,7 @@ function TooltipContent({
               radius={11}
               bezel={10}
               refraction={0.75}
-              tone="menu"
+              size="menu"
             />
           )}
           {children}

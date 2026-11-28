@@ -5,12 +5,23 @@ import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
-import { PanelLeftIcon } from "lucide-react"
+import { CheckIcon, PanelLeftIcon } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
-import { LiquidSurfaceBackdrop } from "@/components/ui/liquid-surface"
+import { LiquidSurfaceBackdrop, OverGlass } from "@/components/ui/liquid-surface"
 import { Separator } from "@/components/ui/separator"
 import {
   Sheet,
@@ -45,6 +56,113 @@ type SidebarContextProps = {
 }
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null)
+
+const SidebarInstanceContext = React.createContext<{
+  side: "left" | "right"
+  collapsible: "offcanvas" | "icon" | "none"
+}>({
+  side: "left",
+  collapsible: "offcanvas",
+})
+
+const SidebarMenuItemContext = React.createContext<{
+  hasSub: boolean
+  dropdownOpen: boolean
+  title: React.ReactNode
+} | null>(null)
+
+const SidebarCollapsedSubDepthContext = React.createContext(0)
+const SidebarExpandedSubDepthContext = React.createContext(0)
+
+const SidebarSubItemContext = React.createContext<{
+  hasNestedSub: boolean
+} | null>(null)
+
+function extractPlainText(node: React.ReactNode): string {
+  if (typeof node === "string" || typeof node === "number") {
+    return String(node)
+  }
+  if (Array.isArray(node)) {
+    return node.map(extractPlainText).join("").trim()
+  }
+  if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
+    return extractPlainText(node.props.children)
+  }
+  return ""
+}
+
+function hasSidebarMenuSub(nodes: React.ReactNode): boolean {
+  let found = false
+  React.Children.forEach(nodes, (child) => {
+    if (found || !React.isValidElement<{ children?: React.ReactNode }>(child)) {
+      return
+    }
+    const type = child.type as { displayName?: string } | string
+    if (
+      type === SidebarMenuSub ||
+      (typeof type !== "string" && type?.displayName === "SidebarMenuSub")
+    ) {
+      found = true
+      return
+    }
+    if (
+      type === SidebarMenuItem ||
+      (typeof type !== "string" && type?.displayName === "SidebarMenuItem") ||
+      type === SidebarMenuSubItem ||
+      (typeof type !== "string" && type?.displayName === "SidebarMenuSubItem")
+    ) {
+      return
+    }
+    if (child.props.children) {
+      found = hasSidebarMenuSub(child.props.children)
+    }
+  })
+  return found
+}
+
+function extractMenuItemTitle(nodes: React.ReactNode): string {
+  let title = ""
+  React.Children.forEach(nodes, (child) => {
+    if (title || !React.isValidElement<{ children?: React.ReactNode }>(child)) {
+      return
+    }
+    const type = child.type as { displayName?: string } | string
+    if (
+      type === SidebarMenuButton ||
+      (typeof type !== "string" && type?.displayName === "SidebarMenuButton")
+    ) {
+      const btnProps = child.props as {
+        tooltip?: unknown
+        children?: React.ReactNode
+      }
+      if (typeof btnProps.tooltip === "string" && btnProps.tooltip.trim()) {
+        title = btnProps.tooltip.trim()
+      } else {
+        title = extractPlainText(btnProps.children)
+      }
+      return
+    }
+    if (child.type === React.Fragment && child.props.children) {
+      title = extractMenuItemTitle(child.props.children)
+    }
+  })
+  return title
+}
+
+function stripTrailingIcons(children: React.ReactNode): React.ReactNode {
+  const arr = React.Children.toArray(children)
+  const isTrailingIcon = (node: React.ReactNode) =>
+    React.isValidElement(node) &&
+    (node.type === "svg" ||
+      (typeof node.type !== "string" &&
+        typeof node.type !== "undefined"))
+
+  let end = arr.length
+  while (end > 1 && isTrailingIcon(arr[end - 1])) {
+    end -= 1
+  }
+  return end === arr.length ? children : arr.slice(0, end)
+}
 
 function useSidebar() {
   const context = React.useContext(SidebarContext)
@@ -179,7 +297,7 @@ function SidebarGlassLayer({
   if (!glass) return null
 
   if (variant === "floating") {
-    return <LiquidSurfaceBackdrop radius={22} bezel={20} tone="sheet" />
+    return <LiquidSurfaceBackdrop radius={22} bezel={20} size="large" />
   }
 
   return (
@@ -202,111 +320,123 @@ function Sidebar({
   ...props
 }: SidebarProps) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+  const instanceCtx = React.useMemo(
+    () => ({ side, collapsible }),
+    [side, collapsible]
+  )
 
   if (collapsible === "none") {
     return (
-      <div
-        data-slot="sidebar"
-        data-glass={glass ? "true" : "false"}
-        className={cn(
-          "relative isolate flex h-full w-(--sidebar-width) flex-col overflow-hidden text-sidebar-foreground",
-          glass ? "bg-transparent" : "bg-sidebar",
-          className
-        )}
-        {...props}
-      >
-        <SidebarGlassLayer glass={glass} variant={variant} />
-        {children}
-      </div>
+      <SidebarInstanceContext.Provider value={instanceCtx}>
+        <div
+          data-slot="sidebar"
+          data-glass={glass ? "true" : "false"}
+          className={cn(
+            "relative isolate flex h-full w-(--sidebar-width) flex-col overflow-hidden text-sidebar-foreground",
+            glass ? "bg-transparent" : "bg-sidebar",
+            className
+          )}
+          {...props}
+        >
+          <SidebarGlassLayer glass={glass} variant={variant} />
+          <OverGlass enabled={glass}>{children}</OverGlass>
+        </div>
+      </SidebarInstanceContext.Provider>
     )
   }
 
   if (isMobile) {
     return (
-      <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
-        <SheetContent
-          dir={dir}
-          data-sidebar="sidebar"
-          data-slot="sidebar"
-          data-mobile="true"
-          glass={glass}
-          showCloseButton={false}
-          className={cn(
-            "w-(--sidebar-width) p-0 text-sidebar-foreground",
-            !glass && "bg-sidebar"
-          )}
-          style={
-            {
-              "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-            } as React.CSSProperties
-          }
-          side={side}
-        >
-          <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
-          </SheetHeader>
-          <div className="flex h-full w-full flex-col">{children}</div>
-        </SheetContent>
-      </Sheet>
+      <SidebarInstanceContext.Provider value={instanceCtx}>
+        <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
+          <SheetContent
+            dir={dir}
+            data-sidebar="sidebar"
+            data-slot="sidebar"
+            data-mobile="true"
+            glass={glass}
+            showCloseButton={false}
+            className={cn(
+              "w-(--sidebar-width) p-0 text-sidebar-foreground",
+              !glass && "bg-sidebar"
+            )}
+            style={
+              {
+                "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+              } as React.CSSProperties
+            }
+            side={side}
+          >
+            <SheetHeader className="sr-only">
+              <SheetTitle>Sidebar</SheetTitle>
+              <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+            </SheetHeader>
+            <div className="flex h-full w-full flex-col">
+              <OverGlass enabled={glass}>{children}</OverGlass>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </SidebarInstanceContext.Provider>
     )
   }
 
   return (
-    <div
-      className="group peer hidden text-sidebar-foreground md:block"
-      data-state={state}
-      data-collapsible={state === "collapsed" ? collapsible : ""}
-      data-variant={variant}
-      data-side={side}
-      data-glass={glass ? "true" : "false"}
-      data-slot="sidebar"
-    >
-      {/* Layout spacer matching desktop sidebar width */}
+    <SidebarInstanceContext.Provider value={instanceCtx}>
       <div
-        data-slot="sidebar-gap"
-        className={cn(
-          "relative w-(--sidebar-width) bg-transparent transition-[width] duration-260 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
-          "group-data-[collapsible=offcanvas]:w-0",
-          "group-data-[side=right]:rotate-180",
-          variant === "floating" || variant === "inset"
-            ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(5)))]"
-            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)"
-        )}
-      />
-      <div
-        data-slot="sidebar-container"
+        className="group peer hidden text-sidebar-foreground md:block"
+        data-state={state}
+        data-collapsible={state === "collapsed" ? collapsible : ""}
+        data-variant={variant}
         data-side={side}
-        className={cn(
-          "fixed inset-y-0 z-10 hidden w-(--sidebar-width) transition-[left,right,width] duration-260 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
-          "data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]",
-          "data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)] md:flex",
-          variant === "floating" || variant === "inset"
-            ? "p-2.5 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(5)))]"
-            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=left]:border-black/[0.07] group-data-[side=right]:border-l group-data-[side=right]:border-black/[0.07] dark:group-data-[side=left]:border-white/[0.1] dark:group-data-[side=right]:border-white/[0.1]",
-          className
-        )}
-        {...props}
+        data-glass={glass ? "true" : "false"}
+        data-slot="sidebar"
       >
+        {/* Layout spacer matching desktop sidebar width */}
         <div
-          data-sidebar="sidebar"
-          data-slot="sidebar-inner"
+          data-slot="sidebar-gap"
           className={cn(
-            "relative isolate flex size-full flex-col overflow-hidden",
-            glass ? "bg-transparent" : "bg-sidebar",
-            "group-data-[variant=floating]:rounded-[22px]",
-            glass &&
-              "group-data-[variant=floating]:shadow-[0_18px_46px_-10px_rgba(0,0,0,0.2),0_4px_14px_-2px_rgba(0,0,0,0.08),0_0_0_0.5px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.92)] dark:group-data-[variant=floating]:shadow-[0_22px_54px_-10px_rgba(0,0,0,0.64),0_0_0_0.5px_rgba(255,255,255,0.16),inset_0_1px_0_rgba(255,255,255,0.22)]",
-            !glass &&
-              "group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow-sm",
-            "group-data-[variant=inset]:rounded-[18px] group-data-[variant=inset]:shadow-[0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.65)] dark:group-data-[variant=inset]:shadow-[0_0_0_0.5px_rgba(255,255,255,0.12),inset_0_1px_0_rgba(255,255,255,0.14)]"
+            "relative w-(--sidebar-width) bg-transparent transition-[width] duration-260 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+            "group-data-[collapsible=offcanvas]:w-0",
+            "group-data-[side=right]:rotate-180",
+            variant === "floating" || variant === "inset"
+              ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(5)))]"
+              : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)"
           )}
+        />
+        <div
+          data-slot="sidebar-container"
+          data-side={side}
+          className={cn(
+            "fixed inset-y-0 z-10 hidden w-(--sidebar-width) transition-[left,right,width] duration-260 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+            "data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]",
+            "data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)] md:flex",
+            variant === "floating" || variant === "inset"
+              ? "p-2.5 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(5)))]"
+              : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=left]:border-black/[0.07] group-data-[side=right]:border-l group-data-[side=right]:border-black/[0.07] dark:group-data-[side=left]:border-white/[0.1] dark:group-data-[side=right]:border-white/[0.1]",
+            className
+          )}
+          {...props}
         >
-          <SidebarGlassLayer glass={glass} variant={variant} />
-          {children}
+          <div
+            data-sidebar="sidebar"
+            data-slot="sidebar-inner"
+            className={cn(
+              "relative isolate flex size-full flex-col overflow-hidden",
+              glass ? "bg-transparent" : "bg-sidebar",
+              "group-data-[variant=floating]:rounded-[22px]",
+              glass &&
+                "group-data-[variant=floating]:shadow-[0_18px_46px_-10px_rgba(0,0,0,0.2),0_4px_14px_-2px_rgba(0,0,0,0.08),0_0_0_0.5px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.92)] dark:group-data-[variant=floating]:shadow-[0_22px_54px_-10px_rgba(0,0,0,0.64),0_0_0_0.5px_rgba(255,255,255,0.16),inset_0_1px_0_rgba(255,255,255,0.22)]",
+              !glass &&
+                "group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow-sm",
+              "group-data-[variant=inset]:rounded-[18px] group-data-[variant=inset]:shadow-[0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.65)] dark:group-data-[variant=inset]:shadow-[0_0_0_0.5px_rgba(255,255,255,0.12),inset_0_1px_0_rgba(255,255,255,0.14)]"
+            )}
+          >
+            <SidebarGlassLayer glass={glass} variant={variant} />
+            <OverGlass enabled={glass}>{children}</OverGlass>
+          </div>
         </div>
       </div>
-    </div>
+    </SidebarInstanceContext.Provider>
   )
 }
 
@@ -468,7 +598,7 @@ function SidebarGroupLabel({
     props: mergeProps<"div">(
       {
         className: cn(
-          "flex h-7 shrink-0 items-center rounded-md px-2.5 text-[11.5px] font-semibold tracking-wide text-foreground/48 outline-hidden transition-[margin,opacity] duration-200 ease-linear motion-reduce:transition-none group-data-[collapsible=icon]:-mt-7 group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 focus-visible:ring-(--apple-blue)/45 [&>svg]:size-3.5 [&>svg]:shrink-0",
+          "flex h-7 shrink-0 items-center rounded-md px-2.5 text-[11.5px] font-semibold tracking-wide text-foreground/48 outline-hidden transition-[margin,opacity] duration-200 ease-linear motion-reduce:transition-none group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:-mt-7 group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 focus-visible:ring-(--apple-blue)/45 [&>svg]:size-3.5 [&>svg]:shrink-0",
           className
         ),
       },
@@ -531,29 +661,71 @@ function SidebarMenu({ className, ...props }: React.ComponentProps<"ul">) {
   )
 }
 
-function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
+function SidebarMenuItem({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"li">) {
+  const { isMobile, state } = useSidebar()
+  const { collapsible } = React.useContext(SidebarInstanceContext)
+  const isIconCollapsed =
+    !isMobile && state === "collapsed" && collapsible === "icon"
+  const hasSub = hasSidebarMenuSub(children)
+  const [dropdownOpen, setDropdownOpen] = React.useState(false)
+
+  React.useEffect(() => {
+    if (!isIconCollapsed || !hasSub) {
+      setDropdownOpen(false)
+    }
+  }, [isIconCollapsed, hasSub])
+
+  const title = React.useMemo(
+    () => (isIconCollapsed && hasSub ? extractMenuItemTitle(children) : ""),
+    [children, hasSub, isIconCollapsed]
+  )
+
+  const itemCtx = React.useMemo(
+    () =>
+      isIconCollapsed && hasSub
+        ? { hasSub: true, dropdownOpen, title }
+        : null,
+    [dropdownOpen, hasSub, isIconCollapsed, title]
+  )
+
   return (
     <li
       data-slot="sidebar-menu-item"
       data-sidebar="menu-item"
       className={cn("group/menu-item relative", className)}
       {...props}
-    />
+    >
+      {itemCtx ? (
+        <SidebarMenuItemContext.Provider value={itemCtx}>
+          <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+            {children}
+          </DropdownMenu>
+        </SidebarMenuItemContext.Provider>
+      ) : (
+        children
+      )}
+    </li>
   )
 }
+SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
   [
     "peer/menu-button group/menu-button flex w-full cursor-pointer items-center gap-2.5 overflow-hidden rounded-[12px] px-2.5 py-2 text-left text-[15px] outline-hidden select-none md:gap-2 md:rounded-[10px] md:px-2.5 md:py-1.5 md:text-[13px]",
     "transition-[width,height,padding,background-color,color] duration-150 ease-out motion-reduce:transition-none",
     "group-has-data-[sidebar=menu-action]/menu-item:pr-8",
-    "group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0! group-data-[collapsible=icon]:[&>span]:hidden",
+    "group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0! group-data-[collapsible=icon]:p-0! group-data-[collapsible=icon]:text-[0px]! group-data-[collapsible=icon]:[&>*:not(:first-child)]:hidden",
     "text-foreground/85 hover:bg-black/[0.05] hover:text-foreground active:bg-black/[0.08] dark:hover:bg-white/[0.09] dark:active:bg-white/[0.13]",
+    "data-popup-open:bg-black/[0.08] data-popup-open:text-foreground dark:data-popup-open:bg-white/[0.13]",
     "focus-visible:ring-2 focus-visible:ring-(--apple-blue)/45",
     "disabled:pointer-events-none disabled:opacity-45 aria-disabled:pointer-events-none aria-disabled:opacity-45",
     "data-open:bg-black/[0.05] data-open:text-foreground dark:data-open:bg-white/[0.09]",
     "data-active:bg-(--apple-blue)/14 data-active:font-semibold data-active:text-(--apple-blue) data-active:hover:bg-(--apple-blue)/18 dark:data-active:bg-(--apple-blue)/22 dark:data-active:hover:bg-(--apple-blue)/28",
-    "[&_svg]:size-4 [&_svg]:shrink-0 data-active:[&_svg]:text-(--apple-blue) [&>span:last-child]:truncate",
+    "[&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 data-active:[&_svg]:text-(--apple-blue) [&>span:last-child]:truncate",
   ].join(" "),
   {
     variants: {
@@ -582,6 +754,7 @@ function SidebarMenuButton({
   size = "default",
   tooltip,
   className,
+  onClick,
   ...props
 }: useRender.ComponentProps<"button"> &
   React.ComponentProps<"button"> & {
@@ -589,15 +762,29 @@ function SidebarMenuButton({
     tooltip?: string | React.ComponentProps<typeof TooltipContent>
   } & VariantProps<typeof sidebarMenuButtonVariants>) {
   const { isMobile, state } = useSidebar()
+  const { collapsible } = React.useContext(SidebarInstanceContext)
+  const itemCtx = React.useContext(SidebarMenuItemContext)
+  const isIconCollapsed =
+    !isMobile && state === "collapsed" && collapsible === "icon"
+  const isCollapsedSubTrigger = Boolean(isIconCollapsed && itemCtx?.hasSub)
+
+  const resolvedRender = isCollapsedSubTrigger
+    ? tooltip
+      ? <TooltipTrigger render={<DropdownMenuTrigger render={render} />} />
+      : <DropdownMenuTrigger render={render} />
+    : !tooltip
+      ? render
+      : <TooltipTrigger render={render} />
+
   const comp = useRender({
     defaultTagName: "button",
     props: mergeProps<"button">(
       {
         className: cn(sidebarMenuButtonVariants({ variant, size }), className),
       },
-      props
+      isCollapsedSubTrigger ? props : { ...props, onClick }
     ),
-    render: !tooltip ? render : <TooltipTrigger render={render} />,
+    render: resolvedRender,
     state: {
       slot: "sidebar-menu-button",
       sidebar: "menu-button",
@@ -622,12 +809,15 @@ function SidebarMenuButton({
       <TooltipContent
         side="right"
         align="center"
-        hidden={state !== "collapsed" || isMobile}
+        hidden={
+          state !== "collapsed" || isMobile || Boolean(itemCtx?.dropdownOpen)
+        }
         {...tooltip}
       />
     </Tooltip>
   )
 }
+SidebarMenuButton.displayName = "SidebarMenuButton"
 
 function SidebarMenuAction({
   className,
@@ -713,35 +903,128 @@ function SidebarMenuSkeleton({
   )
 }
 
-function SidebarMenuSub({ className, ...props }: React.ComponentProps<"ul">) {
+function SidebarMenuSub({
+  className,
+  open = true,
+  children,
+  ...props
+}: React.ComponentProps<"ul"> & {
+  /**
+   * Controls expanded visibility while keeping nested items mounted for collapsed icon Dropdown menus.
+   * @default true
+   */
+  open?: boolean
+}) {
+  const { isMobile, state } = useSidebar()
+  const { side, collapsible } = React.useContext(SidebarInstanceContext)
+  const itemCtx = React.useContext(SidebarMenuItemContext)
+  const subDepth = React.useContext(SidebarCollapsedSubDepthContext)
+  const expandedDepth = React.useContext(SidebarExpandedSubDepthContext)
+  const isIconCollapsed =
+    !isMobile && state === "collapsed" && collapsible === "icon"
+
+  if (isIconCollapsed && itemCtx?.hasSub) {
+    const popupSide = side === "right" ? "left" : "right"
+
+    if (subDepth === 0) {
+      return (
+        <SidebarCollapsedSubDepthContext.Provider value={1}>
+          <DropdownMenuContent
+            data-slot="sidebar-menu-sub"
+            side={popupSide}
+            align="start"
+            sideOffset={10}
+            className={cn("min-w-44", className)}
+          >
+            {itemCtx.title ? (
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>{itemCtx.title}</DropdownMenuLabel>
+                {children}
+              </DropdownMenuGroup>
+            ) : (
+              children
+            )}
+          </DropdownMenuContent>
+        </SidebarCollapsedSubDepthContext.Provider>
+      )
+    }
+
+    return (
+      <SidebarCollapsedSubDepthContext.Provider value={subDepth + 1}>
+        <DropdownMenuSubContent
+          data-slot="sidebar-menu-sub"
+          side={popupSide}
+          sideOffset={6}
+          className={cn("min-w-40", className)}
+        >
+          {children}
+        </DropdownMenuSubContent>
+      </SidebarCollapsedSubDepthContext.Provider>
+    )
+  }
+
+  if (!open) {
+    return null
+  }
+
   return (
-    <ul
-      data-slot="sidebar-menu-sub"
-      data-sidebar="menu-sub"
-      className={cn(
-        "mx-3.5 flex min-w-0 translate-x-px flex-col gap-0.5 border-l border-black/[0.08] px-2.5 py-0.5 group-data-[collapsible=icon]:hidden dark:border-white/[0.1]",
-        className
-      )}
-      {...props}
-    />
+    <SidebarExpandedSubDepthContext.Provider value={expandedDepth + 1}>
+      <ul
+        data-slot="sidebar-menu-sub"
+        data-sidebar="menu-sub"
+        className={cn(
+          "flex min-w-0 flex-col gap-0.5 border-l border-black/[0.08] py-0.5 group-data-[collapsible=icon]:hidden dark:border-white/[0.1]",
+          expandedDepth >= 1 ? "mr-0 ml-2.5 pr-0 pl-2.5" : "mr-0 ml-3.5 pr-0 pl-2.5",
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </ul>
+    </SidebarExpandedSubDepthContext.Provider>
   )
 }
+SidebarMenuSub.displayName = "SidebarMenuSub"
 
 function SidebarMenuSubItem({
   className,
+  children,
   ...props
 }: React.ComponentProps<"li">) {
+  const subDepth = React.useContext(SidebarCollapsedSubDepthContext)
+
+  if (subDepth >= 1) {
+    const hasNestedSub = hasSidebarMenuSub(children)
+
+    if (hasNestedSub) {
+      return (
+        <SidebarSubItemContext.Provider value={{ hasNestedSub: true }}>
+          <DropdownMenuSub>{children}</DropdownMenuSub>
+        </SidebarSubItemContext.Provider>
+      )
+    }
+
+    return (
+      <SidebarSubItemContext.Provider value={{ hasNestedSub: false }}>
+        {children}
+      </SidebarSubItemContext.Provider>
+    )
+  }
+
   return (
     <li
       data-slot="sidebar-menu-sub-item"
       data-sidebar="menu-sub-item"
       className={cn("group/menu-sub-item relative", className)}
       {...props}
-    />
+    >
+      {children}
+    </li>
   )
 }
+SidebarMenuSubItem.displayName = "SidebarMenuSubItem"
 
-function SidebarMenuSubButton({
+function ExpandedSidebarMenuSubButton({
   render,
   size = "md",
   isActive = false,
@@ -757,7 +1040,7 @@ function SidebarMenuSubButton({
     props: mergeProps<"a">(
       {
         className: cn(
-          "flex h-8 min-w-0 -translate-x-px cursor-pointer items-center gap-2 overflow-hidden rounded-[9px] px-2.5 text-foreground/80 outline-hidden select-none group-data-[collapsible=icon]:hidden md:h-7",
+          "flex h-8 w-full min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-[9px] px-2.5 text-foreground/80 outline-hidden select-none group-data-[collapsible=icon]:hidden md:h-7",
           "hover:bg-black/[0.05] hover:text-foreground active:bg-black/[0.08] dark:hover:bg-white/[0.09]",
           "focus-visible:ring-2 focus-visible:ring-(--apple-blue)/45",
           "disabled:pointer-events-none disabled:opacity-45 aria-disabled:pointer-events-none aria-disabled:opacity-45",
@@ -777,6 +1060,81 @@ function SidebarMenuSubButton({
       active: isActive,
     },
   })
+}
+
+function SidebarMenuSubButton({
+  render,
+  size = "md",
+  isActive = false,
+  className,
+  children,
+  href,
+  onClick,
+  ...props
+}: useRender.ComponentProps<"a"> &
+  React.ComponentProps<"a"> & {
+    size?: "sm" | "md"
+    isActive?: boolean
+  }) {
+  const subDepth = React.useContext(SidebarCollapsedSubDepthContext)
+  const subItemCtx = React.useContext(SidebarSubItemContext)
+
+  if (subDepth >= 1) {
+    if (subItemCtx?.hasNestedSub) {
+      return (
+        <DropdownMenuSubTrigger
+          data-active={isActive || undefined}
+          className={cn(
+            isActive &&
+              "font-semibold text-(--apple-blue) data-highlighted:text-white data-popup-open:text-white dark:data-highlighted:text-white dark:data-popup-open:text-white",
+            className
+          )}
+        >
+          {stripTrailingIcons(children)}
+        </DropdownMenuSubTrigger>
+      )
+    }
+
+    const resolvedRender = render ?? (href ? <a href={href} /> : undefined)
+
+    return (
+      <DropdownMenuItem
+        render={
+          resolvedRender as React.ComponentProps<typeof DropdownMenuItem>["render"]
+        }
+        data-active={isActive || undefined}
+        onClick={
+          onClick as React.ComponentProps<typeof DropdownMenuItem>["onClick"]
+        }
+        className={cn(
+          isActive &&
+            "font-semibold text-(--apple-blue) data-highlighted:text-white dark:data-highlighted:text-white",
+          className
+        )}
+      >
+        <span className="flex flex-1 items-center gap-2 truncate">
+          {children}
+        </span>
+        {isActive ? (
+          <CheckIcon className="ml-auto size-3.5 shrink-0 stroke-[2.25]" />
+        ) : null}
+      </DropdownMenuItem>
+    )
+  }
+
+  return (
+    <ExpandedSidebarMenuSubButton
+      render={render}
+      size={size}
+      isActive={isActive}
+      className={className}
+      href={href}
+      onClick={onClick}
+      {...props}
+    >
+      {children}
+    </ExpandedSidebarMenuSubButton>
+  )
 }
 
 export {

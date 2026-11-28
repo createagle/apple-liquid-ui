@@ -6,7 +6,7 @@ import { cn } from "cn"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
-import { LiquidSurfaceBackdrop } from "@/components/ui/liquid-surface"
+import { LiquidSurfaceBackdrop, OverGlass } from "@/components/ui/liquid-surface"
 
 function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
@@ -77,7 +77,7 @@ function AlertDialogContent({
           radius={isMobile ? 34 : 26}
           bezel={isMobile ? 24 : 22}
         />
-        {children}
+        <OverGlass>{children}</OverGlass>
       </AlertDialogPrimitive.Popup>
     </AlertDialogPortal>
   )

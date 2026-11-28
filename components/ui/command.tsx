@@ -23,7 +23,9 @@ import {
 import {
   LiquidSurfaceBackdrop,
   liquidFieldGlassClassName,
+  OverGlass,
   useLiquidFieldRefraction,
+  useOverGlass,
 } from "@/components/ui/liquid-surface"
 
 interface CommandContextValue {
@@ -81,8 +83,12 @@ function Command({
   const [drawerOpen, setDrawerOpen] = React.useState(false)
 
   const shouldWrapMobileDrawer = isMobile && !parentCtx.inDialog && mobileDrawer
+  // The mobile search-bar trigger is glass when standalone and the kit's flat
+  // Over-Glass well on a Liquid Glass surface (no glass on glass)
+  const onGlass = useOverGlass()
+  const glassTrigger = glass && !onGlass
   const refraction = useLiquidFieldRefraction<HTMLButtonElement>(
-    shouldWrapMobileDrawer && glass
+    shouldWrapMobileDrawer && glassTrigger
   )
 
   const mobileSheetCtx = React.useMemo<CommandContextValue>(
@@ -106,12 +112,15 @@ function Command({
           ref={refraction.ref}
           type="button"
           data-slot="command-mobile-trigger"
-          style={glass ? refraction.style : undefined}
+          data-surface={onGlass ? "over-glass" : "default"}
+          style={glassTrigger ? refraction.style : undefined}
           className={cn(
             "flex h-11 w-full cursor-pointer items-center gap-2.5 rounded-full px-4 text-left text-[15px] text-muted-foreground/85 outline-none transition-colors",
-            glass
+            glassTrigger
               ? liquidFieldGlassClassName
-              : "border border-border/60 bg-white/92 dark:bg-[#1e1e1e]/88",
+              : onGlass
+                ? "bg-(--apple-fill-over-glass) active:bg-(--apple-fill-over-glass-pressed)"
+                : "border border-border/60 bg-white/92 dark:bg-[#1e1e1e]/88",
             className
           )}
         >
@@ -119,7 +128,7 @@ function Command({
           <span className="flex-1 truncate">{mobileTriggerPlaceholder}</span>
           <ChevronUpIcon className="size-4 shrink-0 text-muted-foreground/70" />
         </DrawerTrigger>
-        {glass ? refraction.portal : null}
+        {glassTrigger ? refraction.portal : null}
         <DrawerContent
           data-slot="command-mobile-content"
           glass={glass}
@@ -179,9 +188,9 @@ function Command({
       {...props}
     >
       {useBackdrop && (
-        <LiquidSurfaceBackdrop radius={22} bezel={20} tone="sheet" />
+        <LiquidSurfaceBackdrop radius={22} bezel={20} size="medium" />
       )}
-      {children}
+      <OverGlass enabled={Boolean(useBackdrop)}>{children}</OverGlass>
     </CommandPrimitive>
   )
 }

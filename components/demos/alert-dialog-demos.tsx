@@ -24,7 +24,7 @@ export function AlertDialogLiquidHeroDemo() {
       <AlertDialog>
         <AlertDialogTrigger
           render={
-            <Button variant="secondary">
+            <Button glass variant="secondary">
               <MailIcon />
               关闭未发送邮件
             </Button>
@@ -64,7 +64,7 @@ export function AlertDialogDestructiveDemo() {
       <AlertDialog>
         <AlertDialogTrigger
           render={
-            <Button variant="destructive">
+            <Button glass variant="destructive">
               <Trash2Icon />
               删除 iCloud 备份
             </Button>
@@ -107,7 +107,7 @@ export function AlertDialogStackedDemo() {
       <AlertDialog>
         <AlertDialogTrigger
           render={
-            <Button variant="outline">
+            <Button glass variant="outline">
               三操作堆叠警示框
             </Button>
           }

@@ -477,7 +477,7 @@ function ContextMenuContent({
           )}
           {...props}
         >
-          <LiquidSurfaceBackdrop radius={14} bezel={14} tone="menu" />
+          <LiquidSurfaceBackdrop radius={14} bezel={14} size="menu" />
           <div className="flex max-h-(--available-height) flex-col gap-0.5 overflow-x-hidden overflow-y-auto p-1.5">
             {children}
           </div>
@@ -725,7 +725,7 @@ function ContextMenuSubTrigger({
         "group/context-menu-sub-trigger relative flex min-h-[28px] w-full cursor-default items-center gap-2 rounded-[8px] px-2.5 py-1.5 text-[13px] font-medium text-foreground/90 outline-hidden select-none",
         "transition-colors duration-75",
         "data-inset:pl-8",
-        "data-popup-open:bg-black/[0.07] dark:data-popup-open:bg-white/[0.11]",
+        "data-popup-open:bg-(--apple-blue) data-popup-open:text-white dark:data-popup-open:bg-(--apple-blue) dark:data-popup-open:text-white",
         "data-highlighted:bg-(--apple-blue) data-highlighted:text-white dark:data-highlighted:bg-(--apple-blue) dark:data-highlighted:text-white",
         "data-disabled:pointer-events-none data-disabled:opacity-40",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
@@ -734,7 +734,7 @@ function ContextMenuSubTrigger({
       {...props}
     >
       {children}
-      <ChevronRightIcon className="ml-auto size-3.5 text-foreground/45 group-data-highlighted/context-menu-sub-trigger:text-white/90" />
+      <ChevronRightIcon className="ml-auto size-3.5 text-foreground/45 group-data-highlighted/context-menu-sub-trigger:text-white/90 group-data-popup-open/context-menu-sub-trigger:text-white/90" />
     </ContextMenuPrimitive.SubmenuTrigger>
   )
 }

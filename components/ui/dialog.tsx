@@ -7,7 +7,7 @@ import { XIcon } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
-import { LiquidSurfaceBackdrop } from "@/components/ui/liquid-surface"
+import { LiquidSurfaceBackdrop, OverGlass } from "@/components/ui/liquid-surface"
 import {
   Drawer,
   DrawerClose,
@@ -231,7 +231,7 @@ function DialogContent({
         {...props}
       >
         <LiquidSurfaceBackdrop radius={26} bezel={22} />
-        {children}
+        <OverGlass>{children}</OverGlass>
         {shouldShowCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"

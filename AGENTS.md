@@ -44,6 +44,8 @@
   - `--liquid-blur` / `--liquid-saturate`
   - `--lq-tint` / `--lq-tint-deep`
 - **所有新建/改造的玻璃表面组件**（面板、弹窗、菜单、卡片、气泡等）优先使用这些派生变量（如 `bg-(--liquid-surface) [backdrop-filter:blur(var(--liquid-blur))_saturate(var(--liquid-saturate))]`），使用 `@liqui-design/glass` 时则配合 `useLiquidGlass()` 动态调节 `tintFloor` / `blur` / `frost`。
+- **单一材质内核（禁止另起一套玻璃实现）**：所有玻璃（控件与浮层）统一由 `components/ui/liquid-surface.tsx` 的 `getLiquidGlassMaterial(size, tint)` 解算，尺寸档位取自 Apple 27 Sketch 设计稿：`small`（控件，`Regular - Small`：blur 6 / distortion 0.4）、`menu`（`Menus`：blur 20）、`medium`（卡片 / Toast / Calendar / Command：blur 24）、`large`（Dialog / Sheet / Drawer / Sidebar：`Regular - Large` blur 30 / distortion 0.3）；**通透度主要调节不透明度而非模糊**（与苹果"透明 ↔ 色调"设置一致）：底色浓度走缓入曲线 `--liquid-glass-ease = 0.3t + 0.7t²`（CSS Token 与 `getLiquidGlassMaterial` 共用），在色调端接近不透明（≈0.94）；模糊全程保持轻量、线性变化（控件 0.5→2px，面板 1→4.5~6px），避免中段就把背景完全糊掉。拖动通透度时 SVG 滤镜采用 A/B 双缓冲切换（`useFilterDoubleBuffer`），勿改回"原地改滤镜属性"或"每档换新 id"，前者 Chromium 不重绘、后者会闪烁。折射强度随通透度反向变化（`refractionGain`：Clear `1.6` → Regular `1` → Tinted `0.4`），与苹果原生"越透明折射越明显"一致；控件玻璃沿用 Tabs / Slider 指示器的透镜几何（边缘带 `0.48 × 圆角半径`、整体凸面 `curvature: 0.18`、峰值位移 `0.42 × 高度 × gain`，Clear 时近乎无模糊）。玻璃表面统一挂 `<LiquidSurfaceBackdrop size="..." />`，玻璃 `Button` 用 `size="small"` 同一图层，`Input` / `Textarea` 用 `useLiquidFieldRefraction()`（同一 small 参数）；`components/ui/*` 不再直接使用 `@liqui-design/glass` 的 `LiquiGlass`。设计稿所有玻璃样式 `chromaticAberrationMultiplier` 均为 `0`，故表面默认色散为 `0`。
+- **Over-Glass 自动切换（玻璃上不叠玻璃）**：玻璃表面必须用 `<OverGlass enabled={isGlass}>` 包裹其内容；`Button`（`glass` 失效）、`Input`、`Textarea`、`ComboboxInput`、`Card`、`Calendar` 通过 `useOverGlass()` 自动从玻璃切换为设计稿 `Over-Glass` 平涂样式（`Bordered` 浅色 `rgba(0,0,0,.12)` / 深色 `rgba(255,255,255,.12~.15)`，`Prominent` 为实色强调色）；显式 `surface` prop 可覆盖。新增玻璃表面组件时同样要提供 `<OverGlass>`。
 - **零侵入兜底**：即使外部项目不使用 `<LiquidGlassProvider>`，组件也必须通过默认 CSS Token（`0.5`）正常渲染。
 - **重要细节：激活态指示器与选区底色必须恒定**！如 `Tabs` 的激活胶囊指示器（浅色纯白 `bg-white`、深色固定炭灰）**不能**随 `--liquid-glass-tint` 变透，否则在 `tint = 0`（透明）时壁纸杂色会透进激活胶囊中降低可读性。
 
@@ -57,7 +59,7 @@
   - 采用贴边顶部大圆角液态玻璃底部 Sheet（`[--drawer-inset:0px]`、`rounded-t-[32px]! rounded-b-none!`、顶部拖拽手柄 `showSwipeHandle`、底层挂载 `<LiquidSurfaceBackdrop radius={32} bezel={24} />`）；
   - 头部标题与描述文字**水平居中**，**默认不渲染右上角关闭按钮**（由下滑手势、点击遮罩或底部按钮关闭）；
   - 分组列表（Inset Grouped List）的**分组标题（Label）直接以纯文字形式置于圆角卡片外部上方**，禁止将分组标题包进背景框内，仅将列表项包在半透明圆角卡片容器中。
-- **按钮展示克制规则**：在组件文档与 Demo 中，除非明确演示 `Button` 的 `glass` 材质对比，否则常规触发按钮与示例按钮默认**不叠加 `glass`**。
+- **触发器（Trigger）材质规则**：打开浮层的触发器（`DialogTrigger` / `PopoverTrigger` / `DropdownMenuTrigger` / `SheetTrigger` / `DrawerTrigger` / `HoverCardTrigger` / `TooltipTrigger` 等 `render={<Button glass … />}`、打开 Command / 发送 Toast 的按钮、`SelectTrigger`、Command 移动端搜索栏）**单独展示时用 `glass`，位于玻璃表面上时自动为 Over-Glass**（由 `useOverGlass()` 处理，Demo 中写 `glass` 即可）。浮层内部的普通操作按钮（取消 / 确认等）不写 `glass`。
 - **Motion 动效与无障碍**：使用 `lib/liquid-motion.ts` 中的 `LIQUID_SPRINGS` 与 `LIQUID_PRESS_SCALE`，并始终配合 `useReducedMotion()` 与 `disableMotion` prop。
 
 ### 2.5 纯静态导出与 Registry 兼容性

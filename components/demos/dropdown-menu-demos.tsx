@@ -42,7 +42,7 @@ export function DropdownMenuLiquidHeroDemo() {
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button variant="secondary">
+            <Button glass variant="secondary">
               文件操作
               <ChevronDownIcon className="opacity-70" />
             </Button>
@@ -145,7 +145,7 @@ export function DropdownMenuCheckboxesDemo() {
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button variant="secondary">
+            <Button glass variant="secondary">
               显示选项
               <ChevronDownIcon className="opacity-70" />
             </Button>
@@ -209,7 +209,7 @@ export function DropdownMenuRadioGroupDemo() {
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button variant="secondary">
+            <Button glass variant="secondary">
               <ArrowDownUpIcon />
               排序方式：{SORT_LABELS[sortBy] ?? sortBy}
             </Button>

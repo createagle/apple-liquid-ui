@@ -21,7 +21,6 @@ export function TextareaLiquidHeroDemo() {
         </span>
       </div>
       <Textarea
-        surface="over-glass"
         value={note}
         onChange={(e) => setNote(e.target.value)}
         placeholder="输入设计评审记录或随手灵感…"
@@ -30,7 +29,6 @@ export function TextareaLiquidHeroDemo() {
         <Button
           size="sm"
           variant="secondary"
-          surface="over-glass"
           onClick={() => setNote('')}
         >
           清空

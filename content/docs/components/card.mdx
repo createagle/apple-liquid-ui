@@ -1,6 +1,6 @@
 ---
 title: Card 卡片
-description: 响应式 Apple Liquid Glass 容器卡片：默认开启独立层液态玻璃（避免截断内部 Switch / Slider 的光学水滴折射），支持 refract 边缘折射、glass={false} 实体模式与 surface="over-glass" 嵌套分组卡片。
+description: 响应式 Apple Liquid Glass 容器卡片：默认开启独立层液态玻璃（避免截断内部 Switch / Slider 的光学水滴折射），支持 refract 边缘折射、glass={false} 实体模式，嵌套在玻璃表面内时自动切换为 Over-Glass 分组卡片。
 keywords:
   - Card
   - 卡片
@@ -17,11 +17,11 @@ keywords:
 
 - **默认液态玻璃 + 独立背景层**：默认开启 `glass={true}` 并使用独立的 `-z-10` 同级背景层渲染模糊，避免在 Chromium 中形成嵌套 Backdrop Root，确保卡片内部的 `Switch`、`Slider`、`Tabs` 液态水滴折射不受截断。
 - **可选真实光学边缘折射**：开启 `refract` 即可挂载 `<LiquidSurfaceBackdrop />`，为卡片边缘提供实时 SDF 折射高光。
-- **实体与嵌套分组适配**：传入 `glass={false}` 切换为实体卡片（深色对齐 iOS 27 `#1C1C1E`），在另一层玻璃容器内嵌套子卡片时使用 `surface="over-glass"`（对齐 macOS 27 `Group Boxes` 柔和底色）。
+- **实体与嵌套分组适配**：传入 `glass={false}` 切换为实体卡片（深色对齐 iOS 27 `#1C1C1E`），嵌套在另一层玻璃表面（玻璃 Card、Dialog、Popover 等）内时自动切换为 Over-Glass（对齐 macOS 27 `Group Boxes` 柔和底色）；玻璃卡片内部的 `Button` / `Input` / `Textarea` 也会自动使用 Over-Glass 样式。
 
 ## 响应式实时预览（内嵌分组卡片与 Switch）
 
-外层卡片开启 `refract` 光学边缘折射，内部组合 `surface="over-glass"` 紧凑分组卡片与 `Switch`；拖动左侧边栏的「玻璃通透度」与「主题强调色」可实时联动查看效果：
+外层卡片开启 `refract` 光学边缘折射，内部组合自动 Over-Glass 的紧凑分组卡片与 `Switch`；拖动左侧边栏的「玻璃通透度」与「主题强调色」可实时联动查看效果：
 
 <ComponentPreview name="card-liquid-hero" />
 
@@ -75,5 +75,5 @@ export function Example() {
 | :--- | :--- | :--- | :--- |
 | `size` | `'default' \| 'sm'` | `'default'` | 密度与圆角规格（默认 `26px/22px`，`sm` 为 `20px/16px`） |
 | `glass` | `boolean` | `true` | 默认开启液态玻璃独立底板；传入 `false` 切回实体卡片 |
-| `surface` | `'default' \| 'over-glass'` | `'default'` | 嵌套在玻璃容器内部时设为 `'over-glass'`，自动关闭嵌套模糊 |
+| `surface` | `'default' \| 'over-glass'` | 自动检测 | 所处表面语境；嵌套在玻璃表面内时自动为 `'over-glass'`，传入可强制覆盖 |
 | `refract` | `boolean` | `false` | 开启 `<LiquidSurfaceBackdrop />` 真实 SVG 边缘光学折射 |

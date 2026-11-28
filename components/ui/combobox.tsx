@@ -26,6 +26,7 @@ import {
   LiquidSurfaceBackdrop,
   liquidFieldGlassClassName,
   useLiquidFieldRefraction,
+  useOverGlass,
 } from "@/components/ui/liquid-surface"
 
 interface ComboboxMobileContextValue {
@@ -364,7 +365,8 @@ export interface ComboboxInputProps extends ComboboxPrimitive.Input.Props {
    */
   glass?: boolean
   /**
-   * Adapts surface fill when placed inside a glass container (`over-glass`).
+   * Placement context; detected automatically inside Liquid Glass surfaces
+   * (`over-glass` renders the kit's flat Over-Glass well instead of glass).
    */
   surface?: "default" | "over-glass"
 }
@@ -376,12 +378,14 @@ function ComboboxInput({
   showTrigger = true,
   showClear = false,
   glass,
-  surface = "default",
+  surface: surfaceProp,
   placeholder,
   ...props
 }: ComboboxInputProps) {
   const ctx = useComboboxMobile()
-  const isGlass = glass ?? surface !== "over-glass"
+  const onGlass = useOverGlass()
+  const surface = surfaceProp ?? (onGlass ? "over-glass" : "default")
+  const isGlass = surface !== "over-glass" && (glass ?? true)
   const refraction = useLiquidFieldRefraction<HTMLDivElement>(isGlass)
 
   React.useEffect(() => {
@@ -623,7 +627,7 @@ function ComboboxContent({
           {...props}
         >
           {glass && (
-            <LiquidSurfaceBackdrop radius={20} bezel={16} tone="menu" />
+            <LiquidSurfaceBackdrop radius={20} bezel={16} size="menu" />
           )}
           {children}
         </ComboboxPrimitive.Popup>

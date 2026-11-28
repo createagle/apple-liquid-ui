@@ -32,7 +32,7 @@ export function DialogLiquidHeroDemo() {
       <Dialog>
         <DialogTrigger
           render={
-            <Button variant="secondary">
+            <Button glass variant="secondary">
               <UserIcon />
               编辑个人资料
             </Button>
@@ -50,7 +50,6 @@ export function DialogLiquidHeroDemo() {
             <label className="grid gap-1.5">
               <span className="text-xs font-medium text-foreground/80">显示名称</span>
               <Input
-                surface="over-glass"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -58,7 +57,6 @@ export function DialogLiquidHeroDemo() {
             <label className="grid gap-1.5">
               <span className="text-xs font-medium text-foreground/80">头衔与简介</span>
               <Input
-                surface="over-glass"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
               />
@@ -67,7 +65,7 @@ export function DialogLiquidHeroDemo() {
 
           <DialogFooter>
             <DialogClose
-              render={<Button variant="secondary" surface="over-glass" />}
+              render={<Button variant="secondary" />}
             >
               取消
             </DialogClose>
@@ -102,7 +100,7 @@ export function DialogShareSheetDemo() {
     <Dialog>
       <DialogTrigger
         render={
-          <Button variant="default">
+          <Button glass variant="default">
             <ShareIcon />
             共享设计稿
           </Button>
@@ -121,7 +119,7 @@ export function DialogShareSheetDemo() {
             <span className="flex-1 truncate text-[13px] text-foreground/80">
               https://liquid.ui/design/macos-27-kit
             </span>
-            <Button size="sm" variant="secondary" surface="over-glass" onClick={handleCopy}>
+            <Button size="sm" variant="secondary" onClick={handleCopy}>
               {copied ? <CheckIcon /> : <CopyIcon />}
               {copied ? '已复制' : '拷贝'}
             </Button>
@@ -151,7 +149,7 @@ export function DialogScrollableDemo() {
     <Dialog>
       <DialogTrigger
         render={
-          <Button variant="outline">
+          <Button glass variant="outline">
             <FileTextIcon />
             查看更新日志
           </Button>

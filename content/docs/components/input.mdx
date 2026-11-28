@@ -18,11 +18,11 @@ keywords:
 
 - **桌面端（`>= 768px` · macOS 27）**：默认采用全圆角胶囊造型（`rounded-full`），紧凑精密高度（`sm: 28px` / `default: 34px` / `lg: 40px`）、`13px` 字号与 `3.5px` Apple Blue 聚焦光环及蓝色光标；如需小圆角可直接通过 `className` 覆盖。
 - **移动端（`< 768px` · iOS 27）**：保持一致的全圆角胶囊形态，自动放大为宽裕触控高度（`36/44/48px`）与 `16px` 字号（避免 iOS Safari 聚焦时触发页面自动缩放）。
-- **默认液态玻璃材质**：开箱即为实时响应 `--liquid-glass-tint` 的液态玻璃表面，Chromium 内核浏览器中胶囊边缘带与 Dialog / 下拉菜单同源的 SDF 光学折射与微弱色散（偏移量按输入框高度收敛，Safari / Firefox 自动回退为毛玻璃）；如需实体高对比度输入框，传入 `glass={false}` 即可取消；置于 `Dialog` / `Popover` 等玻璃容器内部时，使用 `surface="over-glass"` 自动切换为无嵌套模糊的半透明凹槽。
+- **默认液态玻璃材质**：开箱即为实时响应 `--liquid-glass-tint` 的液态玻璃表面，与玻璃 `Button` 共用 Apple 27 设计稿 `Regular - Small` 控件材质（Chromium 内核浏览器中胶囊边缘带 SDF 光学折射，偏移量按输入框高度收敛，Safari / Firefox 自动回退为毛玻璃）；如需实体高对比度输入框，传入 `glass={false}` 即可取消；置于 `Dialog` / `Popover` / `Sheet` / 玻璃 `Card` 等玻璃表面内部时，**自动**切换为设计稿 Over-Glass 半透明凹槽（玻璃上不再叠玻璃）。
 
 ## 响应式实时预览
 
-上方为默认全圆角液态玻璃搜索框，下方为嵌套在玻璃面板中的 `surface="over-glass"` 输入框；切换右上角 **桌面 / 移动端** 设备框即可体验双端高度与字号自适应：
+上方为默认全圆角液态玻璃搜索框，下方为放在玻璃 Card 中、自动切换为 Over-Glass 的输入框；切换右上角 **桌面 / 移动端** 设备框即可体验双端高度与字号自适应：
 
 <ComponentPreview name="input-liquid-hero" />
 
@@ -60,4 +60,4 @@ export function Example() {
 | :--- | :--- | :--- | :--- |
 | `size` | `'sm' \| 'default' \| 'lg'` | `'default'` | 尺寸阶梯（移动 `36/44/48px` ↔ 桌面 `28/34/40px`） |
 | `glass` | `boolean` | `true` | 默认开启液态玻璃表面（含边缘光学折射）并响应全局 `--liquid-glass-tint`；传入 `false` 切换为实体输入框 |
-| `surface` | `'default' \| 'over-glass'` | `'default'` | 置于液态玻璃容器内部时设为 `'over-glass'`（自动关闭嵌套模糊并切换半透明凹槽） |
+| `surface` | `'default' \| 'over-glass'` | 自动检测 | 所处表面语境；在玻璃表面内自动为 `'over-glass'`（关闭玻璃、切换半透明凹槽），传入可强制覆盖 |

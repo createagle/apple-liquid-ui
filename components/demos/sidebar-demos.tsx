@@ -43,18 +43,14 @@ export function SidebarLiquidHeroDemo() {
   const [activeItem, setActiveItem] = React.useState('recents');
   const [query, setQuery] = React.useState('');
   const [tagsOpen, setTagsOpen] = React.useState(true);
+  const [kitOpen, setKitOpen] = React.useState(false);
+  const [iosOpen, setIosOpen] = React.useState(false);
 
   const favoriteItems = [
     { id: 'recents', label: '最近使用', icon: ClockIcon, badge: '12' },
     { id: 'airdrop', label: '隔空投送', icon: SparklesIcon },
     { id: 'icloud', label: 'iCloud 云盘', icon: CloudIcon, badge: '3' },
     { id: 'starred', label: '个人收藏', icon: StarIcon },
-  ];
-
-  const folderSubItems = [
-    { id: 'design-kit', label: 'Apple UI Kit 27' },
-    { id: 'prototypes', label: '原型草稿' },
-    { id: 'exports', label: '导出产物' },
   ];
 
   const filteredFavorites = favoriteItems.filter((item) =>
@@ -71,7 +67,7 @@ export function SidebarLiquidHeroDemo() {
         >
           <SidebarHeader>
             <div className="flex items-center gap-2 px-1.5 pt-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-(--apple-blue) text-white shadow-xs">
+              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-(--apple-blue) text-white shadow-xs group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:rounded-[10px]">
                 <FolderIcon className="size-4" />
               </div>
               <div className="min-w-0 group-data-[collapsible=icon]:hidden">
@@ -138,24 +134,98 @@ export function SidebarLiquidHeroDemo() {
                         }`}
                       />
                     </SidebarMenuButton>
-                    {tagsOpen ? (
-                      <SidebarMenuSub>
-                        {folderSubItems.map((sub) => (
-                          <SidebarMenuSubItem key={sub.id}>
+                    <SidebarMenuSub open={tagsOpen}>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton
+                          isActive={activeItem.startsWith('kit-')}
+                          onClick={() => setKitOpen((prev) => !prev)}
+                        >
+                          <span>Apple UI Kit 27</span>
+                          <ChevronRightIcon
+                            className={`ml-auto size-3.5 transition-transform duration-150 ${
+                              kitOpen ? 'rotate-90' : ''
+                            }`}
+                          />
+                        </SidebarMenuSubButton>
+                        <SidebarMenuSub open={kitOpen}>
+                          <SidebarMenuSubItem>
                             <SidebarMenuSubButton
-                              href={`#${sub.id}`}
-                              isActive={activeItem === sub.id}
+                              href="#kit-macos"
+                              isActive={activeItem === 'kit-macos'}
                               onClick={(e) => {
                                 e.preventDefault();
-                                setActiveItem(sub.id);
+                                setActiveItem('kit-macos');
                               }}
                             >
-                              <span>{sub.label}</span>
+                              <span>macOS 27 规范</span>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    ) : null}
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton
+                              isActive={activeItem.startsWith('kit-ios-')}
+                              onClick={() => setIosOpen((prev) => !prev)}
+                            >
+                              <span>iOS 27 规范</span>
+                              <ChevronRightIcon
+                                className={`ml-auto size-3.5 transition-transform duration-150 ${
+                                  iosOpen ? 'rotate-90' : ''
+                                }`}
+                              />
+                            </SidebarMenuSubButton>
+                            <SidebarMenuSub open={iosOpen}>
+                              <SidebarMenuSubItem>
+                                <SidebarMenuSubButton
+                                  href="#kit-ios-touch"
+                                  isActive={activeItem === 'kit-ios-touch'}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setActiveItem('kit-ios-touch');
+                                  }}
+                                >
+                                  <span>触控与圆角</span>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                              <SidebarMenuSubItem>
+                                <SidebarMenuSubButton
+                                  href="#kit-ios-drawer"
+                                  isActive={activeItem === 'kit-ios-drawer'}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setActiveItem('kit-ios-drawer');
+                                  }}
+                                >
+                                  <span>底部 Drawer</span>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            </SidebarMenuSub>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton
+                          href="#prototypes"
+                          isActive={activeItem === 'prototypes'}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setActiveItem('prototypes');
+                          }}
+                        >
+                          <span>原型草稿</span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton
+                          href="#exports"
+                          isActive={activeItem === 'exports'}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setActiveItem('exports');
+                          }}
+                        >
+                          <span>导出产物</span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
                     <SidebarMenuButton

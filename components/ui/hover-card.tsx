@@ -4,7 +4,7 @@ import * as React from "react"
 import { PreviewCard as PreviewCardPrimitive } from "@base-ui/react/preview-card"
 import { cn } from "cn"
 
-import { LiquidSurfaceBackdrop } from "@/components/ui/liquid-surface"
+import { LiquidSurfaceBackdrop, OverGlass } from "@/components/ui/liquid-surface"
 
 function HoverCard({ ...props }: PreviewCardPrimitive.Root.Props) {
   return <PreviewCardPrimitive.Root data-slot="hover-card" {...props} />
@@ -67,8 +67,8 @@ function HoverCardContent({
           )}
           {...props}
         >
-          {glass && <LiquidSurfaceBackdrop radius={22} bezel={18} tone="menu" />}
-          {children}
+          {glass && <LiquidSurfaceBackdrop radius={22} bezel={18} size="menu" />}
+          <OverGlass enabled={glass}>{children}</OverGlass>
         </PreviewCardPrimitive.Popup>
       </PreviewCardPrimitive.Positioner>
     </PreviewCardPrimitive.Portal>

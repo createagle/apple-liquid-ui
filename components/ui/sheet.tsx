@@ -5,7 +5,7 @@ import { Dialog as SheetPrimitive } from "@base-ui/react/dialog"
 import { cn } from "cn"
 import { XIcon } from "lucide-react"
 
-import { LiquidSurfaceBackdrop } from "@/components/ui/liquid-surface"
+import { LiquidSurfaceBackdrop, OverGlass } from "@/components/ui/liquid-surface"
 
 function Sheet({ ...props }: SheetPrimitive.Root.Props) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
@@ -114,7 +114,7 @@ function SheetContent({
           />
         )}
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
-          {children}
+          <OverGlass enabled={glass}>{children}</OverGlass>
         </div>
         {showCloseButton && (
           <SheetPrimitive.Close

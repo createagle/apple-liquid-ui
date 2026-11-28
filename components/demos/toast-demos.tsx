@@ -21,6 +21,7 @@ export function ToastLiquidHeroDemo() {
     <Toaster toastManager={manager} position="top-right">
       <div className="flex flex-wrap items-center justify-center gap-2.5">
         <Button
+          glass
           variant="default"
           onClick={() =>
             manager.add({
@@ -34,6 +35,7 @@ export function ToastLiquidHeroDemo() {
           发送液态通知
         </Button>
         <Button
+          glass
           variant="secondary"
           onClick={() =>
             manager.add({
@@ -57,6 +59,7 @@ export function ToastTypesDemo() {
     <Toaster toastManager={manager} position="top-right">
       <div className="flex flex-wrap items-center justify-center gap-2">
         <Button
+          glass
           variant="secondary"
           size="sm"
           onClick={() =>
@@ -71,6 +74,7 @@ export function ToastTypesDemo() {
           成功
         </Button>
         <Button
+          glass
           variant="secondary"
           size="sm"
           onClick={() =>
@@ -85,6 +89,7 @@ export function ToastTypesDemo() {
           信息
         </Button>
         <Button
+          glass
           variant="secondary"
           size="sm"
           onClick={() =>
@@ -99,6 +104,7 @@ export function ToastTypesDemo() {
           警告
         </Button>
         <Button
+          glass
           variant="secondary"
           size="sm"
           onClick={() =>
@@ -113,6 +119,7 @@ export function ToastTypesDemo() {
           错误
         </Button>
         <Button
+          glass
           variant="secondary"
           size="sm"
           onClick={() =>
@@ -139,6 +146,7 @@ export function ToastActionDemo() {
     <Toaster toastManager={manager} position="top-right">
       <div className="flex flex-col items-center gap-3">
         <Button
+          glass
           variant="secondary"
           onClick={() => {
             setRestored(false);

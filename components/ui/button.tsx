@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
-import { LiquiGlass, type LiquiGlassProps } from "@liqui-design/glass"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 import { motion, useReducedMotion } from "motion/react"
@@ -10,10 +9,13 @@ import { motion, useReducedMotion } from "motion/react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { LIQUID_PRESS_SCALE, LIQUID_SPRINGS } from "@/lib/liquid-motion"
 import { useLiquidGlass } from "@/components/ui/liquid-glass-provider"
-import { getLiquidControlMaterial } from "@/components/ui/liquid-surface"
+import {
+  LiquidSurfaceBackdrop,
+  useOverGlass,
+  type LiquidSurfaceBackdropProps,
+} from "@/components/ui/liquid-surface"
 
 const MotionButtonPrimitive = motion.create(ButtonPrimitive)
-const MotionLiquiGlass = motion.create(LiquiGlass)
 
 type GlassTone = "clear" | "prominent"
 
@@ -58,10 +60,12 @@ const buttonVariants = cva(
     variants: {
       variant: {
         // Primary action: Solid Apple Blue (combines with `glass` for blue Liquid Glass)
+        // Over-Glass: kit `Over-Glass / Prominent (Default)` is a flat accent fill (no bevel shadow)
         default: [
           "bg-(--apple-blue) text-white",
           "shadow-[0_1px_2px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.28)]",
           "hover:brightness-[1.05] active:bg-(--apple-blue-pressed) active:brightness-95",
+          "data-[surface=over-glass]:shadow-none",
         ].join(" "),
 
         // Secondary action: iOS 27 Tertiary Fill -> macOS 27 Neutral Fill (combines with `glass` for clear Liquid Glass)
@@ -106,23 +110,8 @@ const buttonVariants = cva(
 )
 
 type GlassOpticsOverrides = Pick<
-  LiquiGlassProps,
-  | "material"
-  | "profile"
-  | "finish"
-  | "lightAngle"
-  | "edgeShade"
-  | "hairline"
-  | "brightness"
-  | "tintFloor"
-  | "frost"
-  | "refraction"
-  | "bezel"
-  | "blur"
-  | "dispersion"
-  | "specular"
-  | "saturation"
-  | "elevated"
+  LiquidSurfaceBackdropProps,
+  "refraction" | "bezel" | "dispersion"
 >
 
 type ButtonBaseProps = Omit<
@@ -136,13 +125,18 @@ export interface ButtonProps
   extends ButtonBaseProps,
     VariantProps<typeof buttonVariants> {
   /**
-   * Enables Apple Liquid Glass optical refraction material orthogonally on top of
-   * any semantic `variant` (`default` -> blue glass, `secondary`/`outline`/`ghost`
-   * -> clear luminous glass, `destructive` -> clear glass with a red label).
+   * Enables the Apple Liquid Glass `Regular - Small` control material orthogonally
+   * on top of any semantic `variant` (`default` -> blue glass,
+   * `secondary`/`outline`/`ghost` -> clear glass, `destructive` -> clear glass
+   * with a red label). Apple never stacks glass on glass: on an Over-Glass
+   * surface the button renders the kit's flat Over-Glass fill instead.
    */
   glass?: boolean
   /**
-   * Placement context from Apple macOS 27 UI Kit (`content` area vs `over-glass` surface).
+   * Placement context from the Apple 27 UI Kits: `content` (on app content) or
+   * `over-glass` (on a Liquid Glass surface). Detected automatically from the
+   * enclosing glass surface (Dialog, Popover, Sheet, Drawer, glass Card, ...);
+   * pass it explicitly to override.
    */
   surface?: "content" | "over-glass"
   /**
@@ -150,8 +144,7 @@ export interface ButtonProps
    */
   disableMotion?: boolean
   /**
-   * Optional fine-tuning overrides forwarded to `@liqui-design/glass` (`LiquiGlass`)
-   * when `glass` is enabled.
+   * Optional optics overrides for the glass layer when `glass` is enabled.
    */
   glassProps?: GlassOpticsOverrides
 }
@@ -163,65 +156,18 @@ function getGlassTone(
   return variant === "default" ? "prominent" : "clear"
 }
 
-function getGlassTintStyle(
-  tone: GlassTone,
-  tint: number
-): React.CSSProperties | undefined {
-  if (tone === "clear") return undefined
-  const primaryPct = Math.round(68 + tint * 30)
-  const deepPct = Math.round(58 + tint * 32)
+/**
+ * Prominent glass (kit `Liquid Glass / Regular - Small - Tinted`): the shared
+ * control material densely washed with the accent color, so it stays a vivid
+ * accent capsule even at Clear.
+ */
+function getProminentGlassStyle(tint: number): React.CSSProperties {
+  const t = Math.max(0, Math.min(1, tint))
   const colorVar = "var(--lq-accent, #0088ff)"
-
   return {
-    ["--lq-tint" as string]: `color-mix(in srgb, ${colorVar} ${primaryPct}%, transparent)`,
-    ["--lq-tint-deep" as string]: `color-mix(in srgb, ${colorVar} ${deepPct}%, transparent)`,
-  }
-}
-
-function getGlassOptics(
-  tone: GlassTone,
-  size: ButtonProps["size"],
-  isMobile: boolean,
-  tint: number
-): GlassOpticsOverrides {
-  const isCompact =
-    size === "xs" || size === "sm" || size === "icon-xs" || size === "icon-sm"
-  const bezel = isCompact ? (isMobile ? 10 : 8) : isMobile ? 14 : 11
-  const refraction = isCompact ? (isMobile ? 42 : 34) : isMobile ? 56 : 46
-
-  if (tone === "clear") {
-    // Clean luminous glass with zero dark edge-shade smudges on corners;
-    // responds continuously to global LiquidGlassProvider tint (0 = Clear, 1 = Tinted).
-    // The material is shared with glass Input / Textarea so they match side by side.
-    return {
-      profile: "squircle",
-      finish: "classic",
-      lightAngle: -45,
-      edgeShade: 0,
-      hairline: 0.08,
-      ...getLiquidControlMaterial(tint),
-      refraction: Math.round(refraction * 0.65),
-      bezel,
-      elevated: true,
-    }
-  }
-
-  // Tinted prominent glass: vibrant Apple System Blue (accent)
-  return {
-    profile: "squircle",
-    finish: "classic",
-    lightAngle: -45,
-    edgeShade: 0,
-    hairline: 0.06,
-    brightness: 1.02,
-    tintFloor: Number((0.35 + tint * 0.35).toFixed(2)),
-    blur: Number((1.5 + tint * 4.5).toFixed(1)),
-    frost: Number((0.55 + tint * 0.41).toFixed(2)),
-    refraction: Math.round(refraction * 0.55),
-    bezel,
-    specular: Number((0.26 - tint * 0.1).toFixed(2)),
-    saturation: 1.75,
-    elevated: true,
+    ["--lq-tint" as string]: `color-mix(in srgb, ${colorVar} ${Math.round(90 + t * 10)}%, transparent)`,
+    ["--lq-tint-deep" as string]: `color-mix(in srgb, ${colorVar} ${Math.round(82 + t * 16)}%, transparent)`,
+    ["--lq-glass-fill" as string]: Number((0.84 + t * 0.14).toFixed(3)),
   }
 }
 
@@ -230,7 +176,7 @@ function Button({
   variant = "default",
   size = "default",
   glass = false,
-  surface = "content",
+  surface: surfaceProp,
   disableMotion = false,
   glassProps,
   disabled,
@@ -241,9 +187,13 @@ function Button({
   const isMobile = useIsMobile()
   const { tint } = useLiquidGlass()
   const prefersReducedMotion = useReducedMotion()
+  const onGlass = useOverGlass()
+  const surface = surfaceProp ?? (onGlass ? "over-glass" : "content")
 
   const resolvedVariant = variant ?? "default"
-  const useGlass = Boolean(glass && resolvedVariant !== "link")
+  const useGlass = Boolean(
+    glass && resolvedVariant !== "link" && surface !== "over-glass"
+  )
   const shouldAnimate =
     !disableMotion &&
     !prefersReducedMotion &&
@@ -260,62 +210,55 @@ function Button({
 
   if (useGlass) {
     const tone = getGlassTone(resolvedVariant)
-    const isIconSize =
-      size === "icon" ||
-      size === "icon-xs" ||
-      size === "icon-sm" ||
-      size === "icon-lg"
-    const optics = {
-      ...getGlassOptics(tone, size, isMobile, tint),
-      ...glassProps,
-    }
 
     return (
-      <MotionLiquiGlass
-        radius={999}
-        {...optics}
+      <MotionButtonPrimitive
+        data-slot="button"
+        data-variant={resolvedVariant}
+        data-glass=""
+        data-size={size ?? "default"}
+        data-surface={surface}
+        disabled={disabled}
+        style={style}
+        className={cn(
+          // The glass layer replaces the variant's own fills, borders and
+          // shadows (incl. `md:` / `dark:` ones), so only base + size classes apply.
+          buttonVariants({ variant: null, size }),
+          // `isolate` keeps the -z-10 glass layer inside the button; the glass
+          // layer clips itself, so the drop shadow may overflow the capsule
+          "isolate overflow-visible rounded-full border-0",
+          // Hover / press wash between the glass layer and the label
+          "after:pointer-events-none after:absolute after:inset-0 after:-z-5 after:rounded-[inherit] after:transition-colors after:duration-200",
+          tone === "clear"
+            ? "text-(--lq-text) hover:after:bg-white/14 active:after:bg-black/6 dark:text-white dark:hover:after:bg-white/10 dark:active:after:bg-white/16"
+            : "text-white hover:after:bg-white/10 active:after:bg-black/12",
+          resolvedVariant === "destructive" &&
+            "text-(--apple-red) focus-visible:ring-(--apple-red)/40 dark:text-(--apple-red)",
+          // Opacity on the host would make it a Backdrop Root and blank the
+          // glass, so disabled dims the layer and the label instead
+          "disabled:opacity-100 disabled:*:opacity-45",
+          tone === "clear"
+            ? "disabled:text-(--lq-text-dim)"
+            : "disabled:text-white/60",
+          className
+        )}
         whileHover={shouldAnimate && !isMobile ? { scale: 1.02 } : undefined}
         whileTap={shouldAnimate ? { scale: tapScale } : undefined}
         transition={pressTransition}
-        className={cn(
-          "inline-flex shrink-0 align-middle",
-          disabled && "pointer-events-none opacity-45",
-          className
-        )}
-        contentClassName="flex size-full items-center justify-center"
-        style={{
-          ...getGlassTintStyle(tone, tint),
-          ["--lq-shadow" as string]:
-            tone === "clear"
-              ? "0 8px 20px -4px rgba(10, 15, 40, 0.14), 0 2px 6px rgba(10, 15, 40, 0.08)"
-              : "0 8px 20px -4px rgba(0, 136, 255, 0.28), 0 2px 6px rgba(0, 0, 0, 0.1)",
-          ...style,
-        }}
+        {...props}
       >
-        <ButtonPrimitive
-          data-slot="button"
-          data-variant={resolvedVariant}
-          data-glass=""
-          data-size={size ?? "default"}
-          data-surface={surface}
-          disabled={disabled}
-          className={cn(
-            // The glass material replaces the variant's own fills, borders and
-            // shadows (incl. `md:` / `dark:` ones), so only base + size classes apply.
-            buttonVariants({ variant: null, size }),
-            !isIconSize && "w-full",
-            "rounded-full border-0",
-            tone === "clear"
-              ? "text-(--lq-text) hover:bg-white/14 active:bg-black/6 dark:text-white dark:hover:bg-white/10 dark:active:bg-white/16"
-              : "text-white hover:bg-white/10 active:bg-black/12",
-            resolvedVariant === "destructive" &&
-              "text-(--apple-red) focus-visible:ring-(--apple-red)/40 dark:text-(--apple-red)"
-          )}
-          {...props}
-        >
-          {children}
-        </ButtonPrimitive>
-      </MotionLiquiGlass>
+        <LiquidSurfaceBackdrop
+          size="small"
+          {...glassProps}
+          className={
+            tone === "prominent"
+              ? "shadow-[inset_0_1px_1px_rgba(255,255,255,0.45),inset_-1px_-1px_1px_rgba(255,255,255,0.18),0_8px_20px_-4px_rgba(0,136,255,0.28),0_2px_6px_rgba(0,0,0,0.1)]"
+              : undefined
+          }
+          style={tone === "prominent" ? getProminentGlassStyle(tint) : undefined}
+        />
+        {children}
+      </MotionButtonPrimitive>
     )
   }
 

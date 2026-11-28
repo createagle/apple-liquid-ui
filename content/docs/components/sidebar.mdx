@@ -18,19 +18,19 @@ keywords:
 完全兼容 shadcn/ui 标准 24 个组合子组件（`<SidebarProvider>` / `<Sidebar>` / `<SidebarInset>` / `<SidebarHeader>` / `<SidebarContent>` / `<SidebarFooter>` / `<SidebarGroup>` / `<SidebarMenu>` / `<SidebarMenuButton>` / `<SidebarMenuSub>` / `<SidebarTrigger>` / `<SidebarRail>` 等）：
 
 - **macOS 27 悬浮液态玻璃（`variant="floating"`）**：侧边栏以 `22px` 大圆角悬空浮于主画布之上，内置 `<LiquidSurfaceBackdrop />` 真实折射壁纸边缘与柔和内高光；`variant="inset"` 与 `variant="sidebar"` 同样采用独立 `-z-10` 玻璃层，不截断内部控件光学效果。
-- **双端交互自适应**：桌面端支持 `⌘B` / `Ctrl+B` 快捷键或 `<SidebarTrigger>` 一键在展开态与 `icon` 图标折叠态（悬停自动显示 Liquid Glass Tooltip）之间切换；移动端（`< 768px`）自动接管为原生 `Sheet` 液态玻璃侧滑抽屉。
+- **双端交互自适应**：桌面端支持 `⌘B` / `Ctrl+B` 快捷键或 `<SidebarTrigger>` 一键在展开态与 `icon` 图标折叠态（仅居中显示单个主图标，悬停自动显示 Liquid Glass Tooltip）之间切换；含 `<SidebarMenuSub>` 的菜单项在 `icon` 收起态点击后会直接在右侧以 Liquid Glass `DropdownMenu` 形式级联弹出，支持任意深层嵌套；移动端（`< 768px`）自动接管为原生 `Sheet` 液态玻璃侧滑抽屉。
 - **Apple Blue 恒定激活胶囊**：选中的菜单项、子菜单与角标均使用恒定 Apple Blue 柔和胶囊高亮，确保在任意玻璃通透度下保持清晰层次。
 
 ## 响应式实时预览
 
-包含内置 `SidebarInput` 搜索过滤、角标计数器、二级子菜单与 `icon` 折叠 Tooltip；点击左上角按钮或切换 **移动端图标** 查看侧滑玻璃 Sheet：
+包含内置 `SidebarInput` 搜索过滤、角标计数器、3 级深层嵌套子菜单与 `icon` 折叠右侧 Dropdown 级联菜单；点击左上角按钮收起后点击「项目目录」图标，或切换 **移动端图标** 查看侧滑玻璃 Sheet：
 
 <ComponentPreview name="sidebar-liquid-hero" />
 
 ## 安装（Shadcn Registry）
 
 ```bash
-# 通过配置好的 @apple-liquid 命名空间安装（自动关联 sheet、input、button、tooltip、liquid-surface 等）
+# 通过配置好的 @apple-liquid 命名空间安装（自动关联 sheet、dropdown-menu、input、button、tooltip、liquid-surface 等）
 npx shadcn@latest add @apple-liquid/sidebar
 ```
 
@@ -111,6 +111,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 | `variant` | `'sidebar' \| 'floating' \| 'inset'` | `'sidebar'` | 布局形态（停靠边栏 / 悬浮玻璃面板 / 内嵌分栏） |
 | `collapsible` | `'offcanvas' \| 'icon' \| 'none'` | `'offcanvas'` | 收起模式（滑出隐藏 / 缩为图标列 / 不可折叠） |
 | `glass` | `boolean` | `true` | 是否启用 Apple 27 液态玻璃表面 |
+
+### `SidebarMenuSub`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `open` | `boolean` | `true` | 控制展开态下子菜单树是否显示；传入 `open`（而非条件卸载）可确保收起至 `icon` 模式后仍能在右侧 `DropdownMenu` 中完整弹出多级嵌套子菜单 |
 
 ### `SidebarTrigger`
 
