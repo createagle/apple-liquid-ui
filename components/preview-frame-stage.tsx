@@ -18,7 +18,10 @@ export function PreviewFrameStage({ name }: { name: DemoName }) {
         backdrop === 'aurora' && 'dark text-white'
       )}
     >
-      <div className="relative z-10 size-full overflow-y-auto overscroll-contain">
+      <div
+        data-preview-stage=""
+        className="no-scrollbar relative z-10 size-full overflow-y-auto overscroll-contain"
+      >
         <div className="flex min-h-full w-full items-center justify-center p-5">
           <Demo />
         </div>

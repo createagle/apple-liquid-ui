@@ -119,14 +119,12 @@ export function ComponentPreviewClient({
     }
   }, [isMobileViewport]);
 
-  // Inline inside the matching browser shell when host viewport matches; iframe when emulating the opposite device.
-  const isIframeMode = Boolean(
-    previewUrl &&
-      ((isMobileViewport && device === 'desktop') ||
-        (!isMobileViewport && device === 'mobile'))
-  );
+  // Always render demos inside an isolated iframe viewport whenever a static preview route exists.
+  // Inline rendering lets portaled overlays (Toast / Dialog / Sheet / Popover) escape the device shell,
+  // because their `position: fixed` resolves against the host docs page instead of the emulated device.
+  const isIframeMode = Boolean(previewUrl);
 
-  // Use scaled stage whenever rendering an iframe (cross-device emulation) OR rendering the fixed-ratio iPhone shell.
+  // Use scaled stage whenever rendering an iframe OR rendering the fixed-ratio iPhone shell.
   const usesScaledFrame = isIframeMode || device === 'mobile';
 
   const targetFrameWidth =
@@ -372,7 +370,7 @@ export function ComponentPreviewClient({
       {tab === 'preview' ? (
         <div className="bg-muted/30 bg-[radial-gradient(color-mix(in_oklab,var(--border)_85%,transparent)_1px,transparent_1px)] [background-size:16px_16px] p-4 sm:p-6">
           {device === 'desktop' && !isIframeMode ? (
-            /* PC Host + PC Mode: Responsive 16:10 MacBook Safari Browser Shell with crisp 1:1 inline preview */
+            /* Fallback (no static preview route, children only): Responsive 16:10 MacBook shell with inline preview */
             <div className="mx-auto flex aspect-[16/10] w-full max-w-[920px] flex-col overflow-hidden rounded-[16px] border border-black/15 bg-background shadow-[0_24px_60px_-16px_rgba(0,0,0,0.22),0_4px_14px_-4px_rgba(0,0,0,0.08)] dark:border-white/15 dark:shadow-[0_28px_72px_-14px_rgba(0,0,0,0.72)]">
               {/* macOS Safari Browser Toolbar */}
               <div className="flex h-10 shrink-0 items-center justify-between gap-4 rounded-t-[15px] border-b border-border/70 bg-muted/65 px-4">
@@ -406,7 +404,7 @@ export function ComponentPreviewClient({
               </div>
             </div>
           ) : (
-            /* Scaled Stage: Mobile Host + PC Mode (16:10 MacBook iframe) OR Any Host + Mobile Mode (9:19.5 iPhone shell) */
+            /* Scaled Stage: 16:10 MacBook iframe (1024px macOS viewport) OR 9:19.5 iPhone shell (390px iOS viewport) */
             <div
               ref={stageRef}
               className="flex w-full justify-center"
@@ -465,6 +463,7 @@ export function ComponentPreviewClient({
                       key={`desktop-${refreshKey}`}
                       src={previewUrl ?? undefined}
                       title={`${title ?? name} (MacBook)`}
+                      loading="lazy"
                       onLoad={syncSettingsToIframe}
                       style={{
                         width: MACBOOK_FRAME_WIDTH,
@@ -534,6 +533,7 @@ export function ComponentPreviewClient({
                             key={`mobile-${refreshKey}`}
                             src={previewUrl ?? undefined}
                             title={`${title ?? name} (iPhone)`}
+                            loading="lazy"
                             onLoad={syncSettingsToIframe}
                             style={{
                               width: IPHONE_VIEWPORT_WIDTH,

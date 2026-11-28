@@ -124,6 +124,25 @@ import {
   ComboboxLiquidHeroDemo,
   ComboboxMultipleDemo,
 } from '@/components/demos/combobox-demos';
+import {
+  MenubarCompactDemo,
+  MenubarLiquidHeroDemo,
+} from '@/components/demos/menubar-demos';
+import {
+  NavigationMenuCompactDemo,
+  NavigationMenuLiquidHeroDemo,
+} from '@/components/demos/navigation-menu-demos';
+import {
+  CalendarDatePickerDemo,
+  CalendarDropdownDemo,
+  CalendarLiquidHeroDemo,
+  CalendarRangeDemo,
+} from '@/components/demos/calendar-demos';
+import {
+  SidebarInsetDemo,
+  SidebarLiquidHeroDemo,
+  SidebarRightDemo,
+} from '@/components/demos/sidebar-demos';
 
 export interface DemoRegistryEntry {
   title: string;
@@ -759,6 +778,98 @@ export const DEMO_REGISTRY = {
     exportName: 'ComboboxGroupedDemo',
     mobileHeight: 440,
     tabletHeight: 380,
+  },
+  'menubar-liquid-hero': {
+    title: '液态玻璃菜单栏（macOS 27 ↔ iOS 27）',
+    component: MenubarLiquidHeroDemo,
+    filePath: 'components/demos/menubar-demos.tsx',
+    exportName: 'MenubarLiquidHeroDemo',
+    installCommand: 'npx shadcn@latest add @apple-liquid/menubar',
+    mobileHeight: 540,
+    tabletHeight: 420,
+  },
+  'menubar-compact': {
+    title: '液态玻璃 vs 实体对比',
+    component: MenubarCompactDemo,
+    filePath: 'components/demos/menubar-demos.tsx',
+    exportName: 'MenubarCompactDemo',
+    mobileHeight: 480,
+    tabletHeight: 380,
+  },
+  'navigation-menu-liquid-hero': {
+    title: '悬浮液态玻璃导航栏',
+    component: NavigationMenuLiquidHeroDemo,
+    filePath: 'components/demos/navigation-menu-demos.tsx',
+    exportName: 'NavigationMenuLiquidHeroDemo',
+    installCommand: 'npx shadcn@latest add @apple-liquid/navigation-menu',
+    mobileHeight: 540,
+    tabletHeight: 440,
+  },
+  'navigation-menu-compact': {
+    title: '激活态高亮与实体样式对比',
+    component: NavigationMenuCompactDemo,
+    filePath: 'components/demos/navigation-menu-demos.tsx',
+    exportName: 'NavigationMenuCompactDemo',
+    mobileHeight: 460,
+    tabletHeight: 380,
+  },
+  'calendar-liquid-hero': {
+    title: '液态玻璃单选日历',
+    component: CalendarLiquidHeroDemo,
+    filePath: 'components/demos/calendar-demos.tsx',
+    exportName: 'CalendarLiquidHeroDemo',
+    installCommand: 'npx shadcn@latest add @apple-liquid/calendar',
+    mobileHeight: 460,
+    tabletHeight: 400,
+  },
+  'calendar-range': {
+    title: '双月行程区间选择（Range）',
+    component: CalendarRangeDemo,
+    filePath: 'components/demos/calendar-demos.tsx',
+    exportName: 'CalendarRangeDemo',
+    mobileHeight: 480,
+    tabletHeight: 420,
+  },
+  'calendar-dropdown': {
+    title: '年月下拉快速跳转（Dropdown）',
+    component: CalendarDropdownDemo,
+    filePath: 'components/demos/calendar-demos.tsx',
+    exportName: 'CalendarDropdownDemo',
+    mobileHeight: 440,
+    tabletHeight: 380,
+  },
+  'calendar-date-picker': {
+    title: '响应式 Date Picker（Popover ↔ Drawer）',
+    component: CalendarDatePickerDemo,
+    filePath: 'components/demos/calendar-demos.tsx',
+    exportName: 'CalendarDatePickerDemo',
+    mobileHeight: 540,
+    tabletHeight: 440,
+  },
+  'sidebar-liquid-hero': {
+    title: 'macOS 27 悬浮液态玻璃侧边栏（Floating）',
+    component: SidebarLiquidHeroDemo,
+    filePath: 'components/demos/sidebar-demos.tsx',
+    exportName: 'SidebarLiquidHeroDemo',
+    installCommand: 'npx shadcn@latest add @apple-liquid/sidebar',
+    mobileHeight: 520,
+    tabletHeight: 480,
+  },
+  'sidebar-inset': {
+    title: '内嵌分栏工作台（Inset）',
+    component: SidebarInsetDemo,
+    filePath: 'components/demos/sidebar-demos.tsx',
+    exportName: 'SidebarInsetDemo',
+    mobileHeight: 480,
+    tabletHeight: 440,
+  },
+  'sidebar-right': {
+    title: '右侧属性检查器边栏（Side Right）',
+    component: SidebarRightDemo,
+    filePath: 'components/demos/sidebar-demos.tsx',
+    exportName: 'SidebarRightDemo',
+    mobileHeight: 480,
+    tabletHeight: 440,
   },
 } as const satisfies Record<string, DemoRegistryEntry>;
 

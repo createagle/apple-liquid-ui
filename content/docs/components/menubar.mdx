@@ -1,0 +1,107 @@
+---
+title: Menubar 菜单栏
+description: 响应式 Apple Liquid Glass 菜单栏：桌面端呈现 macOS 27 全圆角悬浮玻璃条与无缝悬停切换菜单，移动端自动切换为 iOS 27 底部液态玻璃 Drawer 与分组列表。
+keywords:
+  - Menubar
+  - 菜单栏
+  - 顶部菜单
+  - macOS 菜单栏
+  - 子菜单
+  - 快捷键
+  - 底部抽屉
+  - macOS 27
+  - iOS 27
+  - 响应式组件
+  - Liquid Glass
+---
+
+基于 `@base-ui/react/menubar` 与已改造的 `DropdownMenu` 构建，完全兼容 shadcn/ui 标准 JSX API（`<Menubar>` / `<MenubarMenu>` / `<MenubarTrigger>` / `<MenubarContent>` / `<MenubarGroup>` / `<MenubarItem>` / `<MenubarCheckboxItem>` / `<MenubarRadioGroup>` / `<MenubarSub>`）：
+
+- **桌面端（`>= 768px` · macOS 27）**：菜单栏容器采用全圆角悬浮液态玻璃胶囊（内置 `<LiquidSurfaceBackdrop />`），打开后的触发器高亮为恒定 Apple Blue 胶囊并支持相邻菜单悬停无缝切换；弹出的菜单沿用 `14px` 圆角玻璃面板与右侧勾选（`✓`）。
+- **移动端（`< 768px` · iOS 27）**：点击菜单项自动弹出底部 `32px` 大圆角 iOS 27 液态玻璃 Drawer，`MenubarGroup` 与 `MenubarLabel` 自动按 Inset Grouped List 规范在圆角卡片外部上方展示分组标题，子菜单支持平滑切入与顶部 `‹ 返回` 导航。
+
+## 响应式实时预览
+
+包含快捷键、嵌套子菜单、单选分组、多选开关与禁用态；在桌面端展开任意一项后可直接左右悬停切换菜单，切换右上角 **移动端图标** 可体验底部 Drawer 分组列表：
+
+<ComponentPreview name="menubar-liquid-hero" />
+
+## 安装（Shadcn Registry）
+
+```bash
+# 通过配置好的 @apple-liquid 命名空间安装（自动关联 dropdown-menu、liquid-surface 与 liquid-glass）
+npx shadcn@latest add @apple-liquid/menubar
+```
+
+## 液态玻璃 vs 实体对比
+
+默认开启 `glass` 悬浮液态玻璃材质；需要嵌入普通实体工具栏时，可传入 `glass={false}`：
+
+<ComponentPreview name="menubar-compact" />
+
+## 使用方式
+
+```tsx
+import {
+  Menubar,
+  MenubarContent,
+  MenubarGroup,
+  MenubarItem,
+  MenubarLabel,
+  MenubarMenu,
+  MenubarSeparator,
+  MenubarShortcut,
+  MenubarTrigger,
+} from '@/components/ui/menubar';
+
+export function Example() {
+  return (
+    <Menubar>
+      <MenubarMenu>
+        <MenubarTrigger>文件</MenubarTrigger>
+        <MenubarContent title="文件">
+          <MenubarGroup>
+            <MenubarLabel>文稿</MenubarLabel>
+            <MenubarItem>
+              新建文稿
+              <MenubarShortcut>⌘N</MenubarShortcut>
+            </MenubarItem>
+            <MenubarItem>
+              存储
+              <MenubarShortcut>⌘S</MenubarShortcut>
+            </MenubarItem>
+          </MenubarGroup>
+          <MenubarSeparator />
+          <MenubarItem>打印…</MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
+    </Menubar>
+  );
+}
+```
+
+## Props API
+
+### `Menubar`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `glass` | `boolean` | `true` | 是否启用 Apple 27 悬浮液态玻璃菜单栏材质 |
+| `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | 菜单栏排列方向 |
+| `loopFocus` | `boolean` | `true` | 键盘方向键到达首尾时是否循环焦点 |
+| `disabled` | `boolean` | `false` | 禁用整个菜单栏交互 |
+
+### `MenubarTrigger`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `glass` | `boolean` | `false` | 当外层 `<Menubar glass={false}>` 关闭整条玻璃时，可让单个触发器独立呈现悬浮液态玻璃胶囊（外层已开启 `glass` 时自动忽略，避免嵌套 Backdrop Root） |
+
+### `MenubarContent`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `title` | `React.ReactNode` | — | 移动端底部 Drawer 顶部居中的菜单标题 |
+| `align` | `'start' \| 'center' \| 'end'` | `'start'` | 仅桌面端：相对触发器的对齐方式 |
+| `sideOffset` | `number` | `8` | 仅桌面端：菜单与菜单栏之间的间距（px） |
+| `alignOffset` | `number` | `-4` | 仅桌面端：沿对齐轴线的偏移量（px） |

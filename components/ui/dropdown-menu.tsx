@@ -58,6 +58,13 @@ interface MobileRadioGroupContextValue {
 const MobileRadioGroupContext =
   React.createContext<MobileRadioGroupContextValue | null>(null)
 
+const MOBILE_GROUP_NAMES = new Set(["DropdownMenuGroup", "MenubarGroup"])
+const MOBILE_LABEL_NAMES = new Set(["DropdownMenuLabel", "MenubarLabel"])
+const MOBILE_SEPARATOR_NAMES = new Set([
+  "DropdownMenuSeparator",
+  "MenubarSeparator",
+])
+
 function extractPlainTitle(node: React.ReactNode): string {
   if (typeof node === "string" || typeof node === "number") {
     return String(node)
@@ -113,13 +120,13 @@ function renderMobileGroupedNodes(children: React.ReactNode): React.ReactNode[] 
       ? ((child.type as { displayName?: string } | null)?.displayName ?? "")
       : ""
 
-    if (displayName === "DropdownMenuGroup") {
+    if (MOBILE_GROUP_NAMES.has(displayName)) {
       flush()
       result.push(child)
-    } else if (displayName === "DropdownMenuLabel") {
+    } else if (MOBILE_LABEL_NAMES.has(displayName)) {
       flush()
       result.push(child)
-    } else if (displayName === "DropdownMenuSeparator") {
+    } else if (MOBILE_SEPARATOR_NAMES.has(displayName)) {
       flush()
     } else {
       buffer.push(child)
@@ -381,11 +388,10 @@ function DropdownMenuGroup({
     const itemNodes: React.ReactNode[] = []
 
     for (const child of flattenChildren(children)) {
-      if (
-        React.isValidElement(child) &&
-        (child.type as { displayName?: string } | null)?.displayName ===
-          "DropdownMenuLabel"
-      ) {
+      const displayName = React.isValidElement(child)
+        ? ((child.type as { displayName?: string } | null)?.displayName ?? "")
+        : ""
+      if (MOBILE_LABEL_NAMES.has(displayName)) {
         labelNodes.push(child)
       } else {
         itemNodes.push(child)

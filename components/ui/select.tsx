@@ -528,7 +528,7 @@ function SelectContent({
           data-align-trigger={alignItemWithTrigger}
           className={cn(
             // Apple macOS 27 Spotless Liquid Glass Floating Menu (r=14px, true optical bezel refraction)
-            "relative isolate z-50 max-h-(--available-height) min-w-[max(var(--anchor-width),11rem)] origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-[14px] bg-transparent p-1.5 text-neutral-900",
+            "relative isolate z-50 flex max-h-(--available-height) min-w-[max(var(--anchor-width),11rem)] origin-(--transform-origin) flex-col overflow-hidden rounded-[14px] bg-transparent text-neutral-900",
             "shadow-[0_18px_44px_-10px_rgba(0,0,0,0.18),0_4px_12px_-2px_rgba(0,0,0,0.08),0_0_0_0.5px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.92)]",
             "dark:text-white dark:shadow-[0_20px_48px_-10px_rgba(0,0,0,0.58),0_0_0_0.5px_rgba(255,255,255,0.16),inset_0_1px_0_rgba(255,255,255,0.2)]",
             "transition-[transform,opacity] duration-180 ease-[cubic-bezier(0.22,1,0.36,1)]",
@@ -539,7 +539,7 @@ function SelectContent({
         >
           <LiquidSurfaceBackdrop radius={14} bezel={14} tone="menu" />
           <SelectScrollUpButton />
-          <SelectPrimitive.List className="flex flex-col gap-0.5">
+          <SelectPrimitive.List className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-x-hidden overflow-y-auto p-1.5">
             {children}
           </SelectPrimitive.List>
           <SelectScrollDownButton />

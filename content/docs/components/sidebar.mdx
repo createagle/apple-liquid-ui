@@ -1,0 +1,117 @@
+---
+title: Sidebar 侧边栏
+description: 响应式 Apple Liquid Glass 侧边栏系统：桌面端呈现 macOS 27 悬浮圆角玻璃边栏与图标折叠模式，移动端自动切换为 iOS 27 侧滑液态玻璃 Sheet。
+keywords:
+  - Sidebar
+  - 侧边栏
+  - 导航边栏
+  - 悬浮边栏
+  - Floating Sidebar
+  - 折叠边栏
+  - 快捷键 ⌘B
+  - macOS 27
+  - iOS 27
+  - 响应式组件
+  - Liquid Glass
+---
+
+完全兼容 shadcn/ui 标准 24 个组合子组件（`<SidebarProvider>` / `<Sidebar>` / `<SidebarInset>` / `<SidebarHeader>` / `<SidebarContent>` / `<SidebarFooter>` / `<SidebarGroup>` / `<SidebarMenu>` / `<SidebarMenuButton>` / `<SidebarMenuSub>` / `<SidebarTrigger>` / `<SidebarRail>` 等）：
+
+- **macOS 27 悬浮液态玻璃（`variant="floating"`）**：侧边栏以 `22px` 大圆角悬空浮于主画布之上，内置 `<LiquidSurfaceBackdrop />` 真实折射壁纸边缘与柔和内高光；`variant="inset"` 与 `variant="sidebar"` 同样采用独立 `-z-10` 玻璃层，不截断内部控件光学效果。
+- **双端交互自适应**：桌面端支持 `⌘B` / `Ctrl+B` 快捷键或 `<SidebarTrigger>` 一键在展开态与 `icon` 图标折叠态（悬停自动显示 Liquid Glass Tooltip）之间切换；移动端（`< 768px`）自动接管为原生 `Sheet` 液态玻璃侧滑抽屉。
+- **Apple Blue 恒定激活胶囊**：选中的菜单项、子菜单与角标均使用恒定 Apple Blue 柔和胶囊高亮，确保在任意玻璃通透度下保持清晰层次。
+
+## 响应式实时预览
+
+包含内置 `SidebarInput` 搜索过滤、角标计数器、二级子菜单与 `icon` 折叠 Tooltip；点击左上角按钮或切换 **移动端图标** 查看侧滑玻璃 Sheet：
+
+<ComponentPreview name="sidebar-liquid-hero" />
+
+## 安装（Shadcn Registry）
+
+```bash
+# 通过配置好的 @apple-liquid 命名空间安装（自动关联 sheet、input、button、tooltip、liquid-surface 等）
+npx shadcn@latest add @apple-liquid/sidebar
+```
+
+## 内嵌分栏工作台（Inset）
+
+适合邮件、笔记等双栏主从视图应用，主内容区自动带圆角卡片抬升效果：
+
+<ComponentPreview name="sidebar-inset" />
+
+## 右侧属性检查器（Side Right）
+
+设置 `side="right"` 即可作为设计工具右侧检查器栏使用；由于玻璃材质位于独立 `-z-10` 图层，内部嵌入 `Switch` 光学水滴时仍能正常采样折射：
+
+<ComponentPreview name="sidebar-right" />
+
+## 使用方式
+
+```tsx
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/ui/sidebar';
+
+export function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <SidebarProvider>
+      <Sidebar variant="floating" collapsible="icon">
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>导航</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton isActive tooltip="首页">
+                    <span>首页</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+      <SidebarInset>
+        <header className="flex h-12 items-center px-4">
+          <SidebarTrigger />
+        </header>
+        {children}
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}
+```
+
+## Props API
+
+### `SidebarProvider`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `defaultOpen` | `boolean` | `true` | 非受控模式下桌面端初始展开状态 |
+| `open` | `boolean` | — | 受控展开状态 |
+| `onOpenChange` | `(open: boolean) => void` | — | 展开状态变更回调（同步写入 Cookie） |
+
+### `Sidebar`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `side` | `'left' \| 'right'` | `'left'` | 侧边栏停靠方向 |
+| `variant` | `'sidebar' \| 'floating' \| 'inset'` | `'sidebar'` | 布局形态（停靠边栏 / 悬浮玻璃面板 / 内嵌分栏） |
+| `collapsible` | `'offcanvas' \| 'icon' \| 'none'` | `'offcanvas'` | 收起模式（滑出隐藏 / 缩为图标列 / 不可折叠） |
+| `glass` | `boolean` | `true` | 是否启用 Apple 27 液态玻璃表面 |
+
+### `SidebarTrigger`
+
+继承 `Button` 的全部属性，在非玻璃顶栏（如 `SidebarInset` 头部）上可直接传入 `<SidebarTrigger glass />` 开启液态玻璃材质。

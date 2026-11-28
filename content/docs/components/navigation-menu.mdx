@@ -1,0 +1,106 @@
+---
+title: NavigationMenu 导航菜单
+description: 响应式 Apple Liquid Glass 悬浮胶囊导航栏：桌面端呈自适应宽高液态玻璃浮层与方向滑入过渡，移动端自动切换为 iOS 27 底部液态玻璃 Drawer。
+keywords:
+  - NavigationMenu
+  - 导航菜单
+  - 顶部导航栏
+  - 胶囊导航
+  - Mega Menu
+  - 底部抽屉
+  - Drawer
+  - 悬浮视口
+  - macOS 27
+  - iOS 27
+  - 响应式组件
+  - Liquid Glass
+---
+
+基于 `@base-ui/react/navigation-menu` 与 `Drawer` 构建，完全兼容 shadcn/ui 标准 JSX API（`<NavigationMenu>` / `<NavigationMenuList>` / `<NavigationMenuItem>` / `<NavigationMenuTrigger>` / `<NavigationMenuContent>` / `<NavigationMenuLink>`）：
+
+- **桌面端（`>= 768px` · macOS 27）**：`<NavigationMenuList>` 渲染全圆角 `<LiquidSurfaceBackdrop />` 悬浮玻璃条；在不同菜单项间切换时，`<NavigationMenuPositioner>` 内的 `22px` 圆角玻璃浮层会按内容尺寸平滑过渡宽高，并结合左右激活方向执行滑入/滑出动画。
+- **移动端（`< 768px` · iOS 27）**：点击 `<NavigationMenuTrigger>` 自动弹出顶部 `32px` 大圆角 iOS 27 底部液态玻璃 Drawer，顶部自动居中展示触发器标题、支持手势下滑关闭；点击内部卡片链接后自动收起 Drawer，直达 `<NavigationMenuLink>` 则保持轻量胶囊点击体验。
+
+## 响应式实时预览
+
+桌面端悬停或点击菜单项体验宽高平滑形态过渡与光学折射浮层；切换右上角 **移动端图标** 点击「设计规范」或「组件库」，即可体验 iOS 27 底部液态玻璃 Drawer：
+
+<ComponentPreview name="navigation-menu-liquid-hero" />
+
+## 安装（Shadcn Registry）
+
+```bash
+# 通过配置好的 @apple-liquid 命名空间安装（自动关联 drawer、liquid-surface、use-mobile 与 liquid-glass）
+npx shadcn@latest add @apple-liquid/navigation-menu
+```
+
+## 激活态与实体样式对比
+
+支持通过 `active` 标记当前页面（恒定 Apple Blue 柔和胶囊，不随通透度变透），或传入 `glass={false}` 切换为实体导航栏：
+
+<ComponentPreview name="navigation-menu-compact" />
+
+## 使用方式
+
+```tsx
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from '@/components/ui/navigation-menu';
+
+export function Example() {
+  return (
+    <NavigationMenu>
+      <NavigationMenuList>
+        <NavigationMenuItem>
+          <NavigationMenuTrigger>设计规范</NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <div className="grid w-80 gap-2">
+              <NavigationMenuLink href="/docs">
+                <div className="font-semibold">快速开始</div>
+                <p className="text-xs text-muted-foreground">
+                  了解 Apple Liquid Glass 材质与组件安装流程。
+                </p>
+              </NavigationMenuLink>
+            </div>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+        <NavigationMenuItem>
+          <NavigationMenuLink href="/docs/components" className={navigationMenuTriggerStyle()}>
+            全部组件
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+      </NavigationMenuList>
+    </NavigationMenu>
+  );
+}
+```
+
+## Props API
+
+### `NavigationMenu`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `glass` | `boolean` | `true` | 是否为导航胶囊条与下拉浮层启用 Apple 27 液态玻璃材质 |
+| `align` | `'start' \| 'center' \| 'end'` | `'start'` | 桌面端浮层相对于触发器的对齐方式（移动端自动居中） |
+| `delay` | `number` | `50` | 鼠标悬停触发展开的延迟时间（ms） |
+| `closeDelay` | `number` | `50` | 鼠标移出后延迟收起的时间（ms） |
+
+### `NavigationMenuTrigger`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `glass` | `boolean` | `false` | 当外层 `<NavigationMenu glass={false}>` 关闭整条玻璃时，可让单个触发器独立呈现悬浮液态玻璃胶囊（外层已开启 `glass` 时自动忽略，避免嵌套 Backdrop Root） |
+
+### `NavigationMenuLink`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `active` | `boolean` | `false` | 标记当前激活页面，呈现恒定 Apple Blue 胶囊高亮 |
+| `closeOnClick` | `boolean` | `false` | 点击链接后是否自动关闭弹出的导航浮层 |

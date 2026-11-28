@@ -1,0 +1,87 @@
+---
+title: Calendar 日历
+description: 响应式 Apple Liquid Glass 日历与日期选择器：支持全圆 Apple Blue 选中胶囊、连续区间柔和底带、年月下拉跳转以及与 Popover / Drawer 的无缝组合。
+keywords:
+  - Calendar
+  - 日历
+  - 日期选择器
+  - DatePicker
+  - Range Calendar
+  - 区间选择
+  - react-day-picker
+  - macOS 27
+  - iOS 27
+  - 响应式组件
+  - Liquid Glass
+---
+
+基于 `react-day-picker` v10 构建，严格对齐 Apple macOS 27 与 iOS 27 日历控件交互与视觉规范：
+
+- **独立液态玻璃容器**：默认开启 `glass` 与 `refract`（`24px` 圆角光学折射背景），并在嵌入 `Popover`、`Drawer` 或 `Card` 内部时自动退让背景与阴影，避免产生嵌套双层毛玻璃。
+- **双端触控格适配**：移动端（`< 768px`）自动放大至 `40px` 触控圆形单元格，桌面端（`>= 768px`）保持 `32px` 精密网格。
+- **恒定高对比选中态**：单选、区间起止日期与今日徽标均采用恒定 Apple Blue 胶囊与柔和立体投影，不受全局 `--liquid-glass-tint` 变透影响；连续区间自动连接柔和半透明底带。
+
+## 响应式实时预览
+
+支持单选、左右翻月与中文月份星期展示；切换右上角 **移动端图标** 可体验 iOS 27 放大触控网格，或在左侧边栏调整通透度观察底层壁纸折射：
+
+<ComponentPreview name="calendar-liquid-hero" />
+
+## 安装（Shadcn Registry）
+
+```bash
+# 通过配置好的 @apple-liquid 命名空间安装（自动关联 button、select、liquid-surface 与 liquid-glass）
+npx shadcn@latest add @apple-liquid/calendar
+```
+
+## 区间选择（Range）
+
+桌面端并排显示双月日历（`numberOfMonths={2}`），移动端自动折叠为单月；首尾日期呈现全圆 Apple Blue 胶囊，中间日期以连续柔和蓝色底带衔接：
+
+<ComponentPreview name="calendar-range" />
+
+## 年月下拉跳转（Dropdown）
+
+设置 `captionLayout="dropdown"` 后，月份与年份选择器会直接渲染为组件库内置的液态玻璃 `Select` 组件：桌面端展开 macOS 27 悬浮液态玻璃下拉菜单，移动端自动切换为 iOS 27 底部 Drawer 分组列表，适合生日或跨年度日期快速定位：
+
+<ComponentPreview name="calendar-dropdown" />
+
+## 组合 Date Picker（Popover ↔ Drawer）
+
+与 `Popover` 组合即可零配置实现响应式日期选择器：桌面端在触发按钮旁弹出 `20px` 圆角悬浮玻璃日历，移动端自动切换为底部 `32px` 大圆角手势 Drawer：
+
+<ComponentPreview name="calendar-date-picker" />
+
+## 使用方式
+
+```tsx
+import * as React from 'react';
+import { zhCN } from 'react-day-picker/locale';
+import { Calendar } from '@/components/ui/calendar';
+
+export function Example() {
+  const [date, setDate] = React.useState<Date | undefined>(new Date());
+
+  return (
+    <Calendar
+      mode="single"
+      locale={zhCN}
+      selected={date}
+      onSelect={setDate}
+    />
+  );
+}
+```
+
+## Props API
+
+### `Calendar`
+
+| 属性 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `mode` | `'single' \| 'multiple' \| 'range'` | — | 日期选择模式（继承自 `react-day-picker`） |
+| `glass` | `boolean` | `true` | 独立渲染时是否启用 Apple 27 液态玻璃表面 |
+| `refract` | `boolean` | `true` | 是否在独立玻璃容器边缘启用 SDF 光学折射 |
+| `captionLayout` | `'label' \| 'dropdown' \| 'dropdown-months' \| 'dropdown-years'` | `'label'` | 顶部年月标题样式（支持下拉快速跳转） |
+| `buttonVariant` | `ButtonProps['variant']` | `'ghost'` | 左右翻月导航按钮语义变体 |
+| `showOutsideDays` | `boolean` | `true` | 是否显示相邻月份的补齐日期 |

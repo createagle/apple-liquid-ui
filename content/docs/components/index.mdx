@@ -51,6 +51,15 @@ keywords:
   - 命令面板
   - Combobox
   - 可搜索选择器
+  - Menubar
+  - 菜单栏
+  - NavigationMenu
+  - 导航菜单
+  - Calendar
+  - 日历
+  - DatePicker
+  - Sidebar
+  - 侧边栏
   - 液态玻璃组件
   - 响应式
 ---
@@ -74,6 +83,11 @@ keywords:
     title="Button 按钮"
     description="按设备尺寸自动切换 iOS 27 / macOS 27 形态的响应式按钮，保持 shadcn 6 种标准语义变体并支持正交 glass 液态玻璃材质。"
     href="/docs/components/button"
+  />
+  <Card
+    title="Calendar 日历"
+    description="支持全圆 Apple Blue 选中胶囊、连续区间柔和底带与年月下拉跳转的液态玻璃日历，可无缝嵌入 Popover 与移动端 Drawer。"
+    href="/docs/components/calendar"
   />
   <Card
     title="Card 卡片"
@@ -126,6 +140,16 @@ keywords:
     href="/docs/components/input"
   />
   <Card
+    title="Menubar 菜单栏"
+    description="桌面端呈现 macOS 27 全圆角悬浮玻璃菜单栏与无缝悬停切换，移动端自动切换为 iOS 27 底部液态玻璃 Drawer 与分组列表。"
+    href="/docs/components/menubar"
+  />
+  <Card
+    title="NavigationMenu 导航菜单"
+    description="桌面端呈现悬浮胶囊导航栏与动态自适应玻璃浮层，移动端自动切换为 iOS 27 底部液态玻璃 Drawer。"
+    href="/docs/components/navigation-menu"
+  />
+  <Card
     title="Popover 气泡卡片"
     description="桌面端呈现 macOS 27 20px 圆角液态玻璃悬浮面板，移动端自动切换为可下滑关闭的 iOS 27 底部液态玻璃 Sheet。"
     href="/docs/components/popover"
@@ -144,6 +168,11 @@ keywords:
     title="Sheet 侧边抽屉"
     description="桌面端呈现 macOS 27 悬浮 26px 圆角液态玻璃检查器面板，移动端自动切换为 iOS 27 贴边大圆角抽屉。"
     href="/docs/components/sheet"
+  />
+  <Card
+    title="Sidebar 侧边栏"
+    description="macOS 27 悬浮 22px 圆角液态玻璃侧边栏与图标折叠模式，移动端自动切换为玻璃侧滑 Sheet，支持 ⌘B 快捷键。"
+    href="/docs/components/sidebar"
   />
   <Card
     title="Slider 滑块"
@@ -212,3 +241,7 @@ keywords:
 - `public/r/hover-card.json`：Liquid Glass HoverCard（自动关联 `@apple-liquid/liquid-surface` 与 `@apple-liquid/liquid-glass`）
 - `public/r/command.json`：Spotlight 风格 Liquid Glass Command（自动关联 `@apple-liquid/dialog`、`@apple-liquid/liquid-surface` 与 `@apple-liquid/liquid-glass`）
 - `public/r/combobox.json`：响应式 Liquid Glass Combobox（自动关联 `@apple-liquid/button`、`@apple-liquid/input-group`、`@apple-liquid/liquid-surface` 与 `@apple-liquid/liquid-glass`）
+- `public/r/menubar.json`：响应式 Liquid Glass Menubar（自动关联 `@apple-liquid/dropdown-menu`、`@apple-liquid/liquid-surface` 与 `@apple-liquid/liquid-glass`）
+- `public/r/navigation-menu.json`：响应式 Liquid Glass NavigationMenu（自动关联 `@apple-liquid/drawer`、`@apple-liquid/liquid-surface`、`hooks/use-mobile.ts` 与 `@apple-liquid/liquid-glass`）
+- `public/r/calendar.json`：响应式 Liquid Glass Calendar（自动关联 `@apple-liquid/button`、`@apple-liquid/select`、`@apple-liquid/liquid-surface` 与 `@apple-liquid/liquid-glass`）
+- `public/r/sidebar.json`：响应式 Liquid Glass Sidebar（自动关联 `@apple-liquid/sheet`、`@apple-liquid/input`、`@apple-liquid/button`、`@apple-liquid/tooltip`、`@apple-liquid/liquid-surface` 等）

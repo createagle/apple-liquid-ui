@@ -403,7 +403,10 @@
         "react-day-picker"
       ],
       "registryDependencies": [
-        "@apple-liquid/button"
+        "@apple-liquid/button",
+        "@apple-liquid/liquid-glass",
+        "@apple-liquid/liquid-surface",
+        "@apple-liquid/select"
       ]
     },
     {
@@ -940,11 +943,12 @@
       ],
       "dependencies": [
         "@base-ui/react",
-        "cn",
-        "lucide-react"
+        "cn"
       ],
       "registryDependencies": [
-        "@apple-liquid/dropdown-menu"
+        "@apple-liquid/dropdown-menu",
+        "@apple-liquid/liquid-glass",
+        "@apple-liquid/liquid-surface"
       ]
     },
     {
@@ -1007,6 +1011,10 @@
         {
           "path": "components/ui/navigation-menu.tsx",
           "type": "registry:ui"
+        },
+        {
+          "path": "hooks/use-mobile.ts",
+          "type": "registry:hook"
         }
       ],
       "dependencies": [
@@ -1014,6 +1022,11 @@
         "class-variance-authority",
         "cn",
         "lucide-react"
+      ],
+      "registryDependencies": [
+        "@apple-liquid/drawer",
+        "@apple-liquid/liquid-glass",
+        "@apple-liquid/liquid-surface"
       ]
     },
     {
@@ -1237,6 +1250,8 @@
       "registryDependencies": [
         "@apple-liquid/button",
         "@apple-liquid/input",
+        "@apple-liquid/liquid-glass",
+        "@apple-liquid/liquid-surface",
         "@apple-liquid/separator",
         "@apple-liquid/sheet",
         "@apple-liquid/skeleton",

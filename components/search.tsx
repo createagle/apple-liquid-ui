@@ -444,6 +444,9 @@ export default function DefaultSearchDialog({
     <CommandDialog
       open={open}
       onOpenChange={handleOpenChange}
+      // Capture-phase ⌘K / Ctrl+K toggle: cmdk's built-in vim bindings treat Ctrl+K as "previous item"
+      // and call preventDefault(), which makes Fumadocs' own hotkey ignore it while the dialog is open.
+      shortcut="k"
       title="搜索文档"
       description="搜索组件名称、中文关键词或文档内容"
       className="md:max-w-[640px]"

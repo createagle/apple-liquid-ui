@@ -130,14 +130,15 @@ pnpm start           # 启动静态产物预览服务 (serve out)
   - `liquid-glass`（基础样式 & Token 包） + `lib/liquid-motion.ts`
   - `components/ui/liquid-glass-provider.tsx`（`LiquidGlassProvider` + `useLiquidGlass` + `LiquidGlassTintSlider`）
   - `components/ui/liquid-lens.tsx`（清洁无脏边 SDF 光学水滴透镜）
-- **已完成改造并文档化的组件（23 个）**：
-  - **基础与表单**：`button`、`input`、`textarea`、`checkbox`、`radio-group`、`switch`、`slider`、`select`、`combobox`
+- **已完成改造并文档化的组件（27 个，P1 核心组件全部完成）**：
+  - **基础与表单**：`button`、`input`、`textarea`、`checkbox`、`radio-group`、`switch`、`slider`、`select`、`combobox`、`calendar`
   - **浮层与弹窗**：`dialog`、`alert-dialog`、`drawer`、`sheet`、`popover`、`dropdown-menu`、`context-menu`、`command`
-  - **反馈与展示**：`tabs`、`card`、`badge`、`toast`、`tooltip`、`hover-card`
+  - **导航与布局**：`tabs`、`menubar`、`navigation-menu`、`sidebar`
+  - **反馈与展示**：`card`、`badge`、`toast`、`tooltip`、`hover-card`
 
 ### 待完成目标（推荐推进优先级）
 - **P1 剩余（核心导航与系统布局组件）**：
-  - `sidebar`、`menubar`、`navigation-menu`、`calendar`
+  - ✅ 已全部完成（`sidebar`、`menubar`、`navigation-menu`、`calendar`）
 - **P2（其余全量 shadcn 组件与收尾）**：
   - `accordion`、`alert`、`avatar`、`breadcrumb`、`carousel`、`collapsible`、`input-otp`、`pagination`、`progress`、`scroll-area`、`skeleton`、`table`、`toggle`、`toggle-group` 等全量组件风格统一与文档补齐，最终实现整套 `apple-liquid-ui` Registry 100% 覆盖并发布可用。
 
